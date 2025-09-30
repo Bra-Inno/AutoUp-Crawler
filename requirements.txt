@@ -1,16 +1,16 @@
-# requirements.txt
-
 # --- Core Framework ---
 fastapi
-uvicorn[standard]  # ASGI 服务器, [standard] 包含了性能更优的依赖
+uvicorn[standard]
 
 # --- Configuration ---
-pydantic-settings  # 用于从环境变量和文件加载配置
+pydantic-settings
 
 # --- Web Scraping ---
-httpx              # 异步 HTTP 客户端，用于发起网络请求
-beautifulsoup4     # HTML/XML 解析库，方便提取数据
-lxml               # 高性能的 XML/HTML 解析器，BeautifulSoup 会优先使用它（推荐）
+httpx
+requests
+beautifulsoup4
+lxml
+playwright
 
 # --- Caching ---
-redis              # Redis 的 Python 客户端 (包含了异步支持)
+redis

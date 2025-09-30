@@ -5,7 +5,6 @@ __pycache__/
 *.pyd
 
 # 虚拟环境
-# 根据你创建的虚拟环境名称，可能需要修改或添加
 venv/
 env/
 .venv/
@@ -14,8 +13,6 @@ env/
 # 敏感信息和环境变量文件
 # ！！！极其重要：确保不将包含密码、API密钥等信息的文件上传到 Git 仓库
 .env
-*.env
-.env.*
 
 # IDE 和编辑器配置文件
 .vscode/
@@ -35,19 +32,7 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
-nosetests.xml
-coverage.xml
+test.py
 
-# 构建和分发产物
-build/
-dist/
-*.egg-info/
+# 下载文件
 downloads/
-eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg

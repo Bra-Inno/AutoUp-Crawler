@@ -1,3 +1,5 @@
-2025/09/30-20:57:55.300 79c Reusing MANIFEST D:\codes\Python\hotlist-crawler\chrome_user_data\Default\Local Storage\leveldb/MANIFEST-000001
-2025/09/30-20:57:55.304 79c Recovering log #3
-2025/09/30-20:57:55.305 79c Reusing old log D:\codes\Python\hotlist-crawler\chrome_user_data\Default\Local Storage\leveldb/000003.log 
+2025/10/02-19:50:57.196 120c Reusing MANIFEST D:\codes\Python\hotlist-crawler\chrome_user_data\Default\Local Storage\leveldb/MANIFEST-000001
+2025/10/02-19:50:57.199 120c Recovering log #25
+2025/10/02-19:50:57.201 120c Reusing old log D:\codes\Python\hotlist-crawler\chrome_user_data\Default\Local Storage\leveldb/000025.log 
+2025/10/02-19:51:13.347 120c Level-0 table #29: started
+2025/10/02-19:51:13.364 120c Level-0 table #29: 17849 bytes OK

@@ -35,6 +35,13 @@ class Settings(BaseSettings):
                 "title_selector": "#activity-name",
                 "content_selector": "#js_content",
             }
+        },
+        "weibo": {
+            "domains": ["s.weibo.com", "weibo.com"],
+            "rules": {
+                "title_selector": ".card-wrap .info .name",
+                "content_selector": ".card-wrap .txt",
+            }
         }
     }
 

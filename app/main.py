@@ -10,6 +10,7 @@ from app.cache import cache_manager
 from app.storage import storage_manager
 from app.providers.zhihu import ZhihuArticleProvider
 from app.providers.weixin import WeixinMpProvider
+from app.providers.weibo import WeiboProvider
 
 # Windows 系统上修复异步问题
 if sys.platform == "win32":
@@ -25,6 +26,7 @@ app = FastAPI(
 PROVIDER_MAP = {
     "zhihu": ZhihuArticleProvider,
     "weixin_mp": WeixinMpProvider,
+    "weibo": WeiboProvider,
 }
 
 def identify_platform(url: str) -> str | None:

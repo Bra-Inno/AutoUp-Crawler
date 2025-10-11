@@ -79,7 +79,7 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     output_format=output_format,
                     force_save=True
                 )
-            elif platform == "weixin_mp":
+            elif platform == "weixin":
                 provider = WeixinMpProvider(
                     url=url,
                     rules=settings.PLATFORMS[platform]["rules"],
@@ -87,6 +87,11 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     output_format=output_format,
                     force_save=True
                 )
+            elif platform in ["xiaohongshu", "douyin", "bilibili"]:
+                # 这些平台已识别但提供者未实现
+                print(f"⚠️ 平台 '{platform}' 已识别但抓取逻辑尚未实现")
+                print(f"💡 您可以为该平台开发对应的Provider")
+                return False
             else:
                 print(f"❌ 平台 '{platform}' 的抓取逻辑未实现")
                 return False
@@ -265,6 +270,11 @@ def validate_destination(destination: str) -> bool:
     """
     
     try:
+        # 检查空路径
+        if not destination or not destination.strip():
+            print(f"❌ 目标路径不能为空")
+            return False
+            
         # 转换为绝对路径
         abs_path = os.path.abspath(destination)
         

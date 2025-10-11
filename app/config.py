@@ -29,7 +29,7 @@ class Settings(BaseSettings):
                 "content_selector": ".Post-Main .Post-RichText",
             }
         },
-        "weixin_mp": {
+        "weixin": {  # 改为weixin以匹配PlatformType
             "domains": ["mp.weixin.qq.com"],
             "rules": {
                 "title_selector": "#activity-name",
@@ -41,6 +41,27 @@ class Settings(BaseSettings):
             "rules": {
                 "title_selector": ".card-wrap .info .name",
                 "content_selector": ".card-wrap .txt",
+            }
+        },
+        "xiaohongshu": {
+            "domains": ["www.xiaohongshu.com", "xhslink.com"],
+            "rules": {
+                "title_selector": ".note-item .title",
+                "content_selector": ".note-item .content",
+            }
+        },
+        "douyin": {
+            "domains": ["www.douyin.com", "v.douyin.com"],
+            "rules": {
+                "title_selector": ".video-info .title",
+                "content_selector": ".video-info .desc",
+            }
+        },
+        "bilibili": {
+            "domains": ["www.bilibili.com", "b23.tv"],
+            "rules": {
+                "title_selector": ".video-title",
+                "content_selector": ".video-desc",
             }
         }
     }

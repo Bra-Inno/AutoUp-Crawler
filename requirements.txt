@@ -1,16 +1,46 @@
 # --- Core Framework ---
-fastapi
-uvicorn[standard]
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
 
 # --- Configuration ---
-pydantic-settings
+pydantic-settings>=2.1.0
 
 # --- Web Scraping ---
-httpx
-requests
-beautifulsoup4
-lxml
-playwright
+httpx>=0.25.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+playwright>=1.40.0
+
+# --- Data Processing ---
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# --- File Handling ---
+aiofiles>=23.2.0
+
+# --- Async Support ---
+asyncio-throttle>=1.0.2
+
+# --- URL Processing ---
+urllib3>=2.0.0
+tldextract>=5.1.0
 
 # --- Caching ---
-redis
+redis>=5.0.0
+
+# --- Development Tools ---
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
+
+# --- Logging ---
+loguru>=0.7.0
+
+# --- JSON Processing ---
+orjson>=3.9.0
+
+# --- Environment ---
+python-dotenv>=1.0.0

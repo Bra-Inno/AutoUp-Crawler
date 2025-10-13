@@ -100,20 +100,19 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
             print(f"🚀 开始抓取: {url}")
             result = await provider.fetch_and_parse()
             
-            if result is None or len(result) == 0:
+            if result is None:
                 print(f"❌ 抓取失败，没有获取到内容")
                 return False
             
             # 6. 验证文件是否保存成功
             platform_dir = os.path.join(destination, platform)
             if os.path.exists(platform_dir) and os.listdir(platform_dir):
-                print(f"✅ 抓取成功！获取到 {len(result)} 个内容项")
+                print(f"✅ 抓取成功！获取到内容项")
                 print(f"📂 文件已保存到: {platform_dir}")
                 
                 # 显示保存的文件信息
-                for item in result:
-                    if hasattr(item, 'title'):
-                        print(f"   📄 {item.title}")
+                if hasattr(result, 'title') and result.title:
+                    print(f"   📄 {result.title}")
                 
                 return True
             else:

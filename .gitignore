@@ -36,3 +36,9 @@ test.py
 
 # 下载文件
 downloads/
+
+# 登录数据
+chrome_user_data/
+
+# 修复文件
+bug.md

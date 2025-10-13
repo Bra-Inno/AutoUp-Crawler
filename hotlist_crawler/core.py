@@ -94,7 +94,7 @@ def scrape(url: str,
                 output_format=output_format,
                 force_save=force_save
             )
-        elif platform == "weixin_mp":
+        elif platform == "weixin":
             provider = WeixinMpProvider(
                 url=url,
                 rules=settings.PLATFORMS[platform]["rules"],
@@ -219,7 +219,7 @@ def scrape_weixin(url: str,
     async def _scrape_weixin():
         provider = WeixinMpProvider(
             url=url,
-            rules=settings.PLATFORMS["weixin_mp"]["rules"],
+            rules=settings.PLATFORMS["weixin"]["rules"],
             save_images=save_images,
             output_format=output_format,
             force_save=force_save

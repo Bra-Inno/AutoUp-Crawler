@@ -28,7 +28,7 @@ if _parent_dir not in sys.path:
 try:
     # 导入核心功能
     from .core import scrape, scrape_zhihu, scrape_weibo, scrape_weixin, identify_platform
-    from .auth import login, is_online, logout, login_sync, get_all_online_status
+    from .auth import login, is_online, login_sync, get_all_online_status
     from .fetch import fetch, batch_fetch, validate_destination, list_supported_platforms, get_platform_info
     from .types import PlatformType, USER_DATA_DIR
     from .models import ScrapedDataItem
@@ -55,7 +55,6 @@ except ImportError as e:
         
         login = auth_module.login
         is_online = auth_module.is_online
-        logout = auth_module.logout
         login_sync = auth_module.login_sync
         get_all_online_status = auth_module.get_all_online_status
         
@@ -90,7 +89,6 @@ except ImportError as e:
         identify_platform = _import_error_func
         login = _import_error_func
         is_online = _import_error_func
-        logout = _import_error_func
         login_sync = _import_error_func
         get_all_online_status = _import_error_func
         fetch = _import_error_func
@@ -121,7 +119,6 @@ __all__ = [
     # 登录功能 - 符合API设计
     'login',            # 登录函数 -> bool
     'is_online',        # 检查在线状态 -> bool
-    'logout',           # 登出函数 -> bool
     'login_sync',       # 同步版登录
     'get_all_online_status', # 获取所有平台状态
     

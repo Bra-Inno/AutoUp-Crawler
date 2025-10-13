@@ -27,6 +27,19 @@ class WeiboProvider(BaseProvider):
         super().__init__(url, rules, save_images, output_format, force_save, "weibo")
         self.user_data_dir = "./chrome_user_data"
     
+    def _load_saved_cookies(self):
+        """加载已保存的登录cookies"""
+        try:
+            cookies_file = os.path.join(self.user_data_dir, "login_data", "weibo_cookies.json")
+            if os.path.exists(cookies_file):
+                with open(cookies_file, 'r', encoding='utf-8') as f:
+                    cookies = json.load(f)
+                    print(f"📂 加载已保存的登录状态，共 {len(cookies)} 个cookies")
+                    return cookies
+        except Exception as e:
+            print(f"⚠️ 加载登录状态失败: {e}")
+        return None
+    
     def _is_weibo_search_page(self) -> bool:
         """判断是否为微博搜索页面"""
         return "s.weibo.com/weibo" in self.url
@@ -80,7 +93,7 @@ class WeiboProvider(BaseProvider):
                 # 创建持久化上下文，保持登录状态
                 context = playwright.chromium.launch_persistent_context(
                     self.user_data_dir,
-                    headless=False,
+                    headless=True,  # 抓取时使用无头模式  
                     slow_mo=50,
                     user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
                     ignore_default_args=['--enable-automation'],
@@ -88,6 +101,12 @@ class WeiboProvider(BaseProvider):
                 )
                 
                 page = context.new_page()
+                
+                # 加载已保存的登录cookies
+                saved_cookies = self._load_saved_cookies()
+                if saved_cookies:
+                    context.add_cookies(saved_cookies)
+                    print("✅ 登录状态已加载")
                 
                 try:
                     print("🌐 导航至目标页面...")

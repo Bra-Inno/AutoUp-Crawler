@@ -1,46 +1,48 @@
-# --- Core Framework ---
+# hotlist-crawler 依赖包
+# 通用热榜内容爬虫包，支持知乎、微博、微信公众号等平台的内容抓取
+
+# --- 核心框架 ---
+# 基于FastAPI的异步Web框架（可选，仅API服务需要）
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
-
-# --- Configuration ---
 pydantic-settings>=2.1.0
 
-# --- Web Scraping ---
+# --- 浏览器自动化（核心依赖）---
+playwright>=1.40.0
+
+# --- HTTP请求和网页解析 ---
 httpx>=0.25.0
 requests>=2.31.0
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
-playwright>=1.40.0
 
-# --- Data Processing ---
+# --- 异步支持 ---
+asyncio-throttle>=1.0.2
+aiofiles>=23.2.0
+
+# --- 数据处理 ---
 python-dateutil>=2.8.0
 pytz>=2023.3
 
-# --- File Handling ---
-aiofiles>=23.2.0
-
-# --- Async Support ---
-asyncio-throttle>=1.0.2
-
-# --- URL Processing ---
+# --- URL处理 ---
 urllib3>=2.0.0
 tldextract>=5.1.0
 
-# --- Caching ---
+# --- 缓存系统（可选）---
 redis>=5.0.0
 
-# --- Development Tools ---
+# --- 环境配置 ---
+python-dotenv>=1.0.0
+
+# --- JSON处理 ---
+orjson>=3.9.0
+
+# --- 日志系统 ---
+loguru>=0.7.0
+
+# --- 开发工具（可选）---
 pytest>=7.4.0
 pytest-asyncio>=0.21.0
 black>=23.0.0
 flake8>=6.0.0
-
-# --- Logging ---
-loguru>=0.7.0
-
-# --- JSON Processing ---
-orjson>=3.9.0
-
-# --- Environment ---
-python-dotenv>=1.0.0

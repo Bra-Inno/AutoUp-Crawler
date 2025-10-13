@@ -1,7 +1,0 @@
-- login(platform: PlatformType) -> bool
-- is_online(platform: PlatformType) -> bool
-- logout(platform: PlatformType) -> bool (optional)
-
-- fetch(url: str, destination: str) -> bool
-- USER_DATA_DIR: str = 工作目录/chrome_user_data (固定保存到当前工作目录)
-- class PlatformType(StrEnum)

@@ -26,7 +26,7 @@ class WeixinMpProvider(BaseProvider):
     
     def __init__(self, url: str, rules: dict, save_images: bool = True, output_format: str = "markdown", 
                  force_save: bool = True):
-        super().__init__(url, rules, save_images, output_format, force_save, "weixin_mp")
+        super().__init__(url, rules, save_images, output_format, force_save, "weixin")
         self.storage_info = None
         self.img_counter = {'count': 1}
     

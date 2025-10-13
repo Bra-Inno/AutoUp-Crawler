@@ -12,7 +12,7 @@ import time
 from .types import PlatformType, USER_DATA_DIR, PLATFORM_LOGIN_URLS
 
 
-async def login(platform: PlatformType, headless: bool = False) -> bool:
+def login(platform: PlatformType, headless: bool = False) -> bool:
     """
     用户登录函数 - 符合API设计规范
     
@@ -29,7 +29,7 @@ async def login(platform: PlatformType, headless: bool = False) -> bool:
         from hotlist_crawler.types import PlatformType
         
         # 登录知乎
-        success = await login(PlatformType.ZHIHU)
+        success = login(PlatformType.ZHIHU)
         if success:
             print("知乎登录成功！")
         else:
@@ -53,9 +53,34 @@ async def login(platform: PlatformType, headless: bool = False) -> bool:
     print(f"📍 登录页面: {login_url}")
     print(f"📁 用户数据目录: {USER_DATA_DIR}")
     
+    # 同步调用异步函数
+    try:
+        import sys
+        if sys.platform == "win32":
+            try:
+                asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+            except:
+                pass
+        
+        # 运行异步登录逻辑
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        return loop.run_until_complete(_login_async(platform, login_url, headless))
+        
+    except Exception as e:
+        print(f"❌ 登录过程中出现错误: {e}")
+        return False
+
+
+async def _login_async(platform: PlatformType, login_url: str, headless: bool) -> bool:
+    """异步登录实现"""
     try:
         async with async_playwright() as p:
-            # 启动浏览器，使用持久化用户数据
+            # 启动浏览器，使用持久化用户数据 - 最强反检测配置
             browser = await p.chromium.launch_persistent_context(
                 user_data_dir=USER_DATA_DIR,
                 headless=headless,
@@ -64,14 +89,106 @@ async def login(platform: PlatformType, headless: bool = False) -> bool:
                     '--disable-setuid-sandbox', 
                     '--disable-dev-shm-usage',
                     '--no-first-run',
-                    '--disable-gpu'
+                    '--disable-blink-features=AutomationControlled',  # 核心：隐藏自动化控制
+                    '--exclude-switches=enable-automation',          # 核心：排除自动化标识
+                    '--disable-infobars',                           # 核心：禁用信息条
+                    '--disable-extensions',                          
+                    '--disable-default-apps',
+                    '--test-type',                                  # 测试模式，减少提示
+                    '--disable-web-security',
+                    '--disable-features=TranslateUI,VizDisplayCompositor',
+                    '--use-fake-ui-for-media-stream',              # 伪装媒体流UI
+                    '--disable-component-update',                   # 禁用组件更新
+                    '--disable-domain-reliability',                # 禁用域可靠性
+                    '--disable-sync',                              # 禁用同步
+                    '--disable-background-networking',             # 禁用后台网络
+                    '--disable-breakpad',                          # 禁用崩溃报告
+                    '--disable-component-extensions-with-background-pages',
+                    '--disable-client-side-phishing-detection',   # 禁用钓鱼检测
+                    '--disable-default-apps',
+                    '--disable-hang-monitor',                      # 禁用挂起监控
+                    '--disable-prompt-on-repost',                 # 禁用重新提交提示
+                    '--disable-background-timer-throttling',      # 禁用后台定时器限制
+                    '--disable-renderer-backgrounding',           # 禁用渲染器后台化
+                    '--disable-backgrounding-occluded-windows',   # 禁用遮挡窗口后台化
+                    '--disable-ipc-flooding-protection',          # 禁用IPC洪水保护
+                    '--password-store=basic',                      # 基本密码存储
+                    '--use-mock-keychain'                          # 使用模拟钥匙串
                 ],
-                viewport={'width': 1280, 'height': 800}
+                viewport={'width': 1280, 'height': 800},
+                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                ignore_default_args=['--enable-automation', '--enable-blink-features=AutomationControlled'],  # 忽略所有自动化参数
+                bypass_csp=True,
+                # 额外设置
+                locale='zh-CN',
+                timezone_id='Asia/Shanghai'
             )
             
             try:
                 page = await browser.new_page()
                 page.set_default_timeout(300000)  # 5分钟超时
+                
+                # 设置额外的浏览器属性来隐藏自动化
+                await browser.add_init_script("""
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                    });
+                """)
+                
+                # 注入脚本隐藏自动化特征
+                await page.add_init_script("""
+                    // 删除webdriver属性
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                    });
+                    
+                    // 删除自动化相关属性
+                    delete navigator.__proto__.webdriver;
+                    
+                    // 修改chrome对象
+                    window.navigator.chrome = {
+                        runtime: {},
+                        loadTimes: function() {},
+                        csi: function() {},
+                        app: {}
+                    };
+                    
+                    // 覆盖插件信息，模拟真实浏览器
+                    Object.defineProperty(navigator, 'plugins', {
+                        get: () => [{
+                            name: "Chrome PDF Plugin",
+                            filename: "internal-pdf-viewer",
+                            description: "Portable Document Format"
+                        }],
+                    });
+                    
+                    // 覆盖语言信息
+                    Object.defineProperty(navigator, 'languages', {
+                        get: () => ['zh-CN', 'zh', 'en-US', 'en'],
+                    });
+                    
+                    // 覆盖自动化检测相关属性
+                    Object.defineProperty(navigator, 'platform', {
+                        get: () => 'Win32',
+                    });
+                    
+                    // 隐藏Selenium相关属性
+                    window.document.$cdc_asdjflasutopfhvcZLmcfl_ = undefined;
+                    window.document.$chrome_asyncScriptInfo = undefined;
+                    
+                    // 修改permission API
+                    const originalQuery = window.navigator.permissions.query;
+                    window.navigator.permissions.query = (parameters) => (
+                        parameters.name === 'notifications' ?
+                            Promise.resolve({ state: Notification.permission }) :
+                            originalQuery(parameters)
+                    );
+                    
+                    // 覆盖getTimezoneOffset
+                    Date.prototype.getTimezoneOffset = function() {
+                        return -480; // UTC+8 (中国时区)
+                    };
+                """)
                 
                 # 打开登录页面
                 print("🌐 正在打开登录页面...")
@@ -79,116 +196,83 @@ async def login(platform: PlatformType, headless: bool = False) -> bool:
                 
                 print("\n" + "="*50)
                 print("👤 请在浏览器中完成登录操作")
-                print("💡 登录成功后，浏览器会自动保存登录状态")
-                print("⏳ 登录完成后请关闭浏览器窗口，或按 Ctrl+C 结束")
+                print("💡 登录状态将在45秒后自动保存")
+                print("⏳ 请在45秒内完成登录操作")
                 print("="*50)
                 
-                # 等待登录完成
-                login_success = await _wait_for_login_completion(page, platform)
+                # 等待用户操作，45秒后自动保存或用户按回车手动保存
+                await _wait_for_user_action(page, platform, timeout=45)
                 
-                if login_success:
-                    # 获取cookies和保存登录数据
-                    cookies = await page.context.cookies()
-                    
-                    # 保存登录数据
-                    save_success = await _save_login_data(platform, cookies, page)
-                    
-                    if save_success:
-                        print("✅ 登录成功并保存！")
+                # 获取并保存当前cookies状态
+                cookies = await page.context.cookies()
+                
+                # 保存登录数据
+                save_success = await _save_login_data(platform, cookies, page)
+                
+                if save_success:
+                    if len(cookies) > 0:
+                        print("✅ 登录状态已保存！")
                         print(f"🍪 保存了 {len(cookies)} 个cookies")
                         return True
                     else:
-                        print("❌ 登录成功但保存失败")
+                        print("⚠️ 已保存状态，但未检测到cookies（可能未登录）")
                         return False
                 else:
-                    print("❌ 登录未完成或失败")
+                    print("❌ 保存失败")
                     return False
                     
             finally:
                 await browser.close()
                 
     except Exception as e:
-        print(f"❌ 登录过程中出现错误: {e}")
+        print(f"❌ 异步登录过程中出现错误: {e}")
         return False
 
 
-async def _wait_for_login_completion(page, platform: PlatformType, timeout: int = 300) -> bool:
-    """等待登录完成"""
+async def _wait_for_user_action(page, platform: PlatformType, timeout: int = 45):
+    """等待用户操作：45秒倒计时或用户按回车键手动保存"""
+    import threading
+    import queue
+    
+    print(f"⏰ 开始倒计时 {timeout} 秒...")
+    print("💡 提示：您可以随时按回车键保存当前登录状态")
+    
+    # 使用队列来接收用户输入
+    input_queue = queue.Queue()
+    
+    def input_thread():
+        """在独立线程中监听用户输入"""
+        try:
+            input()  # 等待用户按回车
+            input_queue.put("user_input")
+        except:
+            pass
+    
+    # 启动输入监听线程
+    thread = threading.Thread(target=input_thread, daemon=True)
+    thread.start()
+    
     start_time = time.time()
     
-    # 根据平台定义登录成功的判断条件
-    success_indicators = {
-        PlatformType.ZHIHU: {
-            "urls": ["https://www.zhihu.com/", "https://www.zhihu.com/explore"],
-            "selectors": [".Avatar", ".AppHeader-profile"]
-        },
-        PlatformType.WEIBO: {
-            "urls": ["https://weibo.com/", "https://m.weibo.cn/"],
-            "selectors": [".gn_name", ".username"]
-        },
-        PlatformType.XIAOHONGSHU: {
-            "urls": ["https://www.xiaohongshu.com/explore"],
-            "selectors": [".avatar", ".user-avatar"]
-        },
-        PlatformType.WEIXIN: {
-            "urls": ["https://mp.weixin.qq.com/cgi-bin/home"],
-            "selectors": [".weui-desktop-account__nickname"]
-        },
-        PlatformType.DOUYIN: {
-            "urls": ["https://www.douyin.com/"],
-            "selectors": [".semi-avatar"]
-        },
-        PlatformType.BILIBILI: {
-            "urls": ["https://www.bilibili.com/"],
-            "selectors": [".header-avatar-wrap", ".user-con"]
-        }
-    }
-    
-    indicators = success_indicators.get(platform, {"urls": [], "selectors": []})
-    
     while time.time() - start_time < timeout:
+        elapsed = int(time.time() - start_time)
+        remaining = timeout - elapsed
+        
+        # 每5秒显示一次倒计时
+        if elapsed % 5 == 0 and elapsed > 0:
+            print(f"⏳ 剩余时间: {remaining} 秒 (按回车键立即保存)")
+        
+        # 检查是否有用户输入
         try:
-            current_url = page.url
-            
-            # 检查URL变化
-            for url_indicator in indicators["urls"]:
-                if url_indicator in current_url:
-                    print(f"🎉 检测到登录成功（URL变化）: {current_url}")
-                    return True
-            
-            # 检查页面元素
-            for selector in indicators["selectors"]:
-                try:
-                    element = await page.query_selector(selector)
-                    if element and await element.is_visible():
-                        print(f"🎉 检测到登录成功（找到用户元素）")
-                        return True
-                except:
-                    pass
-            
-            # 通用检查：查找常见的用户信息元素
-            common_selectors = [
-                ".avatar", ".user-avatar", ".header-avatar",
-                ".username", ".user-name", ".nickname",
-                "[data-testid='avatar']", "[class*='avatar']"
-            ]
-            
-            for selector in common_selectors:
-                try:
-                    element = await page.query_selector(selector)
-                    if element and await element.is_visible():
-                        print(f"🎉 检测到登录成功（找到通用用户元素）")
-                        return True
-                except:
-                    pass
-            
-            await asyncio.sleep(2)  # 每2秒检查一次
-            
-        except Exception as e:
-            print(f"⚠️ 检查登录状态时出错: {e}")
-            await asyncio.sleep(2)
+            input_queue.get_nowait()
+            print("👍 检测到用户输入，立即保存登录状态")
+            return
+        except queue.Empty:
+            pass
+        
+        await asyncio.sleep(1)
     
-    return False
+    print(f"⏰ 已等待 {timeout} 秒，自动保存当前状态")
 
 
 async def _save_login_data(platform: PlatformType, cookies: list, page) -> bool:
@@ -280,63 +364,10 @@ def is_online(platform: PlatformType) -> bool:
         return False
 
 
-def logout(platform: PlatformType) -> bool:
-    """
-    登出指定平台（删除本地登录数据）
-    
-    Args:
-        platform: 平台类型
-    
-    Returns:
-        bool: 是否成功登出
-        - True: 成功删除登录数据
-        - False: 删除失败或本来就没有登录
-    
-    Example:
-        if logout(PlatformType.ZHIHU):
-            print("知乎登出成功")
-        else:
-            print("知乎登出失败")
-    """
-    
-    if not isinstance(platform, PlatformType):
-        return False
-    
-    try:
-        login_data_dir = os.path.join(USER_DATA_DIR, "login_data")
-        
-        # 删除登录信息文件
-        login_file = os.path.join(login_data_dir, f"{platform}_login.json")
-        cookies_file = os.path.join(login_data_dir, f"{platform}_cookies.json")
-        
-        files_deleted = 0
-        
-        if os.path.exists(login_file):
-            os.remove(login_file)
-            files_deleted += 1
-            print(f"🗑️ 已删除登录信息文件")
-        
-        if os.path.exists(cookies_file):
-            os.remove(cookies_file)
-            files_deleted += 1
-            print(f"🗑️ 已删除cookies文件")
-        
-        if files_deleted > 0:
-            print(f"✅ {platform} 登出成功")
-            return True
-        else:
-            print(f"⚠️ {platform} 本来就没有登录")
-            return False
-            
-    except Exception as e:
-        print(f"❌ 登出失败: {e}")
-        return False
-
-
 # 同步版本的login函数（如果需要的话）
 def login_sync(platform: PlatformType, headless: bool = False) -> bool:
     """
-    同步版本的登录函数
+    同步版本的登录函数（现在login本身就是同步的，这个函数保持兼容性）
     
     Args:
         platform: 平台类型
@@ -345,7 +376,7 @@ def login_sync(platform: PlatformType, headless: bool = False) -> bool:
     Returns:
         bool: 登录是否成功
     """
-    return asyncio.run(login(platform, headless))
+    return login(platform, headless)
 
 
 # 便捷函数：获取所有平台的在线状态

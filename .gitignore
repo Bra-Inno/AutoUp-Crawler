@@ -32,7 +32,6 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
-test.py
 
 # 下载文件
 downloads/

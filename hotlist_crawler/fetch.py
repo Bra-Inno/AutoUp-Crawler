@@ -19,6 +19,7 @@ try:
     from app.providers.zhihu import ZhihuArticleProvider
     from app.providers.weibo import WeiboProvider
     from app.providers.weixin import WeixinMpProvider
+    from app.providers.bilibili import BilibiliVideoProvider
     from app.config import settings
     from app.models import ScrapedDataItem
     from app.storage import storage_manager
@@ -87,7 +88,17 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     output_format=output_format,
                     force_save=True
                 )
-            elif platform in ["xiaohongshu", "douyin", "bilibili"]:
+            elif platform == "bilibili":
+                provider = BilibiliVideoProvider(
+                    url=url,
+                    rules={},  # B站不需要rules
+                    save_images=save_images,
+                    output_format=output_format,
+                    force_save=True,
+                    auto_download_video=True,
+                    video_quality=80  # 默认1080P
+                )
+            elif platform in ["xiaohongshu", "douyin"]:
                 # 这些平台已识别但提供者未实现
                 print(f"⚠️ 平台 '{platform}' 已识别但抓取逻辑尚未实现")
                 print(f"💡 您可以为该平台开发对应的Provider")
@@ -196,26 +207,33 @@ def batch_fetch(urls: List[str], destination: str, save_images: bool = True,
         max_answers: 知乎问题最大回答数
     
     Returns:
-        dict: 每个URL的抓取结果
+        dict: 详细的批量抓取结果统计
         {
-            "url1": True/False,
-            "url2": True/False,
-            ...
-            "summary": {
-                "total": 总数,
-                "success": 成功数,
-                "failed": 失败数
-            }
+            "total": 总数,
+            "success": 成功数,
+            "failed": 失败数,
+            "success_rate": "成功率",
+            "details": [
+                {"url": "...", "success": True/False, "error": "..."},
+                ...
+            ]
         }
     """
     
     if not urls or not isinstance(urls, list):
-        return {"error": "URLs参数无效"}
+        return {
+            "total": 0,
+            "success": 0,
+            "failed": 0,
+            "success_rate": "0%",
+            "details": [],
+            "error": "URLs参数无效"
+        }
     
     print(f"🚀 开始批量抓取 {len(urls)} 个URL")
     print(f"📁 目标目录: {os.path.abspath(destination)}")
     
-    results = {}
+    details = []
     success_count = 0
     
     for i, url in enumerate(urls, 1):
@@ -223,38 +241,50 @@ def batch_fetch(urls: List[str], destination: str, save_images: bool = True,
         
         try:
             success = fetch(url, destination, save_images, output_format, max_answers)
-            results[url] = success
+            
+            detail = {
+                "url": url,
+                "success": success
+            }
             
             if success:
                 success_count += 1
                 print(f"✅ 成功")
             else:
                 print(f"❌ 失败")
+                detail["error"] = "抓取失败"
+            
+            details.append(detail)
                 
         except Exception as e:
             print(f"❌ 异常: {e}")
-            results[url] = False
+            details.append({
+                "url": url,
+                "success": False,
+                "error": str(e)
+            })
         
         # 添加延时避免请求过快
         if i < len(urls):
             import time
             time.sleep(1)
     
-    # 添加统计信息
-    results["summary"] = {
+    # 构建返回结果
+    result = {
         "total": len(urls),
         "success": success_count,
         "failed": len(urls) - success_count,
-        "success_rate": f"{success_count/len(urls)*100:.1f}%"
+        "success_rate": f"{success_count/len(urls)*100:.1f}%",
+        "details": details
     }
     
     print(f"\n📊 批量抓取完成:")
-    print(f"   总计: {results['summary']['total']}")
-    print(f"   成功: {results['summary']['success']}")
-    print(f"   失败: {results['summary']['failed']}")
-    print(f"   成功率: {results['summary']['success_rate']}")
+    print(f"   总计: {result['total']}")
+    print(f"   成功: {result['success']}")
+    print(f"   失败: {result['failed']}")
+    print(f"   成功率: {result['success_rate']}")
     
-    return results
+    return result
 
 
 def validate_destination(destination: str) -> bool:

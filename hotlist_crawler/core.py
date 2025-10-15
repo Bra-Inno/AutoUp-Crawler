@@ -24,6 +24,7 @@ try:
     from app.providers.zhihu import ZhihuArticleProvider
     from app.providers.weibo import WeiboProvider
     from app.providers.weixin import WeixinMpProvider
+    from app.providers.bilibili import BilibiliVideoProvider
     from app.config import settings
     from app.models import ScrapedDataItem
 except ImportError as e:
@@ -233,3 +234,51 @@ def scrape_weixin(url: str,
         return result
     except Exception as e:
         raise Exception(f"微信抓取错误: {str(e)}")
+
+
+def scrape_bilibili(url: str,
+                   save_images: bool = False,
+                   output_format: str = "json",
+                   force_save: bool = True,
+                   auto_download_video: bool = False,
+                   video_quality: int = 80,
+                   cookies: Optional[str] = None) -> List[ScrapedDataItem]:
+    """
+    专门的B站视频爬取函数
+    支持获取视频详细信息和下载链接
+    
+    Args:
+        url: B站视频URL (支持BV号和av号)
+        save_images: 是否下载封面图 (默认False)
+        output_format: 输出格式 (默认json)
+        force_save: 是否强制保存
+        auto_download_video: 是否自动下载视频文件
+        video_quality: 视频清晰度 (16=360P, 32=480P, 64=720P, 80=1080P)
+        cookies: B站登录cookie (获取高清画质需要)
+    
+    Returns:
+        抓取到的视频信息项列表
+    """
+    if not any(domain in url for domain in ["bilibili.com", "b23.tv"]):
+        raise ValueError("不是有效的B站视频URL")
+    
+    async def _scrape_bilibili():
+        provider = BilibiliVideoProvider(
+            url=url,
+            rules={},  # B站不需要rules
+            save_images=save_images,
+            output_format=output_format,
+            force_save=force_save,
+            auto_download_video=auto_download_video,
+            video_quality=video_quality,
+            cookies=cookies
+        )
+        return await provider.fetch_and_parse()
+    
+    try:
+        result = _run_async(_scrape_bilibili())
+        if result is None:
+            raise Exception("B站视频信息抓取失败")
+        return result
+    except Exception as e:
+        raise Exception(f"B站抓取错误: {str(e)}")

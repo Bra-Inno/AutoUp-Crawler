@@ -12,6 +12,7 @@ from app.providers.zhihu import ZhihuArticleProvider
 from app.providers.weixin import WeixinMpProvider
 from app.providers.weibo import WeiboProvider
 from app.providers.bilibili import BilibiliVideoProvider
+from app.providers.douyin import DouyinVideoProvider
 
 # Windows 系统上修复异步问题
 if sys.platform == "win32":
@@ -29,6 +30,7 @@ PROVIDER_MAP = {
     "weixin_mp": WeixinMpProvider,
     "weibo": WeiboProvider,
     "bilibili": BilibiliVideoProvider,
+    "douyin": DouyinVideoProvider,
 }
 
 def identify_platform(url: str) -> str | None:

@@ -2,10 +2,11 @@
 hotlist_crawler 核心功能模块
 提供统一的爬虫接口
 """
+
 import sys
 import os
 import asyncio
-from typing import Optional, List, Dict, Any
+from typing import Optional, List
 from urllib.parse import urlparse
 
 # 添加app目录到路径，以便导入现有模块

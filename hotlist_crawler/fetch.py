@@ -2,6 +2,7 @@
 fetch 函数实现
 符合API设计: fetch(url: str, destination: str) -> bool
 """
+
 import os
 import sys
 import asyncio

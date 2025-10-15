@@ -2,6 +2,7 @@
 小红书Provider - 符合项目统一规范
 支持获取单个笔记、批量搜索、用户笔记列表等功能
 """
+
 import asyncio
 import json
 import os
@@ -17,7 +18,6 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
-from ..utils.xhs.xhs_utils.common_util import init
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
 
 
@@ -362,7 +362,6 @@ class XiaohongshuProvider(BaseProvider):
         print("=" * 60 + "\n")
         
         return note_list
-
 
     async def fetch_all_user_notes(
         self, 
@@ -1077,6 +1076,7 @@ class XiaohongshuProvider(BaseProvider):
                 except Exception as e:
                     logger.error(f"保存笔记失败 {detail.get('title', 'Unknown')}: {e}")
                     import traceback
+
                     traceback.print_exc()
                     continue
             
@@ -1355,9 +1355,11 @@ class XiaohongshuProvider(BaseProvider):
         # 小红书爬虫暂无需特殊关闭操作，保留接口以保持一致性
         pass
 
+
 # ============================================================================
 # 兼容性封装（保持旧接口可用）
 # ============================================================================
+
 
 class Data_Spider:
     """
@@ -1369,6 +1371,7 @@ class Data_Spider:
     
     推荐迁移指南: 参考 docs/XHS_ASYNC_MIGRATION.md
     """
+
     def __init__(self, save_dir: str = "data/xiaohongshu"):
         """
         初始化数据爬虫

@@ -1,6 +1,7 @@
 """
 hotlist_crawler 数据模型
 """
+
 import sys
 import os
 
@@ -20,8 +21,7 @@ try:
     
 except ImportError as e:
     # 如果导入失败，提供简化的模型定义
-    from typing import List, Optional, Dict, Any
-    from datetime import datetime
+    from typing import List
     
     class ImageInfo:
         """图片信息简化版本"""

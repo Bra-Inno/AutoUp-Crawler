@@ -1,13 +1,11 @@
 import httpx
 from ..xhs_utils.cookie_util import trans_cookies
 from ..xhs_utils.xhs_creator_util import get_common_headers, generate_xs, splice_str
-from ..xhs_utils.xhs_util import generate_x_b3_traceid
 
 
-class XHS_Creator_Apis():
+class XHS_Creator_Apis:
     def __init__(self):
         self.base_url = "https://edith.xiaohongshu.com"
-
 
     # page: 页数
     # time: 最近几天的时间
@@ -34,7 +32,6 @@ class XHS_Creator_Apis():
         except Exception as e:
             success, msg = False, str(e)
         return success, msg, res_json
-
 
     # 获取全部的发布信息
     def get_all_publish_note_info(self, cookies_str):

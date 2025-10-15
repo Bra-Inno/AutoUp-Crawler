@@ -1,10 +1,7 @@
 import os
-import re
-import time
 import asyncio
-import sys
 import concurrent.futures
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
 from playwright.sync_api import sync_playwright
@@ -12,7 +9,7 @@ import httpx
 
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem, ImageInfo
-from app.utils import clean_filename, ensure_directory, get_file_extension
+from app.utils import get_file_extension
 from app.config import settings
 from app.storage import storage_manager
 

@@ -5,11 +5,11 @@ import asyncio
 import httpx
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
-from typing import Any, List, Dict, Optional
+from typing import Any, List, Dict
+
 
 class ZhihuArticleProvider(BaseProvider):
     """
@@ -108,6 +108,7 @@ class ZhihuArticleProvider(BaseProvider):
     
     async def _parse_question_page(self) -> Any:
         """使用Playwright解析知乎问题页面（整合test.py逻辑）"""
+
         def _sync_playwright_parse():
             """同步Playwright解析函数"""
             from playwright.sync_api import sync_playwright
@@ -286,6 +287,7 @@ class ZhihuArticleProvider(BaseProvider):
                     
                     # 转换图片路径为ImageInfo对象
                     from app.models import ImageInfo
+
                     all_image_infos = []
                     for img_path in question_images + downloaded_images:
                         all_image_infos.append(ImageInfo(

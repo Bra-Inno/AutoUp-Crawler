@@ -5,7 +5,7 @@ import os
 import re
 import json
 from typing import Any, Dict, Optional
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager

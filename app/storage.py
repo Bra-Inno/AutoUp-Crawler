@@ -2,11 +2,11 @@
 内容存储管理器
 支持不同平台的分类存储，包括文本、图片和元数据
 """
+
 import os
 import json
-import shutil
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 from urllib.parse import urlparse
 
 from app.utils import clean_filename, ensure_directory
@@ -33,6 +33,7 @@ class StorageManager:
     def _generate_article_id(self, url: str, title: str) -> str:
         """生成文章的唯一标识符"""
         import hashlib
+
         # 使用URL和标题生成唯一ID
         content = f"{url}_{title}"
         return hashlib.md5(content.encode()).hexdigest()[:12]

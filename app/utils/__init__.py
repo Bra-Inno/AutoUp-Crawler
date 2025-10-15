@@ -1,10 +1,10 @@
 """
 工具函数模块
 """
+
 # 由于app.utils既是文件也是目录，这里需要特殊处理
 # 直接从外层的utils.py文件导入函数
 
-import sys
 import os
 
 # 获取app目录

@@ -6,12 +6,13 @@ import asyncio
 import httpx
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, parse_qs, unquote
-from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from bs4 import BeautifulSoup
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem, ImageInfo
 from app.storage import storage_manager
-from typing import Any, List, Dict, Optional
+from typing import Any, List
+
 
 class WeiboProvider(BaseProvider):
     """

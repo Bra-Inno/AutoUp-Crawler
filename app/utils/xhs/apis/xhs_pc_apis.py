@@ -10,7 +10,9 @@ from loguru import logger
     获小红书的api
     :param cookies_str: 你的cookies
 """
-class XHS_Apis():
+
+
+class XHS_Apis:
     def __init__(self):
         self.base_url = "https://edith.xiaohongshu.com"
 
@@ -145,7 +147,6 @@ class XHS_Apis():
             msg = str(e)
         return success, msg, res_json
 
-
     def get_user_self_info2(self, cookies_str: str, proxies: dict = None):
         """
             获取用户自己的信息2
@@ -192,7 +193,6 @@ class XHS_Apis():
             success = False
             msg = str(e)
         return success, msg, res_json
-
 
     def get_user_all_notes(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
@@ -474,43 +474,14 @@ class XHS_Apis():
                 "note_type": 0,
                 "ext_flags": [],
                 "filters": [
-                    {
-                        "tags": [
-                            sort_type
-                        ],
-                        "type": "sort_type"
-                    },
-                    {
-                        "tags": [
-                            filter_note_type
-                        ],
-                        "type": "filter_note_type"
-                    },
-                    {
-                        "tags": [
-                            filter_note_time
-                        ],
-                        "type": "filter_note_time"
-                    },
-                    {
-                        "tags": [
-                            filter_note_range
-                        ],
-                        "type": "filter_note_range"
-                    },
-                    {
-                        "tags": [
-                            filter_pos_distance
-                        ],
-                        "type": "filter_pos_distance"
-                    }
+                    {"tags": [sort_type], "type": "sort_type"},
+                    {"tags": [filter_note_type], "type": "filter_note_type"},
+                    {"tags": [filter_note_time], "type": "filter_note_time"},
+                    {"tags": [filter_note_range], "type": "filter_note_range"},
+                    {"tags": [filter_pos_distance], "type": "filter_pos_distance"},
                 ],
                 "geo": geo,
-                "image_formats": [
-                    "jpg",
-                    "webp",
-                    "avif"
-                ]
+                "image_formats": ["jpg", "webp", "avif"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
             response = httpx.post(

@@ -7,7 +7,7 @@
 import sys
 import os
 import asyncio
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 
 # 版本信息
 __version__ = "2.0.0"
@@ -146,6 +146,7 @@ __all__ = [
     '__version__',
 ]
 
+
 # 创建便捷别名
 def _create_aliases():
     """创建便捷别名"""
@@ -157,13 +158,16 @@ def _create_aliases():
         bilibili = scrape_bilibili
         douyin = scrape_douyin
     else:
+
         def _error_func(*args, **kwargs):
             raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
+
         zhihu = _error_func
         weibo = _error_func
         weixin = _error_func
         bilibili = _error_func
         douyin = _error_func
+
 
 # 执行别名创建
 _create_aliases()
@@ -199,34 +203,3 @@ if _import_success:
 else:
     print(f"⚠️ hotlist_crawler包导入时遇到问题: {_import_error}")
     print("💡 请确保所有依赖已正确安装，或查看文档获取帮助")
-
-
-# 便捷的使用示例（在文档字符串中）
-"""
-使用示例:
-
-# 基本爬取功能
-import hotlist_crawler
-
-# 自动识别平台并爬取
-result = hotlist_crawler.scrape("https://www.zhihu.com/question/12345")
-
-# 平台专用爬取
-zhihu_data = hotlist_crawler.scrape_zhihu("https://www.zhihu.com/question/12345", max_answers=5)
-weibo_data = hotlist_crawler.scrape_weibo("https://s.weibo.com/weibo?q=Python")
-
-# 使用别名
-result = hotlist_crawler.zhihu("https://www.zhihu.com/question/12345")
-
-# 登录功能
-import asyncio
-login_result = asyncio.run(hotlist_crawler.login("zhihu"))
-
-# 获取登录状态
-cookies = hotlist_crawler.get_cookies("zhihu")
-status = hotlist_crawler.get_login_status("zhihu")
-
-# 健康检查
-health = hotlist_crawler.health_check()
-print(health)
-"""

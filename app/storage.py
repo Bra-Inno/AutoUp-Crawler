@@ -153,10 +153,6 @@ class StorageManager:
         """
         images_dir = storage_info["images_dir"]
         
-        # 确定文件扩展名
-        from app.utils import get_file_extension
-        import requests
-        
         # 尝试从URL推断扩展名
         parsed_url = urlparse(original_url)
         path_ext = os.path.splitext(parsed_url.path)[1]

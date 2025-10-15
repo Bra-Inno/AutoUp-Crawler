@@ -3,7 +3,7 @@ import os
 import re
 import time
 import openpyxl
-import requests
+import httpx
 from loguru import logger
 from retry import retry
 
@@ -193,11 +193,11 @@ def save_to_xlsx(datas, file_path, type='note'):
 
 def download_media(path, name, url, type):
     if type == 'image':
-        content = requests.get(url).content
+        content = httpx.get(url).content
         with open(path + '/' + name + '.jpg', mode="wb") as f:
             f.write(content)
     elif type == 'video':
-        res = requests.get(url, stream=True)
+        res = httpx.get(url, stream=True)
         size = 0
         chunk_size = 1024 * 1024
         with open(path + '/' + name + '.mp4', mode="wb") as f:

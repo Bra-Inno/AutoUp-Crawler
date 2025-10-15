@@ -2,7 +2,7 @@ import os
 import re
 import json
 import asyncio
-import requests
+import httpx
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
@@ -333,7 +333,7 @@ class ZhihuArticleProvider(BaseProvider):
                 img_filename = f"question_image_{img_index + 1}.jpg"
                 local_img_path = os.path.join(question_image_dir, img_filename)
                 
-                response = requests.get(img_url, stream=True, timeout=15)
+                response = httpx.get(img_url, stream=True, timeout=15)
                 response.raise_for_status()
                 
                 with open(local_img_path, 'wb') as f:
@@ -370,7 +370,7 @@ class ZhihuArticleProvider(BaseProvider):
                 img_filename = f"{img_index + 1}.jpg"
                 local_img_path = os.path.join(answer_image_dir, img_filename)
                 
-                response = requests.get(img_url, stream=True, timeout=10)
+                response = httpx.get(img_url, stream=True, timeout=10)
                 response.raise_for_status()
                 
                 with open(local_img_path, 'wb') as f:

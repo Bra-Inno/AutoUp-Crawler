@@ -1,4 +1,4 @@
-import requests
+import httpx
 from ..xhs_utils.cookie_util import trans_cookies
 from ..xhs_utils.xhs_creator_util import get_common_headers, generate_xs, splice_str
 from ..xhs_utils.xhs_util import generate_x_b3_traceid
@@ -28,7 +28,7 @@ class XHS_Creator_Apis():
             cookies = trans_cookies(cookies_str)
             xs, xt, _ = generate_xs(cookies['a1'], splice_api, '')
             headers['x-s'], headers['x-t'] = xs, str(xt)
-            response = requests.get(self.base_url + splice_api, headers=headers, cookies=cookies, verify=False)
+            response = httpx.get(self.base_url + splice_api, headers=headers, cookies=cookies, verify=False)
             res_json = response.json()
             success = res_json["success"]
         except Exception as e:

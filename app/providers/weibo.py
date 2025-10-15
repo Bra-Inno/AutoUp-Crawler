@@ -3,7 +3,7 @@ import re
 import json
 import time
 import asyncio
-import requests
+import httpx
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlparse, parse_qs, unquote
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
@@ -296,7 +296,7 @@ class WeiboProvider(BaseProvider):
                         img_filename = f"image_{i + 1}.jpg"
                         local_img_path = os.path.join(storage_info["images_dir"], img_filename)
                         
-                        response = requests.get(large_img_url, stream=True, timeout=20)
+                        response = httpx.get(large_img_url, stream=True, timeout=20)
                         response.raise_for_status()
                         
                         with open(local_img_path, 'wb') as f:
@@ -338,7 +338,7 @@ class WeiboProvider(BaseProvider):
                         
                         video_file_path = os.path.join(storage_info["attachments_dir"], "video.mp4")
                         
-                        response = requests.get(video_url, stream=True, timeout=300)
+                        response = httpx.get(video_url, stream=True, timeout=300)
                         response.raise_for_status()
                         
                         with open(video_file_path, 'wb') as f:

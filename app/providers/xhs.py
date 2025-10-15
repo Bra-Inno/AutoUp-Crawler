@@ -7,7 +7,7 @@ import json
 import os
 import time
 import random
-import aiohttp
+import httpx
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 from pathlib import Path
@@ -1309,8 +1309,8 @@ class XiaohongshuProvider(BaseProvider):
             downloaded_count = 0
             total_images = len(image_list)
             
-            timeout = aiohttp.ClientTimeout(total=30)
-            async with aiohttp.ClientSession(timeout=timeout) as session:
+            timeout = httpx.Timeout(timeout=30)
+            async with httpx.Client(timeout=timeout) as session:
                 for idx, image_url in enumerate(image_list, 1):
                     try:
                         if not image_url:

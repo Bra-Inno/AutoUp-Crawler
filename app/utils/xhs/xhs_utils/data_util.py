@@ -5,7 +5,6 @@ import time
 import openpyxl
 import httpx
 from loguru import logger
-from retry import retry
 
 
 def norm_str(str):
@@ -245,30 +244,35 @@ def save_note_detail(note, path):
         f.write(f"ip归属地: {note['ip_location']}\n")
 
 
-
-@retry(tries=3, delay=1)
 def download_note(note_info, path, save_choice):
-    note_id = note_info['note_id']
-    user_id = note_info['user_id']
-    title = note_info['title']
+    max_tries = 3
+    while max_tries > 0:
+        max_tries -= 1
+        try:
+            note_id = note_info["note_id"]
+            user_id = note_info["user_id"]
+            title = note_info["title"]
     title = norm_str(title)[:40]
-    nickname = note_info['nickname']
+            nickname = note_info["nickname"]
     nickname = norm_str(nickname)[:20]
-    if title.strip() == '':
-        title = f'无标题'
-    save_path = f'{path}/{nickname}_{user_id}/{title}_{note_id}'
+            if title.strip() == "":
+                title = f"无标题"
+            save_path = f"{path}/{nickname}_{user_id}/{title}_{note_id}"
     check_and_create_path(save_path)
-    with open(f'{save_path}/info.json', mode='w', encoding='utf-8') as f:
-        f.write(json.dumps(note_info) + '\n')
-    note_type = note_info['note_type']
+            with open(f"{save_path}/info.json", mode="w", encoding="utf-8") as f:
+                f.write(json.dumps(note_info) + "\n")
+            note_type = note_info["note_type"]
     save_note_detail(note_info, save_path)
-    if note_type == '图集' and save_choice in ['media', 'media-image', 'all']:
-        for img_index, img_url in enumerate(note_info['image_list']):
-            download_media(save_path, f'image_{img_index}', img_url, 'image')
-    elif note_type == '视频' and save_choice in ['media', 'media-video', 'all']:
-        download_media(save_path, 'cover', note_info['video_cover'], 'image')
-        download_media(save_path, 'video', note_info['video_addr'], 'video')
+            if note_type == "图集" and save_choice in ["media", "media-image", "all"]:
+                for img_index, img_url in enumerate(note_info["image_list"]):
+                    download_media(save_path, f"image_{img_index}", img_url, "image")
+            elif note_type == "视频" and save_choice in ["media", "media-video", "all"]:
+                download_media(save_path, "cover", note_info["video_cover"], "image")
+                download_media(save_path, "video", note_info["video_addr"], "video")
     return save_path
+        except Exception as e:
+            if max_tries <= 0:
+                raise e
 
 
 def check_and_create_path(path):

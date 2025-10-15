@@ -2,10 +2,12 @@
 # 通用热榜内容爬虫包，支持知乎、微博、微信公众号等平台的内容抓取
 
 # --- 核心框架 ---
-# 基于FastAPI的异步Web框架（可选，仅API服务需要）
+# 基于FastAPI的异步Web框架(可选,仅API服务需要)
 fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
-pydantic>=2.5.0
+# pydantic 2.10+ 与 pydantic-settings 2.6.1 存在兼容性问题
+# 建议使用 pydantic 2.9.x 或升级 pydantic-settings 到 2.7+
+pydantic>=2.5.0,<2.10
 pydantic-settings>=2.1.0
 
 # --- 浏览器自动化（核心依赖）---
@@ -40,6 +42,10 @@ orjson>=3.9.0
 
 # --- 日志系统 ---
 loguru>=0.7.0
+
+# --- 视频处理（B站视频下载需要）---
+# moviepy用于合并视频和音频，如果不想安装ffmpeg可以使用这个
+moviepy>=1.0.3
 
 # --- 开发工具（可选）---
 pytest>=7.4.0

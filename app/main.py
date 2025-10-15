@@ -11,6 +11,7 @@ from app.storage import storage_manager
 from app.providers.zhihu import ZhihuArticleProvider
 from app.providers.weixin import WeixinMpProvider
 from app.providers.weibo import WeiboProvider
+from app.providers.bilibili import BilibiliVideoProvider
 
 # Windows 系统上修复异步问题
 if sys.platform == "win32":
@@ -27,6 +28,7 @@ PROVIDER_MAP = {
     "zhihu": ZhihuArticleProvider,
     "weixin_mp": WeixinMpProvider,
     "weibo": WeiboProvider,
+    "bilibili": BilibiliVideoProvider,
 }
 
 def identify_platform(url: str) -> str | None:

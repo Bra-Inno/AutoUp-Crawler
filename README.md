@@ -53,6 +53,12 @@ from hotlist_crawler import PlatformType
 - **功能：** 返回所有支持的平台列表
 - **返回：** 平台名称列表 ['zhihu', 'weibo', 'weixin', 'xiaohongshu', 'douyin', 'bilibili']
 
+> **🎬 B站支持说明：**
+> - 支持获取视频详细信息（标题、UP主、播放量、点赞数等）
+> - 支持获取视频下载链接（多清晰度）
+> - 支持多P视频
+> - 详细文档参见：[B站Provider使用文档.md](./B站Provider使用文档.md)
+
 ---
 
 ## 🏷️ 类型和常量

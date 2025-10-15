@@ -59,11 +59,8 @@ from hotlist_crawler import PlatformType
 > - **微信** (weixin): 公众号文章 - `https://mp.weixin.qq.com/...`
 > - **B站** (bilibili): 视频信息 - `https://www.bilibili.com/...`
 > - **小红书** (xiaohongshu): 关键词搜索 ⭐ - `xhs_keyword:关键词`
-> - **抖音** (douyin): 暂未实现
+> - **抖音** (douyin): 视频 - `https://www.douyin.com/video/...`
 > 
-> 详细文档参见：
-> - B站: [docs/BILIBILI_INTEGRATION.md](./docs/BILIBILI_INTEGRATION.md)
-> - 小红书: [docs/XHS_FETCH_INTEGRATION.md](./docs/XHS_FETCH_INTEGRATION.md)
 
 ---
 

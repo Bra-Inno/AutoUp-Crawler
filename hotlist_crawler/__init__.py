@@ -27,7 +27,7 @@ if _parent_dir not in sys.path:
 
 try:
     # 导入核心功能
-    from .core import scrape, scrape_zhihu, scrape_weibo, scrape_weixin, scrape_bilibili, identify_platform
+    from .core import scrape, scrape_zhihu, scrape_weibo, scrape_weixin, scrape_bilibili, scrape_douyin, identify_platform
     from .auth import login, is_online, login_sync, get_all_online_status
     from .fetch import fetch, batch_fetch, validate_destination, list_supported_platforms, get_platform_info
     from .types import PlatformType, USER_DATA_DIR
@@ -52,6 +52,7 @@ except ImportError as e:
         scrape_weibo = core.scrape_weibo
         scrape_weixin = core.scrape_weixin
         scrape_bilibili = core.scrape_bilibili
+        scrape_douyin = core.scrape_douyin
         identify_platform = core.identify_platform
         
         login = auth_module.login
@@ -88,6 +89,7 @@ except ImportError as e:
         scrape_weibo = _import_error_func
         scrape_weixin = _import_error_func
         scrape_bilibili = _import_error_func
+        scrape_douyin = _import_error_func
         identify_platform = _import_error_func
         login = _import_error_func
         is_online = _import_error_func
@@ -110,6 +112,7 @@ __all__ = [
     'scrape_weibo',     # 微博专用爬取
     'scrape_weixin',    # 微信专用爬取
     'scrape_bilibili',  # B站专用爬取
+    'scrape_douyin',    # 抖音专用爬取
     'identify_platform', # 平台识别
     
     # Fetch功能 - 符合API设计
@@ -137,6 +140,7 @@ __all__ = [
     'weibo',           # scrape_weibo 的别名
     'weixin',          # scrape_weixin 的别名
     'bilibili',        # scrape_bilibili 的别名
+    'douyin',          # scrape_douyin 的别名
     
     # 版本信息
     '__version__',
@@ -145,12 +149,13 @@ __all__ = [
 # 创建便捷别名
 def _create_aliases():
     """创建便捷别名"""
-    global zhihu, weibo, weixin, bilibili
+    global zhihu, weibo, weixin, bilibili, douyin
     if _import_success:
         zhihu = scrape_zhihu
         weibo = scrape_weibo
         weixin = scrape_weixin
         bilibili = scrape_bilibili
+        douyin = scrape_douyin
     else:
         def _error_func(*args, **kwargs):
             raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
@@ -158,6 +163,7 @@ def _create_aliases():
         weibo = _error_func
         weixin = _error_func
         bilibili = _error_func
+        douyin = _error_func
 
 # 执行别名创建
 _create_aliases()

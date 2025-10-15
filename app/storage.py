@@ -45,19 +45,19 @@ class StorageManager:
         """
         platform_dir = self._get_platform_dir(platform)
         article_id = self._generate_article_id(url, title)
-        safe_title = clean_filename(title)
+        safe_title = clean_filename(title, max_length=50)  # 进一步缩短文件名
         
-        # 创建文章专用目录
-        article_dir_name = f"{article_id}_{safe_title}"
+        # 创建文章专用目录 - 只使用article_id，避免路径过长
+        article_dir_name = article_id
         article_dir = ensure_directory(os.path.join(platform_dir, article_dir_name))
         
         # 创建子目录
         images_dir = ensure_directory(os.path.join(article_dir, "images"))
         attachments_dir = ensure_directory(os.path.join(article_dir, "attachments"))
         
-        # 准备文件路径
-        text_file = os.path.join(article_dir, f"{safe_title}.txt")
-        markdown_file = os.path.join(article_dir, f"{safe_title}.md")
+        # 准备文件路径 - 使用简短的通用文件名
+        text_file = os.path.join(article_dir, "content.txt")
+        markdown_file = os.path.join(article_dir, "article.md")
         metadata_file = os.path.join(article_dir, "metadata.json")
         
         storage_info = {

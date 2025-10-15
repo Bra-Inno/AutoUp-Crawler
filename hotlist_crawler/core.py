@@ -25,6 +25,7 @@ try:
     from app.providers.weibo import WeiboProvider
     from app.providers.weixin import WeixinMpProvider
     from app.providers.bilibili import BilibiliVideoProvider
+    from app.providers.douyin import DouyinVideoProvider
     from app.config import settings
     from app.models import ScrapedDataItem
 except ImportError as e:
@@ -282,3 +283,48 @@ def scrape_bilibili(url: str,
         return result
     except Exception as e:
         raise Exception(f"B站抓取错误: {str(e)}")
+
+
+def scrape_douyin(url: str,
+                  save_images: bool = False,
+                  output_format: str = "json",
+                  force_save: bool = True,
+                  auto_download_video: bool = False,
+                  cookies: Optional[str] = None) -> List[ScrapedDataItem]:
+    """
+    专门的抖音视频爬取函数
+    支持不完整链接自动补全和视频下载
+    
+    Args:
+        url: 抖音视频URL (支持不完整链接)
+        save_images: 是否下载封面图 (默认False)
+        output_format: 输出格式 (默认json)
+        force_save: 是否强制保存
+        auto_download_video: 是否自动下载视频文件
+        cookies: 抖音登录cookie (可选，会自动从浏览器数据加载)
+    
+    Returns:
+        抓取到的视频信息项列表
+    """
+    if not any(domain in url for domain in ["douyin.com"]):
+        raise ValueError("不是有效的抖音视频URL")
+    
+    async def _scrape_douyin():
+        provider = DouyinVideoProvider(
+            url=url,
+            rules={},  # 抖音不需要rules
+            save_images=save_images,
+            output_format=output_format,
+            force_save=force_save,
+            cookies=cookies,
+            auto_download_video=auto_download_video
+        )
+        return await provider.fetch_and_parse()
+    
+    try:
+        result = _run_async(_scrape_douyin())
+        if result is None:
+            raise Exception("抖音视频信息抓取失败")
+        return result
+    except Exception as e:
+        raise Exception(f"抖音抓取错误: {str(e)}")

@@ -6,12 +6,13 @@ import re
 from typing import Optional
 
 
-def clean_filename(filename: str) -> str:
+def clean_filename(filename: str, max_length: int = 80) -> str:
     """
     清理文件名，替换掉Windows和Linux下不支持的非法字符
     
     Args:
         filename: 原始文件名
+        max_length: 最大长度（默认80，避免路径过长）
         
     Returns:
         清理后的安全文件名
@@ -22,12 +23,21 @@ def clean_filename(filename: str) -> str:
     # 替换非法字符为下划线
     cleaned = re.sub(r'[\\/:*?"<>|]', '_', filename)
     
-    # 移除前后空格和点号
-    cleaned = cleaned.strip(' .')
+    # 移除emoji和其他特殊Unicode字符
+    cleaned = re.sub(r'[^\w\s\-_.()（）\u4e00-\u9fff]', '', cleaned)
     
-    # 限制长度
-    if len(cleaned) > 200:
-        cleaned = cleaned[:200]
+    # 移除多余的空格和下划线
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    cleaned = re.sub(r'_+', '_', cleaned)
+    
+    # 移除前后空格、点号、下划线
+    cleaned = cleaned.strip(' ._')
+    
+    # 限制长度（考虑中文字符）
+    if len(cleaned) > max_length:
+        cleaned = cleaned[:max_length]
+        # 确保不在中文字符中间截断
+        cleaned = cleaned.rstrip()
     
     return cleaned or "untitled"
 

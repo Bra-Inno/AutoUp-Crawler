@@ -21,6 +21,7 @@ try:
     from app.providers.weixin import WeixinMpProvider
     from app.providers.bilibili import BilibiliVideoProvider
     from app.providers.xhs import XiaohongshuProvider
+    from app.providers.douyin import DouyinVideoProvider
     from app.config import settings
     from app.models import ScrapedDataItem
     from app.storage import storage_manager
@@ -142,11 +143,17 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     print(f"⚠️ 小红书笔记URL抓取暂未实现")
                     print(f"💡 请使用格式: xhs_keyword:关键词")
                     return False
-            elif platform in ["douyin"]:
-                # 这些平台已识别但提供者未实现
-                print(f"⚠️ 平台 '{platform}' 已识别但抓取逻辑尚未实现")
-                print(f"💡 您可以为该平台开发对应的Provider")
-                return False
+            elif platform == "douyin":
+                # 抖音视频Provider
+                provider = DouyinVideoProvider(
+                    url=url,
+                    rules={},  # 抖音不需要rules
+                    save_images=save_images,
+                    output_format=output_format,
+                    force_save=True,
+                    cookies=None,  # 会自动从浏览器数据加载
+                    auto_download_video=True  # 默认自动下载视频
+                )
             else:
                 print(f"❌ 平台 '{platform}' 的抓取逻辑未实现")
                 return False

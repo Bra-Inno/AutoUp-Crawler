@@ -20,6 +20,7 @@ try:
     from app.providers.weibo import WeiboProvider
     from app.providers.weixin import WeixinMpProvider
     from app.providers.bilibili import BilibiliVideoProvider
+    from app.providers.xhs import XiaohongshuProvider
     from app.config import settings
     from app.models import ScrapedDataItem
     from app.storage import storage_manager
@@ -32,6 +33,11 @@ from .types import PlatformType
 def identify_platform_from_url(url: str) -> Optional[str]:
     """根据URL自动识别平台类型"""
     from urllib.parse import urlparse
+    
+    # 检查是否是小红书关键词搜索格式
+    if url.startswith("xhs_keyword:"):
+        return "xiaohongshu"
+    
     domain = urlparse(url).netloc
     
     for platform, config in settings.PLATFORMS.items():
@@ -98,7 +104,45 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     auto_download_video=True,
                     video_quality=80  # 默认1080P
                 )
-            elif platform in ["xiaohongshu", "douyin"]:
+            elif platform == "xiaohongshu":
+                # 小红书关键词搜索
+                if url.startswith("xhs_keyword:"):
+                    keyword = url.replace("xhs_keyword:", "").strip()
+                    if not keyword:
+                        print(f"❌ 小红书关键词不能为空")
+                        return False
+                    
+                    print(f"🔍 小红书关键词搜索: {keyword}")
+                    
+                    # 创建小红书Provider
+                    provider = XiaohongshuProvider(save_dir=destination)
+                    
+                    # 使用search_and_save方法
+                    result = await provider.search_and_save(
+                        query=keyword,
+                        require_num=20,  # 默认搜索20个笔记
+                        save_format="both",  # 同时保存markdown和json
+                        custom_save_dir=destination
+                    )
+                    
+                    # 关闭provider
+                    await provider.close()
+                    
+                    if result.get('success'):
+                        print(f"✅ 小红书搜索成功！")
+                        print(f"📊 找到 {result['total_found']} 个笔记")
+                        print(f"💾 成功保存 {result['saved']} 个笔记")
+                        print(f"📂 保存位置: {result['save_directory']}")
+                        return True
+                    else:
+                        print(f"❌ 小红书搜索失败: {result.get('error', '未知错误')}")
+                        return False
+                else:
+                    # 普通小红书笔记URL（暂未实现）
+                    print(f"⚠️ 小红书笔记URL抓取暂未实现")
+                    print(f"💡 请使用格式: xhs_keyword:关键词")
+                    return False
+            elif platform in ["douyin"]:
                 # 这些平台已识别但提供者未实现
                 print(f"⚠️ 平台 '{platform}' 已识别但抓取逻辑尚未实现")
                 print(f"💡 您可以为该平台开发对应的Provider")

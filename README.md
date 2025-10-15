@@ -54,16 +54,16 @@ from hotlist_crawler import PlatformType
 - **返回：** 平台名称列表 ['zhihu', 'weibo', 'weixin', 'xiaohongshu', 'douyin', 'bilibili']
 
 > **✅ 所有平台通过 fetch() 统一接口爬取:**
-> - **知乎** (zhihu): 问题、专栏文章
-> - **微博** (weibo): 搜索结果
-> - **微信** (weixin): 公众号文章  
-> - **B站** (bilibili): 视频信息(标题、UP主、播放量、点赞数等)
-> - **小红书** (xiaohongshu): 暂未实现
+> - **知乎** (zhihu): 问题、专栏文章 - `https://www.zhihu.com/...`
+> - **微博** (weibo): 搜索结果 - `https://weibo.com/...`
+> - **微信** (weixin): 公众号文章 - `https://mp.weixin.qq.com/...`
+> - **B站** (bilibili): 视频信息 - `https://www.bilibili.com/...`
+> - **小红书** (xiaohongshu): 关键词搜索 ⭐ - `xhs_keyword:关键词`
 > - **抖音** (douyin): 暂未实现
 > 
 > 详细文档参见：
 > - B站: [docs/BILIBILI_INTEGRATION.md](./docs/BILIBILI_INTEGRATION.md)
-> - 通用Provider: [B站Provider使用文档.md](./B站Provider使用文档.md)
+> - 小红书: [docs/XHS_FETCH_INTEGRATION.md](./docs/XHS_FETCH_INTEGRATION.md)
 
 ---
 

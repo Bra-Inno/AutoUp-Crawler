@@ -1177,18 +1177,22 @@ class XiaohongshuProvider(BaseProvider):
         share_count = raw_note.get('share_count', 0)
         
         # 转换为整数（有些可能是字符串）
-        try:
-            liked_count = int(liked_count) if liked_count else 0
-            collected_count = int(collected_count) if collected_count else 0
-            comment_count = int(comment_count) if comment_count else 0
-            share_count = int(share_count) if share_count else 0
-        except:
-            pass
+        # 格式化数字显示（处理中文单位如"1.4万"）
+        def format_count(count):
+            """格式化数字,保持原样或转换为带千位分隔符的格式"""
+            if isinstance(count, str):
+                # 如果是字符串(如"1.4万"),直接返回
+                return count
+            try:
+                # 如果是数字,添加千位分隔符
+                return f"{int(count):,}"
+            except:
+                return str(count) if count else "0"
         
-        parts.append(f"点赞: {liked_count:,}")
-        parts.append(f"收藏: {collected_count:,}")
-        parts.append(f"评论: {comment_count:,}")
-        parts.append(f"分享: {share_count:,}")
+        parts.append(f"点赞: {format_count(liked_count)}")
+        parts.append(f"收藏: {format_count(collected_count)}")
+        parts.append(f"评论: {format_count(comment_count)}")
+        parts.append(f"分享: {format_count(share_count)}")
         parts.append('')
         
         # 链接
@@ -1231,14 +1235,17 @@ class XiaohongshuProvider(BaseProvider):
         comment_count = raw_note.get('comment_count', 0)
         share_count = raw_note.get('share_count', 0)
         
-        # 转换为整数
-        try:
-            liked_count = int(liked_count) if liked_count else 0
-            collected_count = int(collected_count) if collected_count else 0
-            comment_count = int(comment_count) if comment_count else 0
-            share_count = int(share_count) if share_count else 0
-        except:
-            pass
+        # 格式化数字显示（处理中文单位如"1.4万"）
+        def format_count(count):
+            """格式化数字,保持原样或转换为带千位分隔符的格式"""
+            if isinstance(count, str):
+                # 如果是字符串(如"1.4万"),直接返回
+                return count
+            try:
+                # 如果是数字,添加千位分隔符
+                return f"{int(count):,}"
+            except:
+                return str(count) if count else "0"
         
         # 标签
         tags = raw_note.get('tags', [])
@@ -1259,10 +1266,10 @@ class XiaohongshuProvider(BaseProvider):
 
 ## 📊 互动数据
 
-- 👍 点赞: **{liked_count:,}**
-- ⭐ 收藏: **{collected_count:,}**
-- 💬 评论: **{comment_count:,}**
-- 🔗 分享: **{share_count:,}**
+- 👍 点赞: **{format_count(liked_count)}**
+- ⭐ 收藏: **{format_count(collected_count)}**
+- 💬 评论: **{format_count(comment_count)}**
+- 🔗 分享: **{format_count(share_count)}**
 
 ## 📄 内容描述
 

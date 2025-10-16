@@ -8,6 +8,7 @@ import sys
 import os
 import asyncio
 from typing import List, Dict, Any
+from loguru import logger
 
 # 版本信息
 __version__ = "2.0.0"
@@ -239,5 +240,5 @@ if _import_success:
     # 成功导入时的静默模式，避免过多输出
     pass
 else:
-    print(f"⚠️ hotlist_crawler包导入时遇到问题: {_import_error}")
-    print("💡 请确保所有依赖已正确安装，或查看文档获取帮助")
+    logger.warning(f"⚠️ hotlist_crawler包导入时遇到问题: {_import_error}")
+    logger.info("💡 请确保所有依赖已正确安装，或查看文档获取帮助")

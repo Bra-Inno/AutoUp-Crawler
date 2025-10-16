@@ -7,6 +7,7 @@ import sys
 import os
 from typing import Optional
 from pathlib import Path
+from loguru import logger
 
 # 添加app目录到路径
 _current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -104,11 +105,11 @@ def set_user_data_dir(path: str, save_to_file: bool = True) -> None:
     
     if save_to_file:
         _save_to_env('USER_DATA_DIR', path)
-        print(f"✅ 已设置并保存 USER_DATA_DIR = {path}")
-        print(f"✅ LOGIN_DATA_DIR 将自动更新为 {settings.LOGIN_DATA_DIR}")
+        logger.debug(f"✅ 已设置并保存 USER_DATA_DIR = {path}")
+        logger.info(f"✅ LOGIN_DATA_DIR 将自动更新为 {settings.LOGIN_DATA_DIR}")
     else:
-        print(f"✅ 已设置 USER_DATA_DIR = {path} (仅内存)")
-        print(f"✅ 已设置 LOGIN_DATA_DIR = {settings.LOGIN_DATA_DIR} (仅内存)")
+        logger.debug(f"✅ 已设置 USER_DATA_DIR = {path} (仅内存)")
+        logger.debug(f"✅ 已设置 LOGIN_DATA_DIR = {settings.LOGIN_DATA_DIR} (仅内存)")
 
 
 def set_user_agent(user_agent: str, save_to_file: bool = True) -> None:
@@ -133,9 +134,9 @@ def set_user_agent(user_agent: str, save_to_file: bool = True) -> None:
     
     if save_to_file:
         _save_to_env('USER_AGENT', user_agent)
-        print(f"✅ 已设置并保存 USER_AGENT = {user_agent[:50]}...")
+        logger.debug(f"✅ 已设置并保存 USER_AGENT = {user_agent[:50]}...")
     else:
-        print(f"✅ 已设置 USER_AGENT = {user_agent[:50]}... (仅内存)")
+        logger.debug(f"✅ 已设置 USER_AGENT = {user_agent[:50]}... (仅内存)")
 
 
 def set_playwright_headless(headless: bool, save_to_file: bool = True) -> None:
@@ -157,9 +158,9 @@ def set_playwright_headless(headless: bool, save_to_file: bool = True) -> None:
     
     if save_to_file:
         _save_to_env('PLAYWRIGHT_HEADLESS', headless)
-        print(f"✅ 已设置并保存 PLAYWRIGHT_HEADLESS = {headless}")
+        logger.debug(f"✅ 已设置并保存 PLAYWRIGHT_HEADLESS = {headless}")
     else:
-        print(f"✅ 已设置 PLAYWRIGHT_HEADLESS = {headless} (仅内存)")
+        logger.debug(f"✅ 已设置 PLAYWRIGHT_HEADLESS = {headless} (仅内存)")
 
 
 def set_download_dir(path: str, save_to_file: bool = True) -> None:
@@ -181,9 +182,9 @@ def set_download_dir(path: str, save_to_file: bool = True) -> None:
     
     if save_to_file:
         _save_to_env('DOWNLOAD_DIR', path)
-        print(f"✅ 已设置并保存 DOWNLOAD_DIR = {path}")
+        logger.debug(f"✅ 已设置并保存 DOWNLOAD_DIR = {path}")
     else:
-        print(f"✅ 已设置 DOWNLOAD_DIR = {path} (仅内存)")
+        logger.debug(f"✅ 已设置 DOWNLOAD_DIR = {path} (仅内存)")
 
 
 def set_redis_url(url: str, save_to_file: bool = True) -> None:
@@ -205,9 +206,9 @@ def set_redis_url(url: str, save_to_file: bool = True) -> None:
     
     if save_to_file:
         _save_to_env('REDIS_URL', url)
-        print(f"✅ 已设置并保存 REDIS_URL = {url}")
+        logger.debug(f"✅ 已设置并保存 REDIS_URL = {url}")
     else:
-        print(f"✅ 已设置 REDIS_URL = {url} (仅内存)")
+        logger.debug(f"✅ 已设置 REDIS_URL = {url} (仅内存)")
 
 
 def get_user_data_dir() -> str:
@@ -286,26 +287,26 @@ def print_config() -> None:
         >>> hotlist_crawler.print_config()
     """
     config = get_all_config()
-    print("\n" + "="*60)
-    print("📋 当前配置信息")
-    print("="*60)
+    logger.info("\n" + "="*60)
+    logger.info("📋 当前配置信息")
+    logger.info("="*60)
     
-    print("\n🌐 浏览器配置:")
-    print(f"  USER_DATA_DIR      : {config['USER_DATA_DIR']}")
-    print(f"  LOGIN_DATA_DIR     : {config['LOGIN_DATA_DIR']}")
-    print(f"  USER_AGENT         : {config['USER_AGENT'][:50]}...")
-    print(f"  PLAYWRIGHT_HEADLESS: {config['PLAYWRIGHT_HEADLESS']}")
-    print(f"  PLAYWRIGHT_TIMEOUT : {config['PLAYWRIGHT_TIMEOUT']}ms")
+    logger.debug("\n🌐 浏览器配置:")
+    logger.info(f"  USER_DATA_DIR      : {config['USER_DATA_DIR']}")
+    logger.info(f"  LOGIN_DATA_DIR     : {config['LOGIN_DATA_DIR']}")
+    logger.info(f"  USER_AGENT         : {config['USER_AGENT'][:50]}...")
+    logger.info(f"  PLAYWRIGHT_HEADLESS: {config['PLAYWRIGHT_HEADLESS']}")
+    logger.info(f"  PLAYWRIGHT_TIMEOUT : {config['PLAYWRIGHT_TIMEOUT']}ms")
     
-    print("\n📁 存储配置:")
-    print(f"  DOWNLOAD_DIR       : {config['DOWNLOAD_DIR']}")
-    print(f"  MAX_IMAGE_SIZE     : {config['MAX_IMAGE_SIZE'] / (1024*1024):.1f}MB")
+    logger.info("\n📁 存储配置:")
+    logger.info(f"  DOWNLOAD_DIR       : {config['DOWNLOAD_DIR']}")
+    logger.info(f"  MAX_IMAGE_SIZE     : {config['MAX_IMAGE_SIZE'] / (1024*1024):.1f}MB")
     
-    print("\n💾 缓存配置:")
-    print(f"  REDIS_URL          : {config['REDIS_URL']}")
-    print(f"  CACHE_EXPIRE       : {config['CACHE_EXPIRE_SECONDS']}s")
+    logger.info("\n💾 缓存配置:")
+    logger.info(f"  REDIS_URL          : {config['REDIS_URL']}")
+    logger.info(f"  CACHE_EXPIRE       : {config['CACHE_EXPIRE_SECONDS']}s")
     
-    print("="*60 + "\n")
+    logger.info("="*60 + "\n")
 
 
 # 导出所有函数

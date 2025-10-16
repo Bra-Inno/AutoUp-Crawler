@@ -3,6 +3,7 @@ import json
 import asyncio
 from typing import Optional, Dict, Any
 from app.config import settings
+from loguru import logger
 
 class InMemoryCache:
     """
@@ -58,9 +59,9 @@ class CacheManager:
             # 测试连接
             await self.redis_client.ping()
             self.use_redis = True
-            print("✅ Redis 连接成功")
+            logger.info("✅ Redis 连接成功")
         except Exception as e:
-            print(f"⚠️  Redis 连接失败，使用内存缓存: {e}")
+            logger.error(f"⚠️  Redis 连接失败，使用内存缓存: {e}")
             self.use_redis = False
             self.redis_client = None
 
@@ -72,7 +73,7 @@ class CacheManager:
                 data = await self.redis_client.get(key)
                 return json.loads(data) if data else None
             except Exception as e:
-                print(f"⚠️  Redis 读取失败，切换到内存缓存: {e}")
+                logger.error(f"⚠️  Redis 读取失败，切换到内存缓存: {e}")
                 self.use_redis = False
                 # 降级到内存缓存
                 return await self.memory_cache.get(key)
@@ -86,7 +87,7 @@ class CacheManager:
             try:
                 await self.redis_client.set(key, json.dumps(value), ex=expire)
             except Exception as e:
-                print(f"⚠️  Redis 写入失败，切换到内存缓存: {e}")
+                logger.error(f"⚠️  Redis 写入失败，切换到内存缓存: {e}")
                 self.use_redis = False
                 # 降级到内存缓存
                 await self.memory_cache.set(key, value, expire)

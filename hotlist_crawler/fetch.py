@@ -30,6 +30,7 @@ except ImportError as e:
     raise ImportError(f"无法导入核心模块: {e}")
 
 from .types import PlatformType
+from loguru import logger
 
 
 def identify_platform_from_url(url: str) -> Optional[str]:
@@ -55,15 +56,15 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
         # 1. 识别平台
         platform = identify_platform_from_url(url)
         if not platform:
-            print(f"❌ 无法识别平台: {url}")
+            logger.error(f"❌ 无法识别平台: {url}")
             return False
         
-        print(f"🎯 识别平台: {platform}")
+        logger.info(f"🎯 识别平台: {platform}")
         
         # 2. 确保目标目录存在
         destination = os.path.abspath(destination)
         os.makedirs(destination, exist_ok=True)
-        print(f"📁 目标目录: {destination}")
+        logger.info(f"📁 目标目录: {destination}")
         
         # 3. 临时修改存储管理器的基础目录
         original_base_dir = storage_manager.base_dir
@@ -111,10 +112,10 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                 if url.startswith("xhs_keyword:"):
                     keyword = url.replace("xhs_keyword:", "").strip()
                     if not keyword:
-                        print(f"❌ 小红书关键词不能为空")
+                        logger.error(f"❌ 小红书关键词不能为空")
                         return False
                     
-                    print(f"🔍 小红书关键词搜索: {keyword}")
+                    logger.debug(f"🔍 小红书关键词搜索: {keyword}")
                     
                     # 创建小红书Provider
                     provider = XiaohongshuProvider(save_dir=destination)
@@ -131,18 +132,18 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     await provider.close()
                     
                     if result.get('success'):
-                        print(f"✅ 小红书搜索成功！")
-                        print(f"📊 找到 {result['total_found']} 个笔记")
-                        print(f"💾 成功保存 {result['saved']} 个笔记")
-                        print(f"📂 保存位置: {result['save_directory']}")
+                        logger.info(f"✅ 小红书搜索成功！")
+                        logger.debug(f"📊 找到 {result['total_found']} 个笔记")
+                        logger.info(f"💾 成功保存 {result['saved']} 个笔记")
+                        logger.info(f"📂 保存位置: {result['save_directory']}")
                         return True
                     else:
-                        print(f"❌ 小红书搜索失败: {result.get('error', '未知错误')}")
+                        logger.error(f"❌ 小红书搜索失败: {result.get('error', '未知错误')}")
                         return False
                 else:
                     # 普通小红书笔记URL（暂未实现）
-                    print(f"⚠️ 小红书笔记URL抓取暂未实现")
-                    print(f"💡 请使用格式: xhs_keyword:关键词")
+                    logger.warning(f"⚠️ 小红书笔记URL抓取暂未实现")
+                    logger.info(f"💡 请使用格式: xhs_keyword:关键词")
                     return False
             elif platform == "douyin":
                 # 抖音视频Provider
@@ -156,30 +157,30 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
                     auto_download_video=True  # 默认自动下载视频
                 )
             else:
-                print(f"❌ 平台 '{platform}' 的抓取逻辑未实现")
+                logger.error(f"❌ 平台 '{platform}' 的抓取逻辑未实现")
                 return False
             
             # 5. 执行抓取
-            print(f"🚀 开始抓取: {url}")
+            logger.info(f"🚀 开始抓取: {url}")
             result = await provider.fetch_and_parse()
             
             if result is None:
-                print(f"❌ 抓取失败，没有获取到内容")
+                logger.error(f"❌ 抓取失败，没有获取到内容")
                 return False
             
             # 6. 验证文件是否保存成功
             platform_dir = os.path.join(destination, platform)
             if os.path.exists(platform_dir) and os.listdir(platform_dir):
-                print(f"✅ 抓取成功！获取到内容项")
-                print(f"📂 文件已保存到: {platform_dir}")
+                logger.info(f"✅ 抓取成功！获取到内容项")
+                logger.info(f"📂 文件已保存到: {platform_dir}")
                 
                 # 显示保存的文件信息
                 if hasattr(result, 'title') and result.title:
-                    print(f"   📄 {result.title}")
+                    logger.debug(f"   📄 {result.title}")
                 
                 return True
             else:
-                print(f"⚠️ 抓取完成但文件保存验证失败")
+                logger.warning(f"⚠️ 抓取完成但文件保存验证失败")
                 return False
                 
         finally:
@@ -187,7 +188,7 @@ async def _fetch_async(url: str, destination: str, save_images: bool = True,
             storage_manager.base_dir = original_base_dir
             
     except Exception as e:
-        print(f"❌ 抓取过程中发生错误: {e}")
+        logger.error(f"❌ 抓取过程中发生错误: {e}")
         return False
 
 
@@ -215,18 +216,18 @@ def fetch(url: str, destination: str, save_images: bool = True,
             "./my_downloads"
         )
         if success:
-            print("抓取成功！")
+            logger.info("抓取成功！")
         else:
-            print("抓取失败！")
+            logger.error("抓取失败！")
     """
     
     # 输入验证
     if not url or not isinstance(url, str):
-        print("❌ URL参数无效")
+        logger.error("❌ URL参数无效")
         return False
     
     if not destination or not isinstance(destination, str):
-        print("❌ destination参数无效")
+        logger.error("❌ destination参数无效")
         return False
     
     # Windows系统异步支持
@@ -282,14 +283,14 @@ def batch_fetch(urls: List[str], destination: str, save_images: bool = True,
             "error": "URLs参数无效"
         }
     
-    print(f"🚀 开始批量抓取 {len(urls)} 个URL")
-    print(f"📁 目标目录: {os.path.abspath(destination)}")
+    logger.info(f"🚀 开始批量抓取 {len(urls)} 个URL")
+    logger.info(f"📁 目标目录: {os.path.abspath(destination)}")
     
     details = []
     success_count = 0
     
     for i, url in enumerate(urls, 1):
-        print(f"\n进度: {i}/{len(urls)} - {url}")
+        logger.debug(f"\n进度: {i}/{len(urls)} - {url}")
         
         try:
             success = fetch(url, destination, save_images, output_format, max_answers)
@@ -301,15 +302,15 @@ def batch_fetch(urls: List[str], destination: str, save_images: bool = True,
             
             if success:
                 success_count += 1
-                print(f"✅ 成功")
+                logger.info(f"✅ 成功")
             else:
-                print(f"❌ 失败")
+                logger.error(f"❌ 失败")
                 detail["error"] = "抓取失败"
             
             details.append(detail)
                 
         except Exception as e:
-            print(f"❌ 异常: {e}")
+            logger.error(f"❌ 异常: {e}")
             details.append({
                 "url": url,
                 "success": False,
@@ -330,11 +331,11 @@ def batch_fetch(urls: List[str], destination: str, save_images: bool = True,
         "details": details
     }
     
-    print(f"\n📊 批量抓取完成:")
-    print(f"   总计: {result['total']}")
-    print(f"   成功: {result['success']}")
-    print(f"   失败: {result['failed']}")
-    print(f"   成功率: {result['success_rate']}")
+    logger.info(f"\n📊 批量抓取完成:")
+    logger.info(f"   总计: {result['total']}")
+    logger.info(f"   成功: {result['success']}")
+    logger.error(f"   失败: {result['failed']}")
+    logger.info(f"   成功率: {result['success_rate']}")
     
     return result
 
@@ -353,7 +354,7 @@ def validate_destination(destination: str) -> bool:
     try:
         # 检查空路径
         if not destination or not destination.strip():
-            print(f"❌ 目标路径不能为空")
+            logger.error(f"❌ 目标路径不能为空")
             return False
             
         # 转换为绝对路径
@@ -362,11 +363,11 @@ def validate_destination(destination: str) -> bool:
         # 检查父目录是否存在且可写
         parent_dir = os.path.dirname(abs_path)
         if not os.path.exists(parent_dir):
-            print(f"❌ 父目录不存在: {parent_dir}")
+            logger.error(f"❌ 父目录不存在: {parent_dir}")
             return False
         
         if not os.access(parent_dir, os.W_OK):
-            print(f"❌ 父目录无写入权限: {parent_dir}")
+            logger.error(f"❌ 父目录无写入权限: {parent_dir}")
             return False
         
         # 尝试创建目标目录
@@ -374,14 +375,14 @@ def validate_destination(destination: str) -> bool:
         
         # 检查目录是否可写
         if not os.access(abs_path, os.W_OK):
-            print(f"❌ 目标目录无写入权限: {abs_path}")
+            logger.error(f"❌ 目标目录无写入权限: {abs_path}")
             return False
         
-        print(f"✅ 目标目录有效: {abs_path}")
+        logger.info(f"✅ 目标目录有效: {abs_path}")
         return True
         
     except Exception as e:
-        print(f"❌ 目录验证失败: {e}")
+        logger.error(f"❌ 目录验证失败: {e}")
         return False
 
 

@@ -14,6 +14,7 @@ from app.storage import storage_manager
 from app.file_utils import get_file_extension
 from app.config import settings
 from typing import Any, List
+from loguru import logger
 
 
 class WeiboProvider(BaseProvider):
@@ -36,10 +37,10 @@ class WeiboProvider(BaseProvider):
             if os.path.exists(cookies_file):
                 with open(cookies_file, 'r', encoding='utf-8') as f:
                     cookies = json.load(f)
-                    print(f"📂 加载已保存的登录状态，共 {len(cookies)} 个cookies")
+                    logger.info(f"📂 加载已保存的登录状态，共 {len(cookies)} 个cookies")
                     return cookies
         except Exception as e:
-            print(f"⚠️ 加载登录状态失败: {e}")
+            logger.warning(f"⚠️ 加载登录状态失败: {e}")
         return None
     
     def _is_weibo_search_page(self) -> bool:
@@ -55,7 +56,7 @@ class WeiboProvider(BaseProvider):
             if 'q' in query_params:
                 search_query = unquote(query_params['q'][0])
         except Exception as e:
-            print(f"  - 警告: 解析URL关键词失败: {e}")
+            logger.warning(f"  - 警告: 解析URL关键词失败: {e}")
         
         # 清洗关键词，使其可用于文件名
         safe_search_query = re.sub(r'[\\/:*?"<>|]', '_', search_query)[:30]
@@ -71,7 +72,7 @@ class WeiboProvider(BaseProvider):
     async def fetch_and_parse(self) -> Any:
         """主要的抓取和解析方法"""
         if not self._is_weibo_search_page():
-            print("⚠️ 当前URL不是微博搜索页面，尝试通用解析...")
+            logger.warning("⚠️ 当前URL不是微博搜索页面，尝试通用解析...")
             return await self._parse_generic_weibo()
         
         return await self._parse_weibo_search_page()
@@ -82,14 +83,14 @@ class WeiboProvider(BaseProvider):
             """同步Playwright解析函数"""
             from playwright.sync_api import sync_playwright
             
-            print("=" * 50)
-            print("🚀 开始执行微博第一条帖子抓取任务...")
-            print(f"目标URL: {self.url}")
-            print("=" * 50)
+            logger.info("=" * 50)
+            logger.info("🚀 开始执行微博第一条帖子抓取任务...")
+            logger.info(f"目标URL: {self.url}")
+            logger.info("=" * 50)
             
             # 提取搜索关键词
             search_query, safe_search_query = self._extract_search_query()
-            print(f"已解析搜索关键词为: {search_query}")
+            logger.info(f"已解析搜索关键词为: {search_query}")
             
             with sync_playwright() as playwright:
                 # 创建持久化上下文，保持登录状态
@@ -108,17 +109,17 @@ class WeiboProvider(BaseProvider):
                 saved_cookies = self._load_saved_cookies()
                 if saved_cookies:
                     context.add_cookies(saved_cookies)
-                    print("✅ 登录状态已加载")
+                    logger.info("✅ 登录状态已加载")
                 
                 try:
-                    print("🌐 导航至目标页面...")
+                    logger.debug("🌐 导航至目标页面...")
                     page.goto(self.url, timeout=90000, wait_until='load')
-                    print("✅ 页面初步加载完成。")
+                    logger.info("✅ 页面初步加载完成。")
                     
-                    print("⏳ 正在等待搜索结果加载...")
+                    logger.debug("⏳ 正在等待搜索结果加载...")
                     robust_post_xpath = "(//*[@id='pl_feedlist_index']//div[@class='card-wrap' and .//div[@class='info']])[1]"
                     page.wait_for_selector(f"xpath={robust_post_xpath}", timeout=60000)
-                    print("✅ 目标帖子元素已加载。")
+                    logger.info("✅ 目标帖子元素已加载。")
                     
                     first_post = page.locator(robust_post_xpath)
                     
@@ -149,11 +150,11 @@ class WeiboProvider(BaseProvider):
                     except:
                         reposts_count = comments_count = likes_count = "0"
                     
-                    print(f"\\n--- 帖子信息 ---")
-                    print(f"作者: {author_name}")
-                    print(f"内容: {post_content[:100]}...")
-                    print(f"转发: {reposts_count}, 评论: {comments_count}, 赞: {likes_count}")
-                    print("------------------")
+                    logger.info(f"\\n--- 帖子信息 ---")
+                    logger.debug(f"作者: {author_name}")
+                    logger.debug(f"内容: {post_content[:100]}...")
+                    logger.debug(f"转发: {reposts_count}, 评论: {comments_count}, 赞: {likes_count}")
+                    logger.debug("------------------")
                     
                     # 创建存储结构
                     storage_info = None
@@ -237,7 +238,7 @@ class WeiboProvider(BaseProvider):
                         
                         storage_manager.save_article_index(storage_info, post_content[:200])
                         
-                        print(f"💾 数据已保存到: {storage_info['article_dir']}")
+                        logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
                     
                     # 转换图片和视频路径为ImageInfo对象
                     all_media_infos = []
@@ -266,10 +267,10 @@ class WeiboProvider(BaseProvider):
                     )
                 
                 except Exception as e:
-                    print(f"❌ 微博页面解析失败: {e}")
+                    logger.error(f"❌ 微博页面解析失败: {e}")
                     return None
                 finally:
-                    print("🔒 关闭浏览器...")
+                    logger.info("🔒 关闭浏览器...")
                     context.close()
         
         # 在线程池中执行同步代码
@@ -286,7 +287,7 @@ class WeiboProvider(BaseProvider):
             image_count = image_elements.count()
             
             if image_count > 0:
-                print(f"🖼️ 发现 {image_count} 张图片，开始下载...")
+                logger.info(f"🖼️ 发现 {image_count} 张图片，开始下载...")
                 
                 for i in range(image_count):
                     try:
@@ -314,15 +315,15 @@ class WeiboProvider(BaseProvider):
                             f.write(content)
                         
                         downloaded_images.append(local_img_path)
-                        print(f"  ✅ 图片已下载: {local_img_path}")
+                        logger.debug(f" {local_img_path}")
                         
                     except Exception as e:
-                        print(f"  ❌ 下载图片失败: {e}")
+                        logger.error(f"  ❌ 下载图片失败: {e}")
             else:
-                print("📷 未发现图片内容")
+                logger.debug("📷 未发现图片内容")
                 
         except Exception as e:
-            print(f"❌ 图片下载过程出错: {e}")
+            logger.error(f"❌ 图片下载过程出错: {e}")
         
         return downloaded_images
     
@@ -334,7 +335,7 @@ class WeiboProvider(BaseProvider):
             video_element = first_post.locator('video')
             
             if video_element.count() > 0:
-                print("🎥 发现视频，正在解析链接...")
+                logger.info("🎥 发现视频，正在解析链接...")
                 
                 try:
                     video_url = video_element.first.get_attribute('src', timeout=5000)
@@ -343,8 +344,8 @@ class WeiboProvider(BaseProvider):
                         if video_url.startswith('//'):
                             video_url = 'https:' + video_url
                         
-                        print(f"✅ 视频链接解析成功: {video_url}")
-                        print("⬇️ 开始下载视频...")
+                        logger.debug(f" {video_url}")
+                        logger.debug("⬇️ 开始下载视频...")
                         
                         video_file_path = os.path.join(storage_info["attachments_dir"], "video.mp4")
                         
@@ -356,15 +357,15 @@ class WeiboProvider(BaseProvider):
                                 f.write(chunk)
                         
                         downloaded_videos.append(video_file_path)
-                        print(f"✅ 视频下载成功: {video_file_path}")
+                        logger.debug(f" {video_file_path}")
                         
                 except Exception as e:
-                    print(f"  ❌ 下载视频过程中发生错误: {e}")
+                    logger.error(f"  ❌ 下载视频过程中发生错误: {e}")
             else:
-                print("🎬 未发现视频内容")
+                logger.debug("🎬 未发现视频内容")
                 
         except Exception as e:
-            print(f"❌ 视频下载过程出错: {e}")
+            logger.error(f"❌ 视频下载过程出错: {e}")
         
         return downloaded_videos
     
@@ -402,5 +403,5 @@ class WeiboProvider(BaseProvider):
             )
             
         except Exception as e:
-            print(f"❌ 通用微博解析失败: {e}")
+            logger.error(f"❌ 通用微博解析失败: {e}")
             return None

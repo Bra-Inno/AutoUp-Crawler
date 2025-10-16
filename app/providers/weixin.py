@@ -12,6 +12,7 @@ from app.models import ScrapedDataItem, ImageInfo
 from app.file_utils import get_file_extension
 from app.config import settings
 from app.storage import storage_manager
+from loguru import logger
 
 
 class WeixinMpProvider(BaseProvider):
@@ -42,7 +43,7 @@ class WeixinMpProvider(BaseProvider):
                 # 检查文件大小
                 content_length = img_response.headers.get('Content-Length')
                 if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
-                    print(f"  - 图片过大，跳过: {img_url}")
+                    logger.debug(f"  - 图片过大，跳过: {img_url}")
                     return None
                 
                 content_type = img_response.headers.get('Content-Type')
@@ -52,12 +53,12 @@ class WeixinMpProvider(BaseProvider):
                 with open(img_save_path, 'wb') as f:
                     f.write(img_response.content)
                 
-                print(f"  - 图片已下载: {img_filename}.{ext}")
+                logger.debug(f"  - 图片已下载: {img_filename}.{ext}")
                 self.img_counter['count'] += 1
                 return f"{img_filename}.{ext}"
                 
         except Exception as e:
-            print(f"  - 下载图片失败: {img_url}, 错误: {e}")
+            logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
             return None
     
     def convert_tag_to_markdown(self, tag, save_dir: str) -> str:
@@ -112,7 +113,7 @@ class WeixinMpProvider(BaseProvider):
 
     async def _fallback_parse(self) -> Any:
         """降级方案：使用基础 HTTP 请求解析"""
-        print("🔄 使用降级方案：基础 HTTP 抓取")
+        logger.info("🔄 使用降级方案：基础 HTTP 抓取")
         try:
             html_content = await self._get_html()
             soup = BeautifulSoup(html_content, 'lxml')
@@ -137,13 +138,13 @@ class WeixinMpProvider(BaseProvider):
                     if title_element:
                         title = title_element.get_text(strip=True)
                         if title and len(title) > 5:  # 确保标题有意义
-                            print(f"✅ 使用选择器 '{selector}' 找到标题: {title[:30]}...")
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到标题: {title[:30]}...")
                             break
                 except Exception:
                     continue
             
             if not title:
-                print("❌ 无法找到有效标题")
+                logger.error("❌ 无法找到有效标题")
                 return None
             
             # 尝试多种方式提取作者
@@ -166,7 +167,7 @@ class WeixinMpProvider(BaseProvider):
                         temp_author = author_element.get_text(strip=True)
                         if temp_author and len(temp_author) < 50:  # 合理的作者名长度
                             author = temp_author
-                            print(f"✅ 使用选择器 '{selector}' 找到作者: {author}")
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到作者: {author}")
                             break
                 except Exception:
                     continue
@@ -191,7 +192,7 @@ class WeixinMpProvider(BaseProvider):
                     if content_element:
                         content = content_element.get_text(strip=True)
                         if content and len(content) > 100:  # 确保内容有意义
-                            print(f"✅ 使用选择器 '{selector}' 找到内容，长度: {len(content)} 字符")
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到内容，长度: {len(content)} 字符")
                             break
                 except Exception:
                     continue
@@ -201,13 +202,13 @@ class WeixinMpProvider(BaseProvider):
                 body = soup.find('body')
                 if body:
                     content = body.get_text(strip=True)
-                    print(f"⚠️ 使用body文本作为内容，长度: {len(content)} 字符")
+                    logger.warning(f"⚠️ 使用body文本作为内容，长度: {len(content)} 字符")
             
             if not content:
-                print("❌ 无法找到有效内容")
+                logger.error("❌ 无法找到有效内容")
                 return None
             
-            print(f"✅ 降级方案抓取成功 - 标题: {title[:30]}..., 内容长度: {len(content)}")
+            logger.info(f"✅ 降级方案抓取成功 - 标题: {title[:30]}..., 内容长度: {len(content)}")
             
             return ScrapedDataItem(
                 title=title,
@@ -219,12 +220,12 @@ class WeixinMpProvider(BaseProvider):
             )
             
         except Exception as e:
-            print(f"❌ 降级方案失败: {e}")
+            logger.error(f"❌ 降级方案失败: {e}")
             # 提供详细的调试信息
-            print(f"   URL: {self.url}")
-            print(f"   错误类型: {type(e).__name__}")
+            logger.debug(f"   URL: {self.url}")
+            logger.error(f"   错误类型: {type(e).__name__}")
             import traceback
-            print(f"   详细错误: {traceback.format_exc()}")
+            logger.error(f"   详细错误: {traceback.format_exc()}")
             return None
 
     async def fetch_and_parse(self) -> Any:
@@ -232,8 +233,8 @@ class WeixinMpProvider(BaseProvider):
         try:
             return await self._playwright_parse()
         except Exception as e:
-            print(f"⚠️  Playwright 抓取失败: {e}")
-            print("🔄 尝试降级方案...")
+            logger.warning(f"⚠️  Playwright 抓取失败: {e}")
+            logger.debug("🔄 尝试降级方案...")
             return await self._fallback_parse()
 
     def _sync_playwright_parse(self) -> dict:
@@ -254,12 +255,12 @@ class WeixinMpProvider(BaseProvider):
             page = context.new_page()
             
             try:
-                print(f"🌐 正在访问页面: {self.url}")
+                logger.debug(f"🌐 正在访问页面: {self.url}")
                 page.goto(self.url, timeout=settings.PLAYWRIGHT_TIMEOUT)
                 
                 # 等待关键内容加载
                 page.wait_for_selector('#js_content', timeout=60000)
-                print("✅ 页面内容已加载！")
+                logger.debug("✅ 页面内容已加载！")
                 
                 html_content = page.content()
                 soup = BeautifulSoup(html_content, 'lxml')
@@ -369,7 +370,7 @@ class WeixinMpProvider(BaseProvider):
             # 检查文件大小
             content_length = response.headers.get('Content-Length')
             if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
-                print(f"  - 图片过大，跳过: {img_url}")
+                logger.debug(f"  - 图片过大，跳过: {img_url}")
                 return None
             
             content_type = response.headers.get('Content-Type')
@@ -379,12 +380,12 @@ class WeixinMpProvider(BaseProvider):
             with open(img_save_path, 'wb') as f:
                 f.write(response.content)
             
-            print(f"  - 图片已下载: {img_filename}.{ext}")
+            logger.debug(f"  - 图片已下载: {img_filename}.{ext}")
             self.img_counter['count'] += 1
             return f"{img_filename}.{ext}"
             
         except Exception as e:
-            print(f"  - 下载图片失败: {img_url}, 错误: {e}")
+            logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
             return None
     
     def _sync_convert_tag_to_markdown(self, tag, storage_info=None) -> str:
@@ -452,7 +453,7 @@ class WeixinMpProvider(BaseProvider):
             # 检查文件大小
             content_length = response.headers.get('Content-Length')
             if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
-                print(f"  - 图片过大，跳过: {img_url}")
+                logger.debug(f"  - 图片过大，跳过: {img_url}")
                 return None
             
             # 使用存储管理器保存图片
@@ -468,7 +469,7 @@ class WeixinMpProvider(BaseProvider):
             return image_info["local_path"]
             
         except Exception as e:
-            print(f"  - 下载图片失败: {img_url}, 错误: {e}")
+            logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
             return None
     
     async def _playwright_parse(self) -> Any:

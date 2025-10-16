@@ -1,6 +1,7 @@
 import httpx
 from ..xhs_utils.cookie_util import trans_cookies
 from ..xhs_utils.xhs_creator_util import get_common_headers, generate_xs, splice_str
+from loguru import logger
 
 
 class XHS_Creator_Apis:
@@ -39,7 +40,7 @@ class XHS_Creator_Apis:
         notes = []
         while True:
             success, msg, res_json = self.get_publish_note_info(page, cookies_str)
-            print(success, msg, res_json)
+            logger.info(success, msg, res_json)
             if not success:
                 return False, msg, notes
             notes += res_json['data']['notes']

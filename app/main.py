@@ -13,6 +13,7 @@ from app.providers.weixin import WeixinMpProvider
 from app.providers.weibo import WeiboProvider
 from app.providers.bilibili import BilibiliVideoProvider
 from app.providers.douyin import DouyinVideoProvider
+from loguru import logger
 
 # Windows 系统上修复异步问题
 if sys.platform == "win32":
@@ -79,7 +80,7 @@ async def scrape_url(request: ScrapeRequest):
             raise HTTPException(status_code=422, detail="解析页面内容失败，可能是页面结构已更改或链接不正确")
     except Exception as e:
         # 在生产环境中，这里应该使用日志库记录错误
-        print(f"抓取失败: {url_str} - 错误: {e}")
+        logger.error(f"抓取失败: {url_str} - 错误: {e}")
         raise HTTPException(status_code=500, detail="抓取过程中发生内部错误")
 
     beijing_tz = timezone(timedelta(hours=8))

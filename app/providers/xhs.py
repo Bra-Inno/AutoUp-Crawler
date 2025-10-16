@@ -326,31 +326,31 @@ class XiaohongshuProvider(BaseProvider):
         note_list = []
         total_notes = len(note_urls)
         
-        print(f"\n开始批量爬取 {total_notes} 个笔记...")
-        print("=" * 60)
+        logger.info(f"\n开始批量爬取 {total_notes} 个笔记...")
+        logger.info("=" * 60)
         
         for index, note_url in enumerate(note_urls, 1):
-            print(f"\n[{index}/{total_notes}] 正在爬取笔记: {note_url[-20:]}...")
+            logger.info(f"\n[{index}/{total_notes}] 正在爬取笔记: {note_url[-20:]}...")
             
             try:
                 note_info = await self.fetch_note(note_url, proxies)
                 note_list.append(note_info)
-                print(f"✓ 笔记爬取完成: {note_info.get('title', '未知标题')[:30]}...")
+                logger.info(f"✓ 笔记爬取完成: {note_info.get('title', '未知标题')[:30]}...")
                 
             except Exception as e:
-                print(f"✗ 笔记爬取失败: {e}")
+                logger.error(f"✗ 笔记爬取失败: {e}")
             
             # 笔记之间的延迟
             if index < total_notes:
-                print(f"等待 {self.delay} 秒后继续下一个笔记...")
+                logger.info(f"等待 {self.delay} 秒后继续下一个笔记...")
                 await asyncio.sleep(self.delay)
         
         # 统计信息
-        print("\n" + "=" * 60)
-        print("批量爬取完成!")
-        print(f"成功: {len(note_list)} 个笔记")
-        print(f"失败: {total_notes - len(note_list)} 个笔记")
-        print("=" * 60 + "\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("批量爬取完成!")
+        logger.info(f"成功: {len(note_list)} 个笔记")
+        logger.error(f"失败: {total_notes - len(note_list)} 个笔记")
+        logger.info("=" * 60 + "\n")
         
         return note_list
 
@@ -373,7 +373,7 @@ class XiaohongshuProvider(BaseProvider):
         """
         note_list = []
         
-        print(f"开始爬取用户的所有笔记: {user_url}")
+        logger.info(f"开始爬取用户的所有笔记: {user_url}")
         
         try:
             success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, self.cookies, proxies or {})
@@ -384,7 +384,7 @@ class XiaohongshuProvider(BaseProvider):
                     "Cannot find module" in msg or 
                     "js" in msg.lower()):
                     logger.warning(f'用户笔记获取功能受限: {msg}')
-                    print(f"⚠️ 用户笔记获取功能暂时受限，返回空结果")
+                    logger.warning(f"⚠️ 用户笔记获取功能暂时受限，返回空结果")
                     return []
                 else:
                     raise Exception(f"获取用户笔记列表失败: {msg}")
@@ -400,12 +400,12 @@ class XiaohongshuProvider(BaseProvider):
             # 如果设置了最大笔记数，截取
             if max_notes and len(note_urls) > max_notes:
                 note_urls = note_urls[:max_notes]
-                print(f"限制获取数量为 {max_notes} 个笔记")
+                logger.info(f"限制获取数量为 {max_notes} 个笔记")
             
             # 批量获取笔记详情
             note_data = await self.fetch_multiple_notes(note_urls, proxies)
             
-            print(f"用户笔记爬取完成，共获取 {len(note_data)} 个笔记")
+            logger.info(f"用户笔记爬取完成，共获取 {len(note_data)} 个笔记")
             return note_data
             
         except Exception as e:
@@ -432,11 +432,11 @@ class XiaohongshuProvider(BaseProvider):
         results = {}
         total_users = len(user_urls)
         
-        print(f"\n开始批量爬取 {total_users} 个用户的笔记...")
-        print("=" * 60)
+        logger.info(f"\n开始批量爬取 {total_users} 个用户的笔记...")
+        logger.info("=" * 60)
         
         for index, user_url in enumerate(user_urls, 1):
-            print(f"\n[{index}/{total_users}] 正在爬取用户: {user_url[-30:]}...")
+            logger.info(f"\n[{index}/{total_users}] 正在爬取用户: {user_url[-30:]}...")
             
             try:
                 notes = await self.fetch_all_user_notes(
@@ -445,24 +445,24 @@ class XiaohongshuProvider(BaseProvider):
                     proxies=proxies
                 )
                 results[user_url] = notes
-                print(f"✓ 用户 {user_url[-30:]} 爬取完成: {len(notes)} 个笔记")
+                logger.info(f"✓ 用户 {user_url[-30:]} 爬取完成: {len(notes)} 个笔记")
                 
             except Exception as e:
-                print(f"✗ 用户 {user_url[-30:]} 爬取失败: {e}")
+                logger.error(f"✗ 用户 {user_url[-30:]} 爬取失败: {e}")
                 results[user_url] = []
             
             # 用户之间的延迟
             if index < total_users:
-                print(f"等待 {self.delay} 秒后继续下一个用户...")
+                logger.info(f"等待 {self.delay} 秒后继续下一个用户...")
                 await asyncio.sleep(self.delay)
         
         # 统计信息
-        print("\n" + "=" * 60)
-        print("批量爬取完成!")
-        print(f"成功: {sum(1 for notes in results.values() if notes)} 个用户")
-        print(f"失败: {sum(1 for notes in results.values() if not notes)} 个用户")
-        print(f"总笔记数: {sum(len(notes) for notes in results.values())} 个")
-        print("=" * 60 + "\n")
+        logger.info("\n" + "=" * 60)
+        logger.info("批量爬取完成!")
+        logger.info(f"成功: {sum(1 for notes in results.values() if notes)} 个用户")
+        logger.error(f"失败: {sum(1 for notes in results.values() if not notes)} 个用户")
+        logger.info(f"总笔记数: {sum(len(notes) for notes in results.values())} 个")
+        logger.info("=" * 60 + "\n")
         
         return results
 
@@ -495,7 +495,7 @@ class XiaohongshuProvider(BaseProvider):
         Returns:
             搜索到的笔记列表
         """
-        print(f"开始搜索关键词: {query}，目标数量: {require_num}")
+        logger.info(f"开始搜索关键词: {query}，目标数量: {require_num}")
         
         try:
             success, msg, notes = self.xhs_apis.search_some_note(
@@ -508,7 +508,7 @@ class XiaohongshuProvider(BaseProvider):
                 # 如果是JavaScript相关的错误，返回空结果而不是抛出异常
                 if "Cannot find module" in msg or "js" in msg.lower():
                     logger.warning(f'搜索功能因JavaScript问题被禁用: {msg}')
-                    print(f"⚠️ 搜索功能暂时不可用（JavaScript依赖问题），返回空结果")
+                    logger.warning(f"⚠️ 搜索功能暂时不可用（JavaScript依赖问题），返回空结果")
                     return []
                 else:
                     raise Exception(f"搜索失败: {msg}")
@@ -526,7 +526,7 @@ class XiaohongshuProvider(BaseProvider):
             # 批量获取笔记详情
             note_data = await self.fetch_multiple_notes(note_urls, proxies)
             
-            print(f"搜索完成，共获取 {len(note_data)} 个笔记")
+            logger.info(f"搜索完成，共获取 {len(note_data)} 个笔记")
             return note_data
             
         except Exception as e:
@@ -641,42 +641,42 @@ class XiaohongshuProvider(BaseProvider):
             detail: 笔记详情字典
             index: 序号
         """
-        print(f"\n{'='*70}")
-        print(f"笔记 {index}: {detail['note_id']}")
-        print(f"{'='*70}")
+        logger.info(f"\n{'='*70}")
+        logger.info(f"笔记 {index}: {detail['note_id']}")
+        logger.info(f"{'='*70}")
         
-        print(f"\n📝 基本信息:")
-        print(f"  标题: {detail['title']}")
-        print(f"  描述: {detail['desc'][:100]}{'...' if len(detail['desc']) > 100 else ''}")
-        print(f"  发布时间: {detail['time']}")
-        print(f"  链接: {detail['link']}")
+        logger.debug(f"\n📝 基本信息:")
+        logger.info(f"  标题: {detail['title']}")
+        logger.info(f"  描述: {detail['desc'][:100]}{'...' if len(detail['desc']) > 100 else ''}")
+        logger.info(f"  发布时间: {detail['time']}")
+        logger.info(f"  链接: {detail['link']}")
         
-        print(f"\n📊 统计数据:")
+        logger.debug(f"\n📊 统计数据:")
         stats = detail['statistics']
-        print(f"  👍 点赞: {stats['liked_count']:,}")
-        print(f"  ⭐ 收藏: {stats['collected_count']:,}")
-        print(f"  💬 评论: {stats['comment_count']:,}")
-        print(f"  🔗 分享: {stats['share_count']:,}")
+        logger.info(f"  👍 点赞: {stats['liked_count']:,}")
+        logger.info(f"  ⭐ 收藏: {stats['collected_count']:,}")
+        logger.info(f"  💬 评论: {stats['comment_count']:,}")
+        logger.info(f"  🔗 分享: {stats['share_count']:,}")
         
-        print(f"\n🎬 内容信息:")
+        logger.info(f"\n🎬 内容信息:")
         content = detail['content']
-        print(f"  类型: {content['type']}")
+        logger.info(f"  类型: {content['type']}")
         if content['images']:
-            print(f"  图片数: {len(content['images'])}")
+            logger.info(f"  图片数: {len(content['images'])}")
         if content['video_url']:
-            print(f"  视频: 有")
-        print(f"  封面: {content['cover'][:60]}..." if content['cover'] else "  封面: 无")
+            logger.info(f"  视频: 有")
+        logger.info(f"  封面: {content['cover'][:60]}..." if content['cover'] else "  封面: 无")
         
-        print(f"\n👤 作者信息:")
+        logger.info(f"\n👤 作者信息:")
         author = detail['author']
-        print(f"  昵称: {author['nickname']}")
-        print(f"  用户ID: {author['user_id']}")
-        print(f"  签名: {author['desc'][:50]}{'...' if len(author['desc']) > 50 else ''}")
+        logger.info(f"  昵称: {author['nickname']}")
+        logger.info(f"  用户ID: {author['user_id']}")
+        logger.info(f"  签名: {author['desc'][:50]}{'...' if len(author['desc']) > 50 else ''}")
         
         if detail['hashtags']:
-            print(f"\n🏷️  话题标签:")
+            logger.info(f"\n🏷️  话题标签:")
             for tag in detail['hashtags'][:5]:  # 最多显示5个
-                print(f"  #{tag['name']}")
+                logger.info(f"  #{tag['name']}")
     
     async def fetch_and_extract_user_notes(
         self,
@@ -704,9 +704,9 @@ class XiaohongshuProvider(BaseProvider):
             return raw_notes
         
         # 提取详细信息
-        print(f"\n正在提取 {len(raw_notes)} 个笔记的详细信息...")
+        logger.info(f"\n正在提取 {len(raw_notes)} 个笔记的详细信息...")
         details = self.extract_note_details_batch(raw_notes)
-        print(f"✓ 提取完成")
+        logger.info(f"✓ 提取完成")
         
         return details
     
@@ -746,9 +746,9 @@ class XiaohongshuProvider(BaseProvider):
             return raw_notes
         
         # 提取详细信息
-        print(f"\n正在提取 {len(raw_notes)} 个笔记的详细信息...")
+        logger.info(f"\n正在提取 {len(raw_notes)} 个笔记的详细信息...")
         details = self.extract_note_details_batch(raw_notes)
-        print(f"✓ 提取完成")
+        logger.info(f"✓ 提取完成")
         
         return details
     
@@ -924,10 +924,10 @@ class XiaohongshuProvider(BaseProvider):
         
         try:
             # 1. 搜索笔记（已包含批量获取详情）
-            print(f"\n{'='*70}")
-            print(f"🔍 搜索关键词: {query}")
-            print(f"📊 搜索数量: {require_num}")
-            print(f"{'='*70}\n")
+            logger.info(f"\n{'='*70}")
+            logger.debug(f"🔍 搜索关键词: {query}")
+            logger.debug(f"📊 搜索数量: {require_num}")
+            logger.info(f"{'='*70}\n")
             
             raw_notes = await self.search_notes(
                 query=query,
@@ -953,9 +953,9 @@ class XiaohongshuProvider(BaseProvider):
                 }
             
             # 2. 提取详细信息
-            print(f"\n📝 正在提取 {len(raw_notes)} 个笔记的详细信息...")
+            logger.debug(f"\n📝 正在提取 {len(raw_notes)} 个笔记的详细信息...")
             details = self.extract_note_details_batch(raw_notes)
-            print(f"✅ 详情提取完成\n")
+            logger.info(f"✅ 详情提取完成\n")
             
             # 3. 按关键词创建保存目录
             import re
@@ -973,7 +973,7 @@ class XiaohongshuProvider(BaseProvider):
             saved_directories = []
             successful_saves = 0
             
-            print(f"💾 正在保存笔记到: {keyword_dir}")
+            logger.info(f"💾 正在保存笔记到: {keyword_dir}")
             
             for i, (raw_note, detail) in enumerate(zip(raw_notes, details), 1):
                 try:
@@ -1062,7 +1062,7 @@ class XiaohongshuProvider(BaseProvider):
                     successful_saves += 1
                     
                     if (i % 5 == 0) or (i == len(raw_notes)):
-                        print(f"   已保存: {i}/{len(raw_notes)} 个笔记")
+                        logger.info(f"   已保存: {i}/{len(raw_notes)} 个笔记")
                     
                 except Exception as e:
                     logger.error(f"保存笔记失败 {detail.get('title', 'Unknown')}: {e}")
@@ -1071,7 +1071,7 @@ class XiaohongshuProvider(BaseProvider):
                     traceback.print_exc()
                     continue
             
-            print(f"✅ 保存完成: {successful_saves}/{len(raw_notes)} 个笔记\n")
+            logger.info(f"✅ 保存完成: {successful_saves}/{len(raw_notes)} 个笔记\n")
             
             # 5. 统计数据
             total_likes = sum(int(raw_note.get('liked_count', 0)) if isinstance(raw_note.get('liked_count'), (int, str)) else 0 for raw_note in raw_notes)
@@ -1083,20 +1083,20 @@ class XiaohongshuProvider(BaseProvider):
             duration = (end_time - start_time).total_seconds()
             
             # 打印结果摘要
-            print(f"\n{'='*70}")
-            print(f"✅ 搜索并保存完成!")
-            print(f"{'='*70}")
-            print(f"🔍 搜索关键词: {query}")
-            print(f"📊 找到笔记: {len(raw_notes)} 个")
-            print(f"💾 成功保存: {successful_saves} 个")
-            print(f"📁 保存位置: {keyword_dir}")
-            print(f"⏱️  耗时: {duration:.1f} 秒")
-            print(f"\n📈 互动数据统计:")
-            print(f"   总点赞: {total_likes:,}")
-            print(f"   总收藏: {total_collects:,}")
-            print(f"   总评论: {total_comments:,}")
-            print(f"   总分享: {total_shares:,}")
-            print(f"{'='*70}\n")
+            logger.info(f"\n{'='*70}")
+            logger.info(f"✅ 搜索并保存完成!")
+            logger.info(f"{'='*70}")
+            logger.debug(f"🔍 搜索关键词: {query}")
+            logger.debug(f"📊 找到笔记: {len(raw_notes)} 个")
+            logger.info(f"💾 成功保存: {successful_saves} 个")
+            logger.info(f"📁 保存位置: {keyword_dir}")
+            logger.info(f"⏱️  耗时: {duration:.1f} 秒")
+            logger.info(f"\n📈 互动数据统计:")
+            logger.info(f"   总点赞: {total_likes:,}")
+            logger.info(f"   总收藏: {total_collects:,}")
+            logger.info(f"   总评论: {total_comments:,}")
+            logger.info(f"   总分享: {total_shares:,}")
+            logger.info(f"{'='*70}\n")
             
             result = {
                 'success': True,

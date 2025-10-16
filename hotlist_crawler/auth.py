@@ -10,6 +10,7 @@ from playwright.async_api import async_playwright
 import time
 
 from .types import PlatformType, USER_DATA_DIR, PLATFORM_LOGIN_URLS, PLATFORM_CHECK_URLS
+from loguru import logger
 
 
 def login(platform: PlatformType, headless: bool = False) -> bool:
@@ -31,27 +32,27 @@ def login(platform: PlatformType, headless: bool = False) -> bool:
         # 登录知乎
         success = login(PlatformType.ZHIHU)
         if success:
-            print("知乎登录成功！")
+            logger.info("知乎登录成功！")
         else:
-            print("知乎登录失败！")
+            logger.error("知乎登录失败！")
     """
     
     # 验证平台类型
     if not isinstance(platform, PlatformType):
-        print(f"❌ 无效的平台类型: {platform}")
+        logger.error(f"❌ 无效的平台类型: {platform}")
         return False
     
     login_url = PLATFORM_LOGIN_URLS.get(platform)
     if not login_url:
-        print(f"❌ 不支持的平台: {platform}")
+        logger.error(f"❌ 不支持的平台: {platform}")
         return False
     
     # 确保用户数据目录存在
     os.makedirs(USER_DATA_DIR, exist_ok=True)
     
-    print(f"🚀 开始登录 {platform.upper()} 平台...")
-    print(f"📍 登录页面: {login_url}")
-    print(f"📁 用户数据目录: {USER_DATA_DIR}")
+    logger.info(f"🚀 开始登录 {platform.upper()} 平台...")
+    logger.info(f"📍 登录页面: {login_url}")
+    logger.info(f"📁 用户数据目录: {USER_DATA_DIR}")
     
     # 同步调用异步函数
     try:
@@ -72,7 +73,7 @@ def login(platform: PlatformType, headless: bool = False) -> bool:
         return loop.run_until_complete(_login_async(platform, login_url, headless))
         
     except Exception as e:
-        print(f"❌ 登录过程中出现错误: {e}")
+        logger.error(f"❌ 登录过程中出现错误: {e}")
         return False
 
 
@@ -191,14 +192,14 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                 """)
                 
                 # 打开登录页面
-                print("🌐 正在打开登录页面...")
+                logger.debug("🌐 正在打开登录页面...")
                 await page.goto(login_url, wait_until='networkidle')
                 
-                print("\n" + "="*50)
-                print("👤 请在浏览器中完成登录操作")
-                print("💡 登录状态将在45秒后自动保存")
-                print("⏳ 请在45秒内完成登录操作")
-                print("="*50)
+                logger.info("\n" + "="*50)
+                logger.info("👤 请在浏览器中完成登录操作")
+                logger.info("💡 登录状态将在45秒后自动保存")
+                logger.debug("⏳ 请在45秒内完成登录操作")
+                logger.info("="*50)
                 
                 # 等待用户操作，45秒后自动保存或用户按回车手动保存
                 await _wait_for_user_action(page, platform, timeout=45)
@@ -211,21 +212,21 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                 
                 if save_success:
                     if len(cookies) > 0:
-                        print("✅ 登录状态已保存！")
-                        print(f"🍪 保存了 {len(cookies)} 个cookies")
+                        logger.info("✅ 登录状态已保存！")
+                        logger.info(f"🍪 保存了 {len(cookies)} 个cookies")
                         return True
                     else:
-                        print("⚠️ 已保存状态，但未检测到cookies（可能未登录）")
+                        logger.warning("⚠️ 已保存状态，但未检测到cookies（可能未登录）")
                         return False
                 else:
-                    print("❌ 保存失败")
+                    logger.error("❌ 保存失败")
                     return False
                     
             finally:
                 await browser.close()
                 
     except Exception as e:
-        print(f"❌ 异步登录过程中出现错误: {e}")
+        logger.error(f"❌ 异步登录过程中出现错误: {e}")
         return False
 
 
@@ -234,8 +235,8 @@ async def _wait_for_user_action(page, platform: PlatformType, timeout: int = 45)
     import threading
     import queue
     
-    print(f"⏰ 开始倒计时 {timeout} 秒...")
-    print("💡 提示：您可以随时按回车键保存当前登录状态")
+    logger.info(f"⏰ 开始倒计时 {timeout} 秒...")
+    logger.info("💡 提示：您可以随时按回车键保存当前登录状态")
     
     # 使用队列来接收用户输入
     input_queue = queue.Queue()
@@ -260,19 +261,19 @@ async def _wait_for_user_action(page, platform: PlatformType, timeout: int = 45)
         
         # 每5秒显示一次倒计时
         if elapsed % 5 == 0 and elapsed > 0:
-            print(f"⏳ 剩余时间: {remaining} 秒 (按回车键立即保存)")
+            logger.debug(f"⏳ 剩余时间: {remaining} 秒 (按回车键立即保存)")
         
         # 检查是否有用户输入
         try:
             input_queue.get_nowait()
-            print("👍 检测到用户输入，立即保存登录状态")
+            logger.info("👍 检测到用户输入，立即保存登录状态")
             return
         except queue.Empty:
             pass
         
         await asyncio.sleep(1)
     
-    print(f"⏰ 已等待 {timeout} 秒，自动保存当前状态")
+    logger.info(f"⏰ 已等待 {timeout} 秒，自动保存当前状态")
 
 
 async def _save_login_data(platform: PlatformType, cookies: list, page) -> bool:
@@ -301,11 +302,11 @@ async def _save_login_data(platform: PlatformType, cookies: list, page) -> bool:
         with open(cookies_file, 'w', encoding='utf-8') as f:
             json.dump(cookies, f, ensure_ascii=False, indent=2)
         
-        print(f"💾 登录数据已保存到: {login_data_dir}")
+        logger.info(f"💾 登录数据已保存到: {login_data_dir}")
         return True
         
     except Exception as e:
-        print(f"❌ 保存登录数据失败: {e}")
+        logger.error(f"❌ 保存登录数据失败: {e}")
         return False
 
 
@@ -324,9 +325,9 @@ def is_online(platform: PlatformType) -> bool:
     
     Example:
         if is_online(PlatformType.ZHIHU):
-            print("知乎已登录")
+            logger.info("知乎已登录")
         else:
-            print("知乎未登录")
+            logger.info("知乎未登录")
     """
     
     if not isinstance(platform, PlatformType):
@@ -362,7 +363,7 @@ def is_online(platform: PlatformType) -> bool:
         return loop.run_until_complete(_check_online_async(platform, check_url, cookies_file))
         
     except Exception as e:
-        print(f"⚠️ 检查在线状态时出错: {e}")
+        logger.warning(f"⚠️ 检查在线状态时出错: {e}")
         return False
 
 
@@ -419,7 +420,7 @@ async def _check_online_async(platform: PlatformType, check_url: Optional[str], 
                         return has_content and not is_blocked
                         
                     except Exception as weixin_error:
-                        print(f"⚠️ 微信文章访问检测失败: {weixin_error}")
+                        logger.error(f"⚠️ 微信文章访问检测失败: {weixin_error}")
                         await browser.close()
                         return False
                 
@@ -446,7 +447,7 @@ async def _check_online_async(platform: PlatformType, check_url: Optional[str], 
                         return True
                         
                     except Exception as douyin_error:
-                        print(f"⚠️ 抖音登录检测失败: {douyin_error}")
+                        logger.error(f"⚠️ 抖音登录检测失败: {douyin_error}")
                         await browser.close()
                         return False
                 
@@ -460,7 +461,7 @@ async def _check_online_async(platform: PlatformType, check_url: Optional[str], 
                     response = await page.goto(check_url, wait_until='load', timeout=30000)
                 except Exception as goto_error:
                     # 如果 goto 失败，尝试获取当前页面URL判断是否跳转
-                    print(f"⚠️ 页面加载超时或失败: {goto_error}")
+                    logger.error(f"⚠️ 页面加载超时或失败: {goto_error}")
                     # 即使超时也可能已经跳转，继续检查URL
                 
                 # 等待页面稳定
@@ -502,12 +503,12 @@ async def _check_online_async(platform: PlatformType, check_url: Optional[str], 
                 return is_valid
                 
             except Exception as e:
-                print(f"⚠️ 访问检测页面失败: {e}")
+                logger.error(f"⚠️ 访问检测页面失败: {e}")
                 await browser.close()
                 return False
                 
     except Exception as e:
-        print(f"⚠️ 异步检测失败: {e}")
+        logger.error(f"⚠️ 异步检测失败: {e}")
         return False
 
 

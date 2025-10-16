@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from typing import Dict, List
 from urllib.parse import urlparse
+from loguru import logger
 
 from app.file_utils import clean_filename, ensure_directory, get_file_extension
 from app.config import settings
@@ -98,7 +99,7 @@ class StorageManager:
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
         
-        print(f"📁 创建存储目录: {article_dir}")
+        logger.info(f"📁 创建存储目录: {article_dir}")
         return storage_info
     
     def save_text_content(self, storage_info: Dict[str, str], content: str) -> str:
@@ -108,7 +109,7 @@ class StorageManager:
         with open(text_file, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        print(f"📄 保存文本文件: {os.path.basename(text_file)}")
+        logger.debug(f"📄 保存文本文件: {os.path.basename(text_file)}")
         
         # 更新元数据
         self._update_metadata(storage_info, {"content_length": len(content)})
@@ -142,7 +143,7 @@ class StorageManager:
         with open(markdown_file, 'w', encoding='utf-8') as f:
             f.write(final_content)
         
-        print(f"📄 保存Markdown文件: {os.path.basename(markdown_file)}")
+        logger.debug(f"📄 保存Markdown文件: {os.path.basename(markdown_file)}")
         
         # 更新元数据
         self._update_metadata(storage_info, {"markdown_length": len(final_content)})
@@ -169,7 +170,7 @@ class StorageManager:
         with open(image_path, 'wb') as f:
             f.write(image_data)
         
-        print(f"🖼️ 保存图片: {image_filename}")
+        logger.debug(f"🖼️ 保存图片: {image_filename}")
         
         # 准备图片信息
         image_info = {
@@ -217,10 +218,10 @@ class StorageManager:
         
         if existing_index is not None:
             index_data["articles"][existing_index] = article_entry
-            print(f"📋 更新文章索引: {storage_info['title']}")
+            logger.debug(f"📋 更新文章索引: {storage_info['title']}")
         else:
             index_data["articles"].append(article_entry)
-            print(f"📋 添加文章到索引: {storage_info['title']}")
+            logger.debug(f"📋 添加文章到索引: {storage_info['title']}")
         
         index_data["last_updated"] = datetime.now().isoformat()
         index_data["total_articles"] = len(index_data["articles"])

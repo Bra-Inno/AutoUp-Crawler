@@ -13,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 from typing import Dict, Any, Optional
 from ..config import settings
+from loguru import logger
 
 # ============================================
 # 配置区域
@@ -28,16 +29,16 @@ def load_cookie_from_browser() -> str:
             with open(cookies_file, 'r', encoding='utf-8') as f:
                 cookies_list = json.load(f)
                 cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
-                print(f"📂 从浏览器数据加载Cookie，共 {len(cookies_list)} 个")
+                logger.info(f"📂 从浏览器数据加载Cookie，共 {len(cookies_list)} 个")
                 return cookie_str
     except Exception as e:
-        print(f"⚠️ 加载Cookie失败: {e}")
+        logger.warning(f"⚠️ 加载Cookie失败: {e}")
     
     return ""
 
 def load_user_agent_from_browser() -> str:
     # 使用配置文件中的User-Agent
-    print(f"📝 使用配置的User-Agent")
+    logger.debug(f"📝 使用配置的User-Agent")
     return settings.USER_AGENT
 
 # 默认从浏览器数据加载（如果可用）
@@ -46,7 +47,7 @@ USER_AGENT = load_user_agent_from_browser()
 
 # 如果浏览器数据不可用，使用手动配置的Cookie（向后兼容）
 if not COOKIE:
-    print("💡 提示: 未找到浏览器数据，可以手动在下方配置Cookie")
+    logger.info("💡 提示: 未找到浏览器数据，可以手动在下方配置Cookie")
     # 从浏览器开发者工具的Network标签页复制完整的Cookie字符串
     COOKIE = """__ac_nonce=068e36ed20084903da92d; __ac_signature=_02B4Z6wo00f01tdVnwgAAIDCmnSmocHh-0bXZJuAAN1D54; __security_mc_1_s_sdk_cert_key=efc4b9a3-458e-ad5d; __security_mc_1_s_sdk_crypt_sdk=b7c45f8d-4613-a463; __security_mc_1_s_sdk_sign_data_key_web_protect=56392f0a-4435-8c35; __security_server_data_status=1; _bd_ticket_crypt_cookie=cfd07fb8d2a0d1025f42c2ee17c61466; architecture=amd64; bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCTEZPeTFzelRCNnVwN3JidytORXVWc3U2WlRuMFlnUFJIVnhqWVVndWZpelNJK2tBNmsyM3kzZmw3NlcyT2dOOHhQRTZLaVExNTA3eGNDVThCdWVxZEk9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoyfQ==; bd_ticket_guard_client_data_v2=eyJyZWVfcHVibGljX2tleSI6IkJMRk95MXN6VEI2dXA3cmJ3K05FdVZzdTZaVG4wWWdQUkhWeGpZVWd1Zml6U0kra0E2azIzeTNmbDc2VzJPZ044eFBFNktpUTE1MDd4Y0NVOEJ1ZXFkST0iLCJ0c19zaWduIjoidHMuMi5jYjkyMGJlZjRiY2I0OTg2OGFiNTI2YTBhZTRlOThhNzA2YzI5NzE3MDdhNTBhNjNmYjk1MDRjYjZiYzA3MTFkYzRmYmU4N2QyMzE5Y2YwNTMxODYyNGNlZGExNDkxMWNhNDA2ZGVkYmViZWRkYjJlMzBmY2U4ZDRmYTAyNTc1ZCIsInJlcV9jb250ZW50Ijoic2VjX3RzIiwicmVxX3NpZ24iOiJGdm1HWGVQQXNYQVhDSTN4dXBVRGd6Z3o2dmtSdm1iTGwvTU9tZ2hGVWVBPSIsInNlY190cyI6IiNlSWoyRFdVdDlwMTNHdUZwQlNvZUxXbXJ5aC9Oa1hHRFlkMTRwMzg4UHowRGtRNWh1eXBIUmdEbTZTeEUifQ==; bd_ticket_guard_client_web_domain=2; sessionid=56d86eaa9e312f2179f3fad262f61f71; sessionid_ss=56d86eaa9e312f2179f3fad262f61f71; ttwid=1|kua-ocR2BbNzx6ePnQHIFsTgf1Yvln-g-DbFs4qBros|1759735568|78957873a464e1589cf8218af687e7d1120ec20d5b7e14a056ef4fe50021ced1"""
 
@@ -113,8 +114,8 @@ class DouyinVideoDownloader:
         Returns:
             dict: {'aweme_id': xxx, 'sec_user_id': xxx, 'url': xxx}
         """
-        print(f"\n🔍 正在解析链接...")
-        print(f"   输入: {share_url[:80]}...")
+        logger.debug(f"\n🔍 正在解析链接...")
+        logger.info(f"   输入: {share_url[:80]}...")
         
         try:
             # 如果是短链接,先重定向获取真实链接
@@ -122,7 +123,7 @@ class DouyinVideoDownloader:
                 async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
                     response = await client.get(share_url)
                     real_url = str(response.url)
-                    print(f"   重定向: {real_url[:80]}...")
+                    logger.info(f"   重定向: {real_url[:80]}...")
                     share_url = real_url
             
             # 从URL中提取作品ID
@@ -147,20 +148,20 @@ class DouyinVideoDownloader:
             
             # 如果只有视频ID没有用户ID,尝试通过访问页面获取重定向URL
             if aweme_id and not sec_user_id:
-                print(f"   ⚠️  链接缺少用户ID,尝试自动获取...")
+                logger.warning(f"   ⚠️  链接缺少用户ID,尝试自动获取...")
                 sec_user_id = await self._fetch_user_id_from_video(aweme_id)
                 if sec_user_id:
-                    print(f"   ✓ 成功获取用户ID: {sec_user_id[:20]}...")
+                    logger.info(f"   ✓ 成功获取用户ID: {sec_user_id[:20]}...")
                 else:
-                    print(f"   × 无法自动获取用户ID")
+                    logger.info(f"   × 无法自动获取用户ID")
             
             if aweme_id:
-                print(f"✅ 解析成功!")
-                print(f"   作品ID: {aweme_id}")
+                logger.info(f"✅ 解析成功!")
+                logger.info(f"   作品ID: {aweme_id}")
                 if sec_user_id:
-                    print(f"   用户ID: {sec_user_id[:20]}...")
+                    logger.info(f"   用户ID: {sec_user_id[:20]}...")
             else:
-                print(f"❌ 未能提取作品ID")
+                logger.error(f"❌ 未能提取作品ID")
             
             return {
                 'aweme_id': aweme_id,
@@ -169,7 +170,7 @@ class DouyinVideoDownloader:
             }
             
         except Exception as e:
-            print(f"❌ 解析链接失败: {e}")
+            logger.error(f"❌ 解析链接失败: {e}")
             return {}
     
     async def _fetch_user_id_from_video(self, aweme_id: str) -> Optional[str]:
@@ -214,7 +215,7 @@ class DouyinVideoDownloader:
                     return sec_uid_match.group(1)
                 
         except Exception as e:
-            print(f"      方法1失败: {e}")
+            logger.error(f"      方法1失败: {e}")
         
         # 方法3: 尝试通过详情接口获取
         try:
@@ -225,7 +226,7 @@ class DouyinVideoDownloader:
                 if sec_uid:
                     return sec_uid
         except Exception as e:
-            print(f"      方法2失败: {e}")
+            logger.error(f"      方法2失败: {e}")
         
         return None
     
@@ -262,7 +263,7 @@ class DouyinVideoDownloader:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print(f"请求失败: {e}")
+            logger.error(f"请求失败: {e}")
             return {"status_code": -1}
     
     async def fetch_aweme_detail(self, aweme_id: str) -> Dict[str, Any]:
@@ -310,11 +311,11 @@ class DouyinVideoDownloader:
                     return aweme_detail
             
             # 如果详情接口返回空,尝试从HTML页面解析
-            print(f"   详情接口返回空数据,尝试其他方法...")
+            logger.info(f"   详情接口返回空数据,尝试其他方法...")
             return await self.fetch_aweme_from_webpage(aweme_id)
             
         except Exception as e:
-            print(f"   请求详情失败: {e}")
+            logger.error(f"   请求详情失败: {e}")
             # 尝试从网页获取
             return await self.fetch_aweme_from_webpage(aweme_id)
     
@@ -347,29 +348,29 @@ class DouyinVideoDownloader:
             import json
             import urllib.parse
             
-            print(f"   正在解析HTML...")
+            logger.info(f"   正在解析HTML...")
             
             # 查找RENDER_DATA
             if 'id="RENDER_DATA"' in html:
-                print(f"   ✓ 找到RENDER_DATA标签")
+                logger.info(f"   ✓ 找到RENDER_DATA标签")
                 start = html.find('id="RENDER_DATA"')
                 if start > 0:
                     start = html.find('>', start) + 1
                     end = html.find('</script>', start)
                     if end > start:
                         data_str = html[start:end].strip()
-                        print(f"   数据长度: {len(data_str)} 字符")
+                        logger.info(f"   数据长度: {len(data_str)} 字符")
                         # 解码URL编码的数据
                         try:
                             decoded = urllib.parse.unquote(data_str)
-                            print(f"   解码后长度: {len(decoded)} 字符")
+                            logger.info(f"   解码后长度: {len(decoded)} 字符")
                             data = json.loads(decoded)
-                            print(f"   ✓ JSON解析成功")
+                            logger.info(f"   ✓ JSON解析成功")
                             
                             # 提取视频详情
                             # 数据结构可能是: data['app']['videoDetail'] 或类似路径
                             if isinstance(data, dict):
-                                print(f"   顶层键: {list(data.keys())[:10]}")
+                                logger.info(f"   顶层键: {list(data.keys())[:10]}")
                                 
                                 # 递归搜索包含 aweme_id 的字典
                                 def find_aweme_data(obj, depth=0, max_depth=5):
@@ -400,29 +401,29 @@ class DouyinVideoDownloader:
                                 aweme = find_aweme_data(data)
                                 
                                 if aweme:
-                                    print(f"   ✓ 找到包含视频数据的字典")
+                                    logger.info(f"   ✓ 找到包含视频数据的字典")
                                     if isinstance(aweme, dict):
-                                        print(f"   数据键(前10): {list(aweme.keys())[:10]}")
+                                        logger.info(f"   数据键(前10): {list(aweme.keys())[:10]}")
                                     return aweme
                                 else:
-                                    print(f"   × 未找到包含 aweme_id 的数据")
+                                    logger.info(f"   × 未找到包含 aweme_id 的数据")
                                 
                                 # 打印app的结构以便调试
                                 if 'app' in data and isinstance(data['app'], dict):
-                                    print(f"   app的键: {list(data['app'].keys())[:10]}")
+                                    logger.info(f"   app的键: {list(data['app'].keys())[:10]}")
                         except json.JSONDecodeError as je:
-                            print(f"   × JSON解析失败: {je}")
-                            print(f"   前100字符: {decoded[:100] if 'decoded' in locals() else data_str[:100]}")
+                            logger.error(f"   × JSON解析失败: {je}")
+                            logger.info(f"   前100字符: {decoded[:100] if 'decoded' in locals() else data_str[:100]}")
                         except Exception as parse_e:
-                            print(f"   × 解析异常: {parse_e}")
+                            logger.info(f"   × 解析异常: {parse_e}")
             else:
-                print(f"   × HTML中未找到RENDER_DATA标签")
+                logger.info(f"   × HTML中未找到RENDER_DATA标签")
             
-            print(f"   无法从网页解析数据")
+            logger.info(f"   无法从网页解析数据")
             return None
             
         except Exception as e:
-            print(f"   从网页获取失败: {e}")
+            logger.error(f"   从网页获取失败: {e}")
             return None
     
     async def find_video_in_posts(self, sec_user_id: str, aweme_id: str, 
@@ -438,7 +439,7 @@ class DouyinVideoDownloader:
         Returns:
             dict: 作品信息,未找到返回None
         """
-        print(f"\n🔎 正在搜索作品...")
+        logger.info(f"\n🔎 正在搜索作品...")
         
         max_cursor = 0
         
@@ -446,7 +447,7 @@ class DouyinVideoDownloader:
             res = await self.fetch_user_posts(sec_user_id, max_cursor, 20)
             
             if res.get("status_code") != 0:
-                print(f"   获取失败: {res.get('status_msg', '未知错误')}")
+                logger.error(f"   获取失败: {res.get('status_msg', '未知错误')}")
                 return None
             
             aweme_list = res.get("aweme_list", [])
@@ -454,22 +455,22 @@ class DouyinVideoDownloader:
             # 在当前页查找目标作品
             for aweme in aweme_list:
                 if aweme.get('aweme_id') == aweme_id:
-                    print(f"✅ 找到作品! (第{page+1}页)")
+                    logger.info(f"✅ 找到作品! (第{page+1}页)")
                     return aweme
             
             # 检查是否还有更多
             if not res.get("has_more", False):
-                print(f"   已搜索完所有 {page+1} 页")
+                logger.info(f"   已搜索完所有 {page+1} 页")
                 break
             
             max_cursor = res.get("max_cursor", 0)
             
             if (page + 1) % 5 == 0:
-                print(f"   已搜索 {page+1} 页...")
+                logger.info(f"   已搜索 {page+1} 页...")
             
             await asyncio.sleep(0.3)  # 避免请求过快
         
-        print(f"❌ 未找到作品 (搜索了{min(page+1, max_pages)}页)")
+        logger.error(f"❌ 未找到作品 (搜索了{min(page+1, max_pages)}页)")
         return None
     
     def extract_video_info(self, aweme: dict) -> dict:
@@ -520,37 +521,37 @@ class DouyinVideoDownloader:
     
     def print_video_info(self, info: dict):
         """打印视频信息"""
-        print("\n" + "="*80)
-        print("📹 视频信息")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info("📹 视频信息")
+        logger.info("="*80)
         
-        print(f"\n📝 基本信息:")
-        print(f"   作品ID: {info['aweme_id']}")
+        logger.debug(f"\n📝 基本信息:")
+        logger.info(f"   作品ID: {info['aweme_id']}")
         desc = info['desc']
-        print(f"   描述: {desc[:60]}{'...' if len(desc) > 60 else ''}")
+        logger.info(f"   描述: {desc[:60]}{'...' if len(desc) > 60 else ''}")
         
         from datetime import datetime
         if info['create_time']:
             dt = datetime.fromtimestamp(info['create_time'])
-            print(f"   发布时间: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"   发布时间: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
         
         author = info['author']
-        print(f"\n👤 作者:")
-        print(f"   昵称: {author['nickname']}")
+        logger.info(f"\n👤 作者:")
+        logger.info(f"   昵称: {author['nickname']}")
         if author['unique_id']:
-            print(f"   抖音号: {author['unique_id']}")
+            logger.info(f"   抖音号: {author['unique_id']}")
         
         video = info['video']
-        print(f"\n🎬 视频:")
-        print(f"   时长: {video['duration']:.1f} 秒")
-        print(f"   分辨率: {video['width']}x{video['height']}")
+        logger.info(f"\n🎬 视频:")
+        logger.info(f"   时长: {video['duration']:.1f} 秒")
+        logger.info(f"   分辨率: {video['width']}x{video['height']}")
         
         stats = info['statistics']
-        print(f"\n📊 数据:")
-        print(f"   👍 点赞: {stats['digg_count']:,}")
-        print(f"   💬 评论: {stats['comment_count']:,}")
-        print(f"   🔗 分享: {stats['share_count']:,}")
-        print(f"   ⭐ 收藏: {stats['collect_count']:,}")
+        logger.debug(f"\n📊 数据:")
+        logger.info(f"   👍 点赞: {stats['digg_count']:,}")
+        logger.info(f"   💬 评论: {stats['comment_count']:,}")
+        logger.info(f"   🔗 分享: {stats['share_count']:,}")
+        logger.info(f"   ⭐ 收藏: {stats['collect_count']:,}")
     
     async def download_video(self, video_url: str, save_path: str) -> bool:
         """
@@ -564,7 +565,7 @@ class DouyinVideoDownloader:
             bool: 是否下载成功
         """
         try:
-            print(f"\n⬇️  开始下载视频...")
+            logger.info(f"\n⬇️  开始下载视频...")
             
             # 创建保存目录
             Path(save_path).parent.mkdir(parents=True, exist_ok=True)
@@ -592,14 +593,14 @@ class DouyinVideoDownloader:
                                 progress = (downloaded / total_size) * 100
                                 mb_downloaded = downloaded / (1024*1024)
                                 mb_total = total_size / (1024*1024)
-                                print(f"\r   进度: {progress:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)", end='')
+                                logger.info(f"\r   进度: {progress:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)", end='')
             
-            print(f"\n✅ 下载完成!")
-            print(f"   保存路径: {save_path}")
+            logger.info(f"\n✅ 下载完成!")
+            logger.info(f"   保存路径: {save_path}")
             return True
             
         except Exception as e:
-            print(f"\n❌ 下载失败: {e}")
+            logger.error(f"\n❌ 下载失败: {e}")
             return False
     
     async def download_from_url(self, share_url: str, save_dir: str = "downloads") -> str:
@@ -613,9 +614,9 @@ class DouyinVideoDownloader:
         Returns:
             str: 保存的文件路径,失败返回空字符串
         """
-        print("\n" + "="*80)
-        print("🎬 抖音视频下载工具")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info("🎬 抖音视频下载工具")
+        logger.info("="*80)
         
         # 1. 解析链接
         parse_result = await self.parse_share_url(share_url)
@@ -623,7 +624,7 @@ class DouyinVideoDownloader:
         sec_user_id = parse_result.get('sec_user_id')
         
         if not aweme_id:
-            print("❌ 无法从链接中提取作品ID")
+            logger.error("❌ 无法从链接中提取作品ID")
             return ""
         
         # 2. 查找视频
@@ -631,26 +632,26 @@ class DouyinVideoDownloader:
         
         if sec_user_id:
             # 如果有用户ID,从用户作品列表中查找
-            print(f"\n� 从用户作品列表中查找视频...")
+            logger.info(f"\n� 从用户作品列表中查找视频...")
             aweme = await self.find_video_in_posts(sec_user_id, aweme_id)
         else:
             # 如果没有用户ID,直接获取视频详情
-            print(f"\n🔍 直接获取视频详情...")
-            print(f"   视频ID: {aweme_id}")
+            logger.debug(f"\n🔍 直接获取视频详情...")
+            logger.info(f"   视频ID: {aweme_id}")
             aweme = await self.fetch_aweme_detail(aweme_id)
         
         if not aweme:
-            print("\n❌ 无法获取视频信息")
-            print("\n💡 可能的原因:")
-            print("   1. 视频已被删除或设为私密")
-            print("   2. Cookie已过期,请更新config.py中的COOKIE")
-            print("   3. 该视频需要登录才能访问")
-            print("   4. 该视频链接格式不完整")
-            print("\n💡 建议:")
-            print("   • 请使用包含用户ID的完整链接,例如:")
-            print("     https://www.douyin.com/user/MS4w.../video/755578...")
-            print("   • 或者先在浏览器中打开视频,确认能正常访问后再尝试下载")
-            print("   • 确保Cookie是最新的(从浏览器开发者工具复制)")
+            logger.error("\n❌ 无法获取视频信息")
+            logger.info("\n💡 可能的原因:")
+            logger.info("   1. 视频已被删除或设为私密")
+            logger.info("   2. Cookie已过期,请更新config.py中的COOKIE")
+            logger.info("   3. 该视频需要登录才能访问")
+            logger.info("   4. 该视频链接格式不完整")
+            logger.info("\n💡 建议:")
+            logger.info("   • 请使用包含用户ID的完整链接,例如:")
+            logger.info("     https://www.douyin.com/user/MS4w.../video/755578...")
+            logger.info("   • 或者先在浏览器中打开视频,确认能正常访问后再尝试下载")
+            logger.info("   • 确保Cookie是最新的(从浏览器开发者工具复制)")
             return ""
         
         # 3. 提取视频信息
@@ -662,7 +663,7 @@ class DouyinVideoDownloader:
         download_url = video_data.get('download_url') or video_data.get('play_url')
         
         if not download_url:
-            print("\n❌ 未找到视频下载地址")
+            logger.error("\n❌ 未找到视频下载地址")
             return ""
         
         # 5. 构造文件名
@@ -682,7 +683,7 @@ class DouyinVideoDownloader:
         if success:
             # 获取文件大小
             file_size = Path(save_path).stat().st_size / (1024*1024)
-            print(f"   文件大小: {file_size:.2f} MB")
+            logger.info(f"   文件大小: {file_size:.2f} MB")
             return save_path
         else:
             return ""
@@ -719,15 +720,15 @@ async def download_single_video(share_url: str, save_dir: str = "downloads"):
 async def main():
     """主函数 - 演示使用"""
     
-    print("="*80)
-    print("抖音视频下载工具 - 独立版")
-    print("="*80)
-    print("\n💡 使用说明:")
-    print("   1. 打开抖音网页版,找到想下载的视频")
-    print("   2. 复制浏览器地址栏中的完整链接")
-    print("   3. 链接应包含 /user/xxx/video/xxx 格式")
-    print("   4. 将链接粘贴到下方代码中")
-    print("\n" + "="*80)
+    logger.info("="*80)
+    logger.info("抖音视频下载工具 - 独立版")
+    logger.info("="*80)
+    logger.info("\n💡 使用说明:")
+    logger.info("   1. 打开抖音网页版,找到想下载的视频")
+    logger.info("   2. 复制浏览器地址栏中的完整链接")
+    logger.info("   3. 链接应包含 /user/xxx/video/xxx 格式")
+    logger.info("   4. 将链接粘贴到下方代码中")
+    logger.info("\n" + "="*80)
     
     # ============================================
     # 在这里修改要下载的视频链接
@@ -744,17 +745,17 @@ async def main():
     save_path = await download_single_video(share_url, save_dir="downloads")
     
     if save_path:
-        print("\n" + "="*80)
-        print("🎉 下载成功!")
-        print(f"文件位置: {save_path}")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.info("🎉 下载成功!")
+        logger.info(f"文件位置: {save_path}")
+        logger.info("="*80)
     else:
-        print("\n" + "="*80)
-        print("❌ 下载失败,请检查:")
-        print("   1. Cookie是否正确配置")
-        print("   2. 链接格式是否正确(需要包含用户ID)")
-        print("   3. 网络连接是否正常")
-        print("="*80)
+        logger.info("\n" + "="*80)
+        logger.error("❌ 下载失败,请检查:")
+        logger.info("   1. Cookie是否正确配置")
+        logger.info("   2. 链接格式是否正确(需要包含用户ID)")
+        logger.info("   3. 网络连接是否正常")
+        logger.info("="*80)
 
 
 if __name__ == "__main__":

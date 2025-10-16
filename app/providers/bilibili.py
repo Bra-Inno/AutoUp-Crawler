@@ -11,6 +11,7 @@ from app.models import ScrapedDataItem
 from app.storage import storage_manager
 from app.config import settings
 import httpx
+from loguru import logger
 
 
 class BilibiliVideoEndpoints:
@@ -81,10 +82,10 @@ class BilibiliVideoProvider(BaseProvider):
                     cookies_list = json.load(f)
                     # 转换为cookie字符串
                     cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
-                    print(f"📂 加载已保存的B站登录状态，共 {len(cookies_list)} 个cookies")
+                    logger.info(f"📂 加载已保存的B站登录状态，共 {len(cookies_list)} 个cookies")
                     return cookie_str
         except Exception as e:
-            print(f"⚠️ 加载B站登录状态失败: {e}")
+            logger.warning(f"⚠️ 加载B站登录状态失败: {e}")
         return None
     
     def _extract_bvid(self, url: str) -> str:
@@ -259,12 +260,12 @@ class BilibiliVideoProvider(BaseProvider):
                 
                 # 自动下载视频（如果启用）
                 if self.auto_download_video:
-                    print(f"\n🎬 开始下载视频...")
+                    logger.info(f"\n🎬 开始下载视频...")
                     download_result = await self.download_video(qn=self.video_quality)
                     if download_result.get("success"):
-                        print(f"✅ 视频已保存到: {download_result.get('file_path')}")
+                        logger.info(f"✅ 视频已保存到: {download_result.get('file_path')}")
                     else:
-                        print(f"❌ 视频下载失败: {download_result.get('message')}")
+                        logger.error(f"❌ 视频下载失败: {download_result.get('message')}")
             
             return ScrapedDataItem(
                 title=video_info["title"],
@@ -511,25 +512,25 @@ class BilibiliVideoProvider(BaseProvider):
                 audio_url = audio_stream.get("baseUrl") or audio_stream.get("base_url")
                 
                 # 下载视频和音频
-                print(f"📥 开始下载视频流...")
+                logger.info(f"📥 开始下载视频流...")
                 video_file = os.path.join(video_dir, "video_temp.m4s")
                 await self._download_file(video_url, video_file)
                 
-                print(f"📥 开始下载音频流...")
+                logger.info(f"📥 开始下载音频流...")
                 audio_file = os.path.join(video_dir, "audio_temp.m4s")
                 await self._download_file(audio_url, audio_file)
                 
                 # 合并视频和音频
                 if merge_video:
                     output_file = os.path.join(video_dir, f"{storage_info['safe_title']}.mp4")
-                    print(f"🔄 合并视频和音频...")
+                    logger.info(f"🔄 合并视频和音频...")
                     success = await self._merge_video_audio(video_file, audio_file, output_file)
                     
                     if success:
                         # 删除临时文件
                         os.remove(video_file)
                         os.remove(audio_file)
-                        print(f"✅ 视频下载完成: {output_file}")
+                        logger.info(f"✅ 视频下载完成: {output_file}")
                         return {
                             "success": True,
                             "file_path": output_file,
@@ -537,7 +538,7 @@ class BilibiliVideoProvider(BaseProvider):
                             "format": "mp4"
                         }
                     else:
-                        print(f"⚠️ 视频和音频已下载，但合并失败。文件保存在: {video_dir}")
+                        logger.warning(f"⚠️ 视频和音频已下载，但合并失败。文件保存在: {video_dir}")
                         return {
                             "success": True,
                             "video_file": video_file,
@@ -558,10 +559,10 @@ class BilibiliVideoProvider(BaseProvider):
                 video_url = durl[0].get("url")
                 output_file = os.path.join(video_dir, f"{storage_info['safe_title']}.flv")
                 
-                print(f"📥 开始下载视频...")
+                logger.info(f"📥 开始下载视频...")
                 await self._download_file(video_url, output_file)
                 
-                print(f"✅ 视频下载完成: {output_file}")
+                logger.info(f"✅ 视频下载完成: {output_file}")
                 return {
                     "success": True,
                     "file_path": output_file,
@@ -602,7 +603,7 @@ class BilibiliVideoProvider(BaseProvider):
                         # 显示进度
                         if total_size > 0:
                             progress = (downloaded / total_size) * 100
-                            print(f"\r进度: {progress:.1f}% ({downloaded}/{total_size} 字节)", end="")
+                            logger.info(f"\r进度: {progress:.1f}% ({downloaded}/{total_size} 字节)", end="")
                 
                 print()  # 换行
     
@@ -623,13 +624,13 @@ class BilibiliVideoProvider(BaseProvider):
         if await self._merge_with_ffmpeg(video_file, audio_file, output_file):
             return True
         
-        print("⚠️ ffmpeg 不可用，尝试使用 moviepy...")
+        logger.warning("⚠️ ffmpeg 不可用，尝试使用 moviepy...")
         
         # 方案2: 尝试使用 moviepy (纯Python，较慢但不需要外部工具)
         if await self._merge_with_moviepy(video_file, audio_file, output_file):
             return True
         
-        print("⚠️ moviepy 不可用，尝试使用简单合并...")
+        logger.warning("⚠️ moviepy 不可用，尝试使用简单合并...")
         
         # 方案3: 简单的容器级别合并 (最快但兼容性可能有问题)
         if await self._merge_simple(video_file, audio_file, output_file):
@@ -651,7 +652,7 @@ class BilibiliVideoProvider(BaseProvider):
             except (subprocess.CalledProcessError, FileNotFoundError):
                 return False
             
-            print("🔄 使用 ffmpeg 合并...")
+            logger.info("🔄 使用 ffmpeg 合并...")
             
             # 合并命令
             cmd = [
@@ -670,11 +671,11 @@ class BilibiliVideoProvider(BaseProvider):
             if result.returncode == 0:
                 return True
             else:
-                print(f"❌ ffmpeg错误: {result.stderr[:200]}")
+                logger.error(f"❌ ffmpeg错误: {result.stderr[:200]}")
                 return False
                 
         except Exception as e:
-            print(f"❌ ffmpeg合并失败: {e}")
+            logger.error(f"❌ ffmpeg合并失败: {e}")
             return False
     
     async def _merge_with_moviepy(self, video_file: str, audio_file: str, output_file: str) -> bool:
@@ -692,7 +693,7 @@ class BilibiliVideoProvider(BaseProvider):
                     # moviepy 未安装
                     raise ImportError("moviepy not available")
             
-            print("🔄 使用 moviepy 合并（这可能需要几分钟）...")
+            logger.info("🔄 使用 moviepy 合并（这可能需要几分钟）...")
             
             # 加载视频和音频
             video = VideoFileClip(video_file)
@@ -720,13 +721,13 @@ class BilibiliVideoProvider(BaseProvider):
             # moviepy 未安装，返回False让程序尝试其他方案
             return False
         except Exception as e:
-            print(f"❌ moviepy合并失败: {e}")
+            logger.error(f"❌ moviepy合并失败: {e}")
             return False
     
     async def _merge_simple(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """简单的MP4容器合并（使用mp4box格式，兼容性最好）"""
         try:
-            print("🔄 使用简单方法合并...")
+            logger.info("🔄 使用简单方法合并...")
             
             # 读取视频和音频数据
             with open(video_file, 'rb') as f:
@@ -746,12 +747,12 @@ class BilibiliVideoProvider(BaseProvider):
             
             # 验证文件大小
             if os.path.getsize(output_file) > 0:
-                print("⚠️ 注意：使用了简单合并方案，某些播放器可能无法正常播放")
-                print("💡 建议安装 ffmpeg 或 moviepy 以获得更好的兼容性")
+                logger.warning("⚠️ 注意：使用了简单合并方案，某些播放器可能无法正常播放")
+                logger.info("💡 建议安装 ffmpeg 或 moviepy 以获得更好的兼容性")
                 return True
             
             return False
             
         except Exception as e:
-            print(f"❌ 简单合并失败: {e}")
+            logger.error(f"❌ 简单合并失败: {e}")
             return False

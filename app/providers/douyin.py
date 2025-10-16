@@ -18,6 +18,7 @@ from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.dy_downloader import DouyinVideoDownloader
 from ..config import settings
+from loguru import logger
 
 
 class DouyinVideoProvider(BaseProvider):
@@ -79,13 +80,13 @@ class DouyinVideoProvider(BaseProvider):
                     cookies_list = json.load(f)
                     # 转换为cookie字符串
                     cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
-                    print(f"📂 加载已保存的抖音登录状态，共 {len(cookies_list)} 个cookies")
+                    logger.info(f"📂 加载已保存的抖音登录状态，共 {len(cookies_list)} 个cookies")
                     return cookie_str
             else:
-                print(f"⚠️ 未找到保存的抖音Cookie: {cookies_file}")
-                print(f"💡 提示: 可以运行浏览器登录脚本保存Cookie")
+                logger.warning(f"⚠️ 未找到保存的抖音Cookie: {cookies_file}")
+                logger.info(f"💡 提示: 可以运行浏览器登录脚本保存Cookie")
         except Exception as e:
-            print(f"⚠️ 加载抖音登录状态失败: {e}")
+            logger.warning(f"⚠️ 加载抖音登录状态失败: {e}")
         
         return None
     
@@ -101,7 +102,7 @@ class DouyinVideoProvider(BaseProvider):
 
         
         # 使用配置文件中的User-Agent
-        print(f"📝 使用配置的User-Agent")
+        logger.debug(f"📝 使用配置的User-Agent")
         return settings.USER_AGENT
     
     async def _get_user_id_from_browser(self, video_url: str) -> Optional[str]:
@@ -114,7 +115,7 @@ class DouyinVideoProvider(BaseProvider):
         Returns:
             str: 用户ID，失败返回None
         """
-        print(f"   🌐 使用浏览器获取用户ID...")
+        logger.debug(f"   🌐 使用浏览器获取用户ID...")
         
         try:
             async with async_playwright() as p:
@@ -125,7 +126,7 @@ class DouyinVideoProvider(BaseProvider):
                 page = await context.new_page()
                 
                 try:
-                    print("   ⏳ 正在加载页面...")
+                    logger.debug("   ⏳ 正在加载页面...")
                     await page.goto(video_url, wait_until='networkidle', timeout=30000)
                     await asyncio.sleep(3)
                     
@@ -135,18 +136,18 @@ class DouyinVideoProvider(BaseProvider):
                     
                     if matches:
                         user_id = matches[0]
-                        print(f"   ✅ 成功获取用户ID: {user_id[:30]}...")
+                        logger.debug(f"   ✅ 成功获取用户ID: {user_id[:30]}...")
                         return user_id
                     else:
-                        print("   ❌ 未在网页中找到用户ID")
+                        logger.error("   ❌ 未在网页中找到用户ID")
                         return None
                 except Exception as e:
-                    print(f"   ❌ 获取失败: {e}")
+                    logger.error(f"   ❌ 获取失败: {e}")
                     return None
                 finally:
                     await browser.close()
         except Exception as e:
-            print(f"   ❌ 浏览器初始化失败: {e}")
+            logger.error(f"   ❌ 浏览器初始化失败: {e}")
             return None
     
     async def _build_complete_url(self, url: str) -> Optional[str]:
@@ -161,17 +162,17 @@ class DouyinVideoProvider(BaseProvider):
         """
         # 如果已经是完整链接，直接返回
         if '/user/' in url:
-            print("   ✅ 已经是完整链接")
+            logger.debug("   ✅ 已经是完整链接")
             return url
         
         # 提取视频ID
         video_id_match = re.search(r'/video/(\d+)', url)
         if not video_id_match:
-            print("   ❌ 无法从链接中提取视频ID")
+            logger.error("   ❌ 无法从链接中提取视频ID")
             return None
         
         video_id = video_id_match.group(1)
-        print(f"   📹 视频ID: {video_id}")
+        logger.debug(f"   📹 视频ID: {video_id}")
         
         # 使用浏览器获取用户ID
         user_id = await self._get_user_id_from_browser(url)
@@ -180,7 +181,7 @@ class DouyinVideoProvider(BaseProvider):
         
         # 拼接完整链接
         complete_url = f"https://www.douyin.com/user/{user_id}/video/{video_id}"
-        print(f"   ✅ 完整链接: {complete_url[:80]}...")
+        logger.debug(f"   ✅ 完整链接: {complete_url[:80]}...")
         return complete_url
     
     async def fetch_and_parse(self) -> ScrapedDataItem:
@@ -191,20 +192,18 @@ class DouyinVideoProvider(BaseProvider):
             ScrapedDataItem: 包含视频信息的数据项
         """
         try:
-            print("\n" + "="*80)
-            print("🎬 抖音视频Provider - 开始处理")
-            print("="*80)
-            print(f"\n📎 输入链接: {self.url}")
+            logger.debug("\n" + "="*80 + "\n🎬 抖音视频Provider - 开始处理\n" + "="*80)
+            logger.debug(f"\n📎 输入链接: {self.url}")
             
             # 1. 处理链接（如果需要补全）
-            print("\n🔧 正在处理链接...")
+            logger.debug("\n🔧 正在处理链接...")
             complete_url = await self._build_complete_url(self.url)
             
             if not complete_url:
                 raise Exception("无法获取完整链接")
             
             # 2. 解析URL获取视频ID和用户ID
-            print("\n🔍 正在解析抖音链接...")
+            logger.debug("\n🔍 正在解析抖音链接...")
             parse_result = await self.downloader.parse_share_url(complete_url)
             
             if not parse_result or "aweme_id" not in parse_result:
@@ -213,20 +212,20 @@ class DouyinVideoProvider(BaseProvider):
             aweme_id = parse_result["aweme_id"]
             sec_user_id = parse_result.get("sec_user_id")
             
-            print(f"   ✅ 解析成功!")
-            print(f"   作品ID: {aweme_id}")
+            logger.info(f"   ✅ 解析成功!")
+            logger.info(f"   作品ID: {aweme_id}")
             if sec_user_id:
-                print(f"   用户ID: {sec_user_id[:20]}...")
+                logger.info(f"   用户ID: {sec_user_id[:20]}...")
             
             # 3. 从用户作品列表中查找视频（更可靠的方法）
             aweme = None
             if sec_user_id:
-                print("\n� 从用户作品列表中查找视频...")
+                logger.info("\n� 从用户作品列表中查找视频...")
                 aweme = await self.downloader.find_video_in_posts(sec_user_id, aweme_id)
             
             # 如果find_video_in_posts失败，回退到直接获取详情
             if not aweme:
-                print("\n📥 使用备用方法获取视频详情...")
+                logger.info("\n📥 使用备用方法获取视频详情...")
                 aweme = await self.downloader.fetch_aweme_detail(aweme_id)
             
             if not aweme:
@@ -250,13 +249,13 @@ class DouyinVideoProvider(BaseProvider):
             
             # 6. 自动下载视频（如果启用）
             if self.auto_download_video and storage_info:
-                print(f"\n📥 开始下载视频...")
+                logger.info(f"\n📥 开始下载视频...")
                 
                 # 获取视频下载地址
                 video_url = video_info['video'].get('download_url') or video_info['video'].get('play_url')
                 
                 if not video_url:
-                    print("   ⚠️ 未找到视频下载地址")
+                    logger.warning("   ⚠️ 未找到视频下载地址")
                 else:
                     # 构造文件名
                     author_name = video_info['author']['nickname']
@@ -276,9 +275,9 @@ class DouyinVideoProvider(BaseProvider):
                         video_info["local_video_path"] = save_path
                         # 获取文件大小
                         file_size = Path(save_path).stat().st_size / (1024*1024)
-                        print(f"   文件大小: {file_size:.2f} MB")
+                        logger.info(f"   文件大小: {file_size:.2f} MB")
                     else:
-                        print(f"   ⚠️ 视频下载失败")
+                        logger.error(f"   ⚠️ 视频下载失败")
             
             # 7. 创建ScrapedDataItem
             title = video_info.get("desc", "抖音视频")
@@ -313,14 +312,14 @@ class DouyinVideoProvider(BaseProvider):
                 save_directory=storage_info.get('article_dir') if storage_info else None
             )
             
-            print("\n" + "="*80)
-            print("✅ 抖音视频信息获取成功!")
-            print("="*80)
+            logger.info("\n" + "="*80)
+            logger.info("✅ 抖音视频信息获取成功!")
+            logger.info("="*80)
             
             return item
             
         except Exception as e:
-            print(f"\n❌ 获取抖音视频信息失败: {str(e)}")
+            logger.error(f"\n❌ 获取抖音视频信息失败: {str(e)}")
             raise
     
     def _extract_video_info(self, aweme_detail: Dict[str, Any]) -> Dict[str, Any]:

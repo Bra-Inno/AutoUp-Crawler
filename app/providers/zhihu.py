@@ -5,6 +5,7 @@ import asyncio
 import httpx
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+from loguru import logger
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
@@ -32,10 +33,10 @@ class ZhihuArticleProvider(BaseProvider):
             if os.path.exists(cookies_file):
                 with open(cookies_file, 'r', encoding='utf-8') as f:
                     cookies = json.load(f)
-                    print(f"📂 加载已保存的知乎登录状态，共 {len(cookies)} 个cookies")
-                    return cookies
+                logger.info(f"📂 加载已保存的知乎登录状态，共 {len(cookies)} 个cookies")
+                return cookies
         except Exception as e:
-            print(f"⚠️ 加载知乎登录状态失败: {e}")
+            logger.warning(f"⚠️ 加载知乎登录状态失败: {e}")
         return None
     
     def _is_question_page(self) -> bool:
@@ -131,40 +132,40 @@ class ZhihuArticleProvider(BaseProvider):
                 saved_cookies = self._load_saved_cookies()
                 if saved_cookies:
                     context.add_cookies(saved_cookies)
-                    print("✅ 知乎登录状态已加载")
+                    logger.info("✅ 知乎登录状态已加载")
                 
                 try:
-                    print(f"🌐 正在访问知乎问题页面: {self.url}")
+                    logger.debug(f"🌐 正在访问知乎问题页面: {self.url}")
                     
                     # 访问页面
                     page.goto(self.url, timeout=90000, wait_until='networkidle')
                     page.wait_for_selector('h1.QuestionHeader-title', timeout=60000)
-                    print("✅ 页面已稳定！")
+                    logger.info("✅ 页面已稳定！")
                     
                     # 检查是否需要登录
                     if page.is_visible('button.Button--primary.Button--blue:has-text("登录")'):
-                        print("\n🔐 需要登录知乎账号，请在浏览器中手动登录...")
+                        logger.debug("\n🔐 需要登录知乎账号，请在浏览器中手动登录...")
                         try:
                             page.wait_for_selector('div.AppHeader-profile', timeout=120000)
-                            print("✅ 登录成功！")
+                            logger.info("✅ 登录成功！")
                         except:
-                            print("⚠️ 登录超时，尝试继续...")
+                            logger.warning("⚠️ 登录超时，尝试继续...")
                     
                     # 点击"显示全部"按钮以展开问题描述
-                    print("\n📖 正在检查问题描述是否需要展开...")
+                    logger.debug("\n📖 正在检查问题描述是否需要展开...")
                     show_all_button_selector = 'button.QuestionRichText-more'
                     if page.is_visible(show_all_button_selector):
                         try:
                             page.click(show_all_button_selector, timeout=5000)
-                            print("  - 成功点击 '显示全部' 按钮，等待内容加载...")
+                            logger.debug("  - 成功点击 '显示全部' 按钮，等待内容加载...")
                             page.wait_for_timeout(2000)
                         except Exception as e:
-                            print(f"  - 点击 '显示全部' 按钮失败: {e}")
+                            logger.warning(f"  - 点击 \'显示全部\' 按钮失败: {e}")
                     else:
-                        print("  - 无需展开，问题描述已是全文。")
+                        logger.debug("  - 无需展开，问题描述已是全文。")
                     
                     # 等待页面稳定
-                    print(f"📝 仅处理页面前 {self.max_answers} 个回答。")
+                    logger.debug(f"📝 仅处理页面前 {self.max_answers} 个回答。")
                     page.wait_for_timeout(1000)
                     
                     # 获取页面内容
@@ -178,7 +179,7 @@ class ZhihuArticleProvider(BaseProvider):
                     question_detail_element = soup.find('div', class_='QuestionRichText')
                     question_detail = question_detail_element.get_text('\n', strip=True) if question_detail_element else ""
                     
-                    print(f"📋 问题标题: {question_title}")
+                    logger.info(f"📋 问题标题: {question_title}")
                     
                     # 创建存储结构
                     storage_info = None
@@ -201,7 +202,7 @@ class ZhihuArticleProvider(BaseProvider):
                     downloaded_images = []
                     answer_items = soup.find_all('div', class_='AnswerItem')
                     
-                    print(f"📊 页面共加载了 {len(answer_items)} 个回答，将处理前 {self.max_answers} 个。")
+                    logger.debug(f"📊 页面共加载了 {len(answer_items)} 个回答，将处理前 {self.max_answers} 个。")
                     
                     for index, item in enumerate(answer_items[:self.max_answers]):
                         # 使用字符串操作来提取信息，避免类型问题
@@ -248,7 +249,7 @@ class ZhihuArticleProvider(BaseProvider):
                             'images': answer_images
                         })
                         
-                        print(f"  ✅ 处理完成第 {index + 1} 个回答 (作者: {author}, 👍 {upvotes})")
+                        logger.debug(f"  ✅ 处理完成第 {index + 1} 个回答 (作者: {author}, 👍 {upvotes})")
                     
                     # 组装完整内容
                     full_content = f"# {question_title}\n\n"
@@ -284,7 +285,7 @@ class ZhihuArticleProvider(BaseProvider):
                         
                         storage_manager.save_article_index(storage_info, full_content[:200])
                         
-                        print(f"💾 数据已保存到: {storage_info['article_dir']}")
+                        logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
                     
                     # 转换图片路径为ImageInfo对象
                     from app.models import ImageInfo
@@ -307,7 +308,7 @@ class ZhihuArticleProvider(BaseProvider):
                     )
                 
                 except Exception as e:
-                    print(f"❌ 知乎问题页面解析失败: {e}")
+                    logger.error(f"❌ 知乎问题页面解析失败: {e}")
                     return None
                 finally:
                     context.close()
@@ -324,7 +325,7 @@ class ZhihuArticleProvider(BaseProvider):
         os.makedirs(question_image_dir, exist_ok=True)
         
         images = question_element.find_all('img')
-        print(f"🖼️ 正在处理问题描述中的图片... 发现 {len(images)} 张")
+        logger.debug(f"🖼️ 正在处理... 发现 {len(images)} 张")
         
         for img_index, img_tag in enumerate(images):
             img_url = img_tag.get('data-original') or img_tag.get('data-actualsrc') or img_tag.get('src')
@@ -348,10 +349,10 @@ class ZhihuArticleProvider(BaseProvider):
                     f.write(content)
                 
                 downloaded_images.append(local_img_path)
-                print(f"  - 问题图片已下载: {local_img_path}")
+                logger.debug(f" {local_img_path}")
                 
             except Exception as e:
-                print(f"  - ❌ 下载问题图片失败: {img_url}, 错误: {e}")
+                logger.error(f"  - ❌ 下载问题图片失败: {img_url}, 错误: {e}")
         
         return downloaded_images
     
@@ -365,7 +366,7 @@ class ZhihuArticleProvider(BaseProvider):
         os.makedirs(answer_image_dir, exist_ok=True)
         
         images = content_element.find_all('img')
-        print(f"  🖼️ 正在处理第 {answer_index + 1} 个回答中的图片，发现 {len(images)} 张")
+        logger.debug(f"  🖼️ 正在处理第 {answer_index + 1} 个回答中的图片，发现 {len(images)} 张")
         
         for img_index, img_tag in enumerate(images):
             img_url = img_tag.get('data-original') or img_tag.get('data-actualsrc') or img_tag.get('src')
@@ -389,10 +390,10 @@ class ZhihuArticleProvider(BaseProvider):
                     f.write(content)
                 
                 downloaded_images.append(local_img_path)
-                print(f"    - 图片已下载: {local_img_path}")
+                logger.debug(f" {local_img_path}")
                 
             except Exception as e:
-                print(f"    - ❌ 下载图片失败: {img_url}, 错误: {e}")
+                logger.error(f"    - ❌ 下载图片失败: {img_url}, 错误: {e}")
         
         return downloaded_images
     

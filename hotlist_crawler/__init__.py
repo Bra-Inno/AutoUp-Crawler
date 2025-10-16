@@ -33,6 +33,19 @@ try:
     from .types import PlatformType, USER_DATA_DIR
     from .models import ScrapedDataItem
     
+    # 导入配置管理功能
+    from .config import (
+        set_user_data_dir,
+        set_user_agent,
+        get_user_data_dir,
+        get_user_agent,
+        get_login_data_dir,
+        set_playwright_headless,
+        set_download_dir,
+        get_all_config,
+        print_config,
+    )
+    
     # 成功导入标志
     _import_success = True
     _import_error = None
@@ -100,6 +113,19 @@ except ImportError as e:
         validate_destination = _import_error_func
         list_supported_platforms = _import_error_func
         get_platform_info = _import_error_func
+        
+        # 配置管理函数
+        set_user_data_dir = _import_error_func
+        set_user_agent = _import_error_func
+        set_login_data_dir = _import_error_func
+        get_user_data_dir = _import_error_func
+        get_user_agent = _import_error_func
+        get_login_data_dir = _import_error_func
+        set_playwright_headless = _import_error_func
+        set_download_dir = _import_error_func
+        get_all_config = _import_error_func
+        print_config = _import_error_func
+        
         PlatformType = None
         USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")  # 固定保存到工作目录
         ScrapedDataItem = None
@@ -127,6 +153,18 @@ __all__ = [
     'is_online',        # 检查在线状态 -> bool
     'login_sync',       # 同步版登录
     'get_all_online_status', # 获取所有平台状态
+    
+    # 配置管理功能
+    'set_user_data_dir',      # 设置浏览器数据目录
+    'set_user_agent',         # 设置User-Agent
+    'set_login_data_dir',     # 设置登录数据目录
+    'get_user_data_dir',      # 获取浏览器数据目录
+    'get_user_agent',         # 获取User-Agent
+    'get_login_data_dir',     # 获取登录数据目录
+    'set_playwright_headless', # 设置无头模式
+    'set_download_dir',       # 设置下载目录
+    'get_all_config',         # 获取所有配置
+    'print_config',           # 打印配置信息
     
     # 类型和常量
     'PlatformType',     # 平台类型枚举

@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
-from app.utils import get_file_extension
+from app.file_utils import get_file_extension
 from typing import Any, List, Dict
 
 

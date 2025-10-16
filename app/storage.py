@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from app.utils import clean_filename, ensure_directory
+from app.utils import clean_filename, ensure_directory, get_file_extension
 from app.config import settings
 
 
@@ -148,20 +148,14 @@ class StorageManager:
     def save_image(self, storage_info: Dict[str, str], image_data: bytes, 
                    original_url: str, alt_text: str = "", image_index: int = 1) -> Dict[str, str]:
         """
-        保存图片文件
+        保存图片文件（自动识别正确格式）
         
         返回包含图片信息的字典
         """
         images_dir = storage_info["images_dir"]
         
-        # 尝试从URL推断扩展名
-        parsed_url = urlparse(original_url)
-        path_ext = os.path.splitext(parsed_url.path)[1]
-        if path_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
-            ext = path_ext[1:]  # 去掉点号
-        else:
-            # 默认为jpg
-            ext = 'jpg'
+        # 使用增强的格式识别（Content-Type + URL + 文件签名）
+        ext = get_file_extension(url=original_url, content=image_data)
         
         # 生成文件名
         image_filename = f"image_{image_index:03d}.{ext}"

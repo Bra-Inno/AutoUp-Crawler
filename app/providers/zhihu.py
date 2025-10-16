@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
+from app.utils import get_file_extension
 from typing import Any, List, Dict
 
 
@@ -332,15 +333,19 @@ class ZhihuArticleProvider(BaseProvider):
                 continue
             
             try:
-                img_filename = f"question_image_{img_index + 1}.jpg"
-                local_img_path = os.path.join(question_image_dir, img_filename)
-                
-                response = httpx.get(img_url, stream=True, timeout=15)
+                response = httpx.get(img_url, timeout=15)
                 response.raise_for_status()
                 
+                # 智能检测图片格式
+                content_type = response.headers.get('Content-Type')
+                content = response.content
+                ext = get_file_extension(content_type, img_url, content)
+                
+                img_filename = f"question_image_{img_index + 1}.{ext}"
+                local_img_path = os.path.join(question_image_dir, img_filename)
+                
                 with open(local_img_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
+                    f.write(content)
                 
                 downloaded_images.append(local_img_path)
                 print(f"  - 问题图片已下载: {local_img_path}")
@@ -369,15 +374,19 @@ class ZhihuArticleProvider(BaseProvider):
                 continue
             
             try:
-                img_filename = f"{img_index + 1}.jpg"
-                local_img_path = os.path.join(answer_image_dir, img_filename)
-                
-                response = httpx.get(img_url, stream=True, timeout=10)
+                response = httpx.get(img_url, timeout=10)
                 response.raise_for_status()
                 
+                # 获取正确的文件扩展名
+                content_type = response.headers.get('Content-Type')
+                content = response.content
+                ext = get_file_extension(content_type, img_url, content)
+                
+                img_filename = f"{img_index + 1}.{ext}"
+                local_img_path = os.path.join(answer_image_dir, img_filename)
+                
                 with open(local_img_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
+                    f.write(content)
                 
                 downloaded_images.append(local_img_path)
                 print(f"    - 图片已下载: {local_img_path}")

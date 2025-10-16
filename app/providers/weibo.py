@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem, ImageInfo
 from app.storage import storage_manager
+from app.utils import get_file_extension
 from typing import Any, List
 
 
@@ -294,15 +295,19 @@ class WeiboProvider(BaseProvider):
                         # 获取高质量图片URL
                         large_img_url = img_url.replace('/orj360/', '/large/').replace('/thumbnail/', '/large/')
                         
-                        img_filename = f"image_{i + 1}.jpg"
-                        local_img_path = os.path.join(storage_info["images_dir"], img_filename)
-                        
-                        response = httpx.get(large_img_url, stream=True, timeout=20)
+                        response = httpx.get(large_img_url, timeout=20)
                         response.raise_for_status()
                         
+                        # 获取正确的文件扩展名
+                        content_type = response.headers.get('Content-Type')
+                        content = response.content
+                        ext = get_file_extension(content_type, large_img_url, content)
+                        
+                        img_filename = f"image_{i + 1}.{ext}"
+                        local_img_path = os.path.join(storage_info["images_dir"], img_filename)
+                        
                         with open(local_img_path, 'wb') as f:
-                            for chunk in response.iter_content(chunk_size=8192):
-                                f.write(chunk)
+                            f.write(content)
                         
                         downloaded_images.append(local_img_path)
                         print(f"  ✅ 图片已下载: {local_img_path}")

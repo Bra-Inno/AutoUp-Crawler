@@ -18,6 +18,7 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
+from ..utils import get_file_extension
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
 
 
@@ -1316,21 +1317,19 @@ class XiaohongshuProvider(BaseProvider):
                         if not image_url:
                             continue
                         
-                        # 提取文件扩展名
-                        ext = '.webp'  # 小红书默认使用 webp 格式
-                        if 'jpg' in image_url.lower() or 'jpeg' in image_url.lower():
-                            ext = '.jpg'
-                        elif 'png' in image_url.lower():
-                            ext = '.png'
-                        
-                        # 生成文件名：使用序号命名
-                        filename = f"image_{idx:03d}{ext}"
-                        filepath = os.path.join(images_dir, filename)
-                        
                         # 下载图片
                         async with session.get(image_url) as response:
                             if response.status == 200:
                                 content = await response.read()
+                                
+                                # 智能检测图片格式
+                                content_type = response.headers.get('Content-Type')
+                                ext = get_file_extension(content_type=content_type, url=image_url, content=content)
+                                
+                                # 生成文件名：使用序号命名
+                                filename = f"image_{idx:03d}.{ext}"
+                                filepath = os.path.join(images_dir, filename)
+                                
                                 with open(filepath, 'wb') as f:
                                     f.write(content)
                                 downloaded_count += 1

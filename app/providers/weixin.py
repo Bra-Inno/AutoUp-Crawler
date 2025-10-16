@@ -46,7 +46,7 @@ class WeixinMpProvider(BaseProvider):
                     return None
                 
                 content_type = img_response.headers.get('Content-Type')
-                ext = get_file_extension(content_type)
+                ext = get_file_extension(content_type=content_type, url=img_url, content=img_response.content)
                 
                 img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
                 with open(img_save_path, 'wb') as f:
@@ -375,7 +375,7 @@ class WeixinMpProvider(BaseProvider):
                 return None
             
             content_type = response.headers.get('Content-Type')
-            ext = get_file_extension(content_type)
+            ext = get_file_extension(content_type=content_type, url=img_url, content=response.content)
             
             img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
             with open(img_save_path, 'wb') as f:

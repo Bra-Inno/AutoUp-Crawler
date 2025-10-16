@@ -3,6 +3,7 @@
 """
 import os
 import re
+import filetype
 from typing import Optional
 
 
@@ -57,25 +58,37 @@ def ensure_directory(directory: str) -> str:
     return abs_path
 
 
-def get_file_extension(content_type: Optional[str]) -> str:
+def get_file_extension(content_type: Optional[str] = None, url: Optional[str] = None, 
+                      content: Optional[bytes] = None) -> str:
     """
-    根据Content-Type获取文件扩展名
+    根据多种来源智能判断图片格式
+    
+    优先级策略:
+    1. 如果有文件内容，使用 filetype 库检测（最准确）
+    2. 如果检测失败，使用 Content-Type
+    3. 如果 Content-Type 也没有，使用 URL 扩展名
+    4. 都没有则默认返回 jpg
     
     Args:
         content_type: HTTP响应的Content-Type头
+        url: 图片URL
+        content: 图片二进制内容（用于文件类型检测，最准确）
         
     Returns:
         文件扩展名（不含点号）
     """
-    if not content_type:
-        return 'jpg'
+    if content:
+        try:
+            kind = filetype.guess(content)
+            if kind is not None:
+                # filetype 返回的扩展名已经是标准格式
+                ext = kind.extension
+                # 标准化：jpeg -> jpg
+                return 'jpg' if ext == 'jpeg' else ext
+        except Exception:
+            pass
     
-    if 'image' in content_type:
-        ext = content_type.split('/')[-1]
-        if ext == "jpeg":
-            return "jpg"
-        return ext
-    
+    # 默认返回 jpg
     return 'jpg'
 
 

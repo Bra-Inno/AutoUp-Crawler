@@ -17,6 +17,7 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.dy_downloader import DouyinVideoDownloader
+from ..config import settings
 
 
 class DouyinVideoProvider(BaseProvider):
@@ -71,8 +72,7 @@ class DouyinVideoProvider(BaseProvider):
             str: Cookie字符串，失败返回None
         """
         try:
-            user_data_dir = "./chrome_user_data"
-            cookies_file = os.path.join(user_data_dir, "login_data", "douyin_cookies.json")
+            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "douyin_cookies.json")
             
             if os.path.exists(cookies_file):
                 with open(cookies_file, 'r', encoding='utf-8') as f:
@@ -91,28 +91,18 @@ class DouyinVideoProvider(BaseProvider):
     
     def _load_user_agent(self) -> str:
         """
-        加载保存的User-Agent
+        加载User-Agent,优先级:
+        1. user_agent.txt 文件
+        2. settings.USER_AGENT 配置
         
         Returns:
-            str: User-Agent字符串，失败返回默认值
+            str: User-Agent字符串
         """
-        try:
-            user_data_dir = "./chrome_user_data"
-            ua_file = os.path.join(user_data_dir, "login_data", "user_agent.txt")
-            
-            if os.path.exists(ua_file):
-                with open(ua_file, 'r', encoding='utf-8') as f:
-                    user_agent = f.read().strip()
-                    if user_agent:
-                        print(f"📂 加载已保存的User-Agent")
-                        return user_agent
-        except Exception as e:
-            print(f"⚠️ 加载User-Agent失败: {e}")
+
         
-        # 返回默认User-Agent
-        default_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-        print(f"📝 使用默认User-Agent")
-        return default_ua
+        # 使用配置文件中的User-Agent
+        print(f"📝 使用配置的User-Agent")
+        return settings.USER_AGENT
     
     async def _get_user_id_from_browser(self, video_url: str) -> Optional[str]:
         """

@@ -9,7 +9,7 @@ import httpx
 
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem, ImageInfo
-from app.utils import get_file_extension
+from app.file_utils import get_file_extension
 from app.config import settings
 from app.storage import storage_manager
 
@@ -240,13 +240,11 @@ class WeixinMpProvider(BaseProvider):
         """同步版本的 Playwright 抓取实现"""
         with sync_playwright() as playwright:
             # 使用持久化上下文，减少反爬虫检测
-            user_data_dir = "./chrome_user_data"
-            
             try:
                 context = playwright.chromium.launch_persistent_context(
-                    user_data_dir,
+                    settings.USER_DATA_DIR,
                     headless=settings.PLAYWRIGHT_HEADLESS,
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+                    user_agent=settings.USER_AGENT,
                     ignore_default_args=['--enable-automation'],
                     args=['--disable-blink-features=AutomationControlled']
                 )

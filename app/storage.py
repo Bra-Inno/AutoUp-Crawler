@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Dict, List
 from urllib.parse import urlparse
 
-from app.utils import clean_filename, ensure_directory, get_file_extension
+from app.file_utils import clean_filename, ensure_directory, get_file_extension
 from app.config import settings
 
 

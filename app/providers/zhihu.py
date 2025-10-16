@@ -9,6 +9,7 @@ from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
 from app.file_utils import get_file_extension
+from app.config import settings
 from typing import Any, List, Dict
 
 
@@ -23,12 +24,11 @@ class ZhihuArticleProvider(BaseProvider):
                  force_save: bool = True, max_answers: int = 3):
         super().__init__(url, rules, save_images, output_format, force_save, "zhihu")
         self.max_answers = max_answers
-        self.user_data_dir = "./chrome_user_data"
     
     def _load_saved_cookies(self):
         """加载已保存的登录cookies"""
         try:
-            cookies_file = os.path.join(self.user_data_dir, "login_data", "zhihu_cookies.json")
+            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "zhihu_cookies.json")
             if os.path.exists(cookies_file):
                 with open(cookies_file, 'r', encoding='utf-8') as f:
                     cookies = json.load(f)
@@ -117,10 +117,10 @@ class ZhihuArticleProvider(BaseProvider):
             with sync_playwright() as playwright:
                 # 创建持久化上下文，保持登录状态
                 context = playwright.chromium.launch_persistent_context(
-                    self.user_data_dir,
+                    settings.USER_DATA_DIR,
                     headless=True,  # 抓取时使用无头模式
                     slow_mo=100,
-                    user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+                    user_agent=settings.USER_AGENT,
                     ignore_default_args=['--enable-automation'],
                     args=['--disable-blink-features=AutomationControlled']
                 )

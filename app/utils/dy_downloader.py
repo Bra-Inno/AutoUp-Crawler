@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlencode
 from typing import Dict, Any, Optional
+from ..config import settings
 
 # ============================================
 # 配置区域
@@ -21,8 +22,7 @@ from typing import Dict, Any, Optional
 def load_cookie_from_browser() -> str:
     """从浏览器数据加载Cookie"""
     try:
-        user_data_dir = "./chrome_user_data"
-        cookies_file = os.path.join(user_data_dir, "login_data", "douyin_cookies.json")
+        cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "douyin_cookies.json")
         
         if os.path.exists(cookies_file):
             with open(cookies_file, 'r', encoding='utf-8') as f:
@@ -36,21 +36,9 @@ def load_cookie_from_browser() -> str:
     return ""
 
 def load_user_agent_from_browser() -> str:
-    """从浏览器数据加载User-Agent"""
-    try:
-        user_data_dir = "./chrome_user_data"
-        ua_file = os.path.join(user_data_dir, "login_data", "user_agent.txt")
-        
-        if os.path.exists(ua_file):
-            with open(ua_file, 'r', encoding='utf-8') as f:
-                user_agent = f.read().strip()
-                if user_agent:
-                    print(f"📂 从浏览器数据加载User-Agent")
-                    return user_agent
-    except Exception as e:
-        print(f"⚠️ 加载User-Agent失败: {e}")
-    
-    return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+    # 使用配置文件中的User-Agent
+    print(f"📝 使用配置的User-Agent")
+    return settings.USER_AGENT
 
 # 默认从浏览器数据加载（如果可用）
 COOKIE = load_cookie_from_browser()

@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
+from app.config import settings
 import httpx
 
 
@@ -74,8 +75,7 @@ class BilibiliVideoProvider(BaseProvider):
     def _load_saved_cookies(self) -> Optional[str]:
         """加载已保存的B站登录cookies"""
         try:
-            user_data_dir = "./chrome_user_data"
-            cookies_file = os.path.join(user_data_dir, "login_data", "bilibili_cookies.json")
+            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "bilibili_cookies.json")
             if os.path.exists(cookies_file):
                 with open(cookies_file, 'r', encoding='utf-8') as f:
                     cookies_list = json.load(f)

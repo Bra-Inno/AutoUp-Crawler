@@ -20,6 +20,7 @@ from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
 from ..file_utils import get_file_extension
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
+from ..config import settings
 
 
 class XiaohongshuProvider(BaseProvider):
@@ -86,7 +87,7 @@ class XiaohongshuProvider(BaseProvider):
     
     def _load_saved_cookies(self) -> str:
         """从浏览器数据加载保存的cookies"""
-        cookie_file = Path("chrome_user_data/login_data/xiaohongshu_cookies.json")
+        cookie_file = Path(settings.LOGIN_DATA_DIR) / "xiaohongshu_cookies.json"
         if cookie_file.exists():
             try:
                 with open(cookie_file, 'r', encoding='utf-8') as f:
@@ -119,21 +120,10 @@ class XiaohongshuProvider(BaseProvider):
         return ""
     
     def _load_user_agent(self) -> str:
-        """从浏览器数据加载User-Agent"""
-        ua_file = Path("chrome_user_data/login_data/user_agent.txt")
-        if ua_file.exists():
-            try:
-                with open(ua_file, 'r', encoding='utf-8') as f:
-                    user_agent = f.read().strip()
-                    logger.info("成功加载保存的User-Agent")
-                    return user_agent
-            except Exception as e:
-                logger.warning(f"加载User-Agent失败: {e}")
         
-        # 返回默认User-Agent
-        default_ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        logger.info("使用默认User-Agent")
-        return default_ua
+        # 使用配置文件中的User-Agent
+        logger.info("使用配置的User-Agent")
+        return settings.USER_AGENT
     
     async def fetch_and_parse(self, note_url: Optional[str] = None) -> Optional[ScrapedDataItem]:
         """

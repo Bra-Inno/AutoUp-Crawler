@@ -135,6 +135,10 @@ class StorageManager:
         
         final_content = "".join(markdown_parts)
         
+        # 清理多余的连续换行：将3个或以上连续的换行符替换为1个换行符
+        import re
+        final_content = re.sub(r'\n{3,}', '\n', final_content)
+        
         with open(markdown_file, 'w', encoding='utf-8') as f:
             f.write(final_content)
         

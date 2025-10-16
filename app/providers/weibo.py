@@ -193,14 +193,18 @@ class WeiboProvider(BaseProvider):
                         full_content += f"**图片 ({len(downloaded_images)}张)**:\\n"
                         for img_path in downloaded_images:
                             img_name = os.path.basename(img_path)
-                            full_content += f"![{img_name}]({img_path})\\n"
+                            # 使用相对路径在Markdown中引用图片
+                            relative_path = f"images/{img_name}"
+                            full_content += f"![{img_name}]({relative_path})\\n"
                         full_content += "\\n"
                     
                     if downloaded_videos:
                         full_content += f"**视频 ({len(downloaded_videos)}个)**:\\n"
                         for video_path in downloaded_videos:
                             video_name = os.path.basename(video_path)
-                            full_content += f"- [{video_name}]({video_path})\\n"
+                            # 使用相对路径在Markdown中引用视频
+                            relative_path = f"attachments/{video_name}"
+                            full_content += f"- [{video_name}]({relative_path})\\n"
                         full_content += "\\n"
                     
                     # 保存内容

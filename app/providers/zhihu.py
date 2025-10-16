@@ -413,6 +413,8 @@ class ZhihuArticleProvider(BaseProvider):
                 markdown += "**相关图片:**\n\n"
                 for img_path in answer['images']:
                     img_name = os.path.basename(img_path)
-                    markdown += f"![{img_name}]({img_path})\n\n"
+                    # 使用相对路径在Markdown中引用图片
+                    relative_path = f"images/{img_name}"
+                    markdown += f"![{img_name}]({relative_path})\n\n"
         
         return markdown

@@ -17,7 +17,17 @@ from hotlist_crawler import PlatformType
 
 ### 2. is_online(platform) -> bool
 - **功能：** 检查指定平台是否有有效的登录状态
+
 - **返回：** 是否在线
+
+  > 各个平台使用的定向网址：
+  >
+  > - 知乎："https://www.zhihu.com/settings/profile"（设置页面）
+  > - 微博："https://weibo.com/set/index"（设置页面）
+  > - 微信：爬取固定的一个帖子来判断(https://mp.weixin.qq.com/s/T7PYt7UTYiKVT67ENmvtnw)，检查页面是否包含文章内容
+  > - B站："https://account.bilibili.com/account/home"（个人中心）
+  > - 小红书："https://www.xiaohongshu.com/explore/683fe17f0000000023017c6a?xsec_token=ABiqWIzMrzlIqlcQ8I5Ywig4rtiMtgvr2LQ5Jp02z1EDw="（一个帖子链接，转跳原因可能是xsec_token过期了）
+  > - 抖音："https://www.douyin.com/user/self?from_tab_name=main&showTab=record"（个人页面），检查是否存在登录框元素（支持多个ID: "login-full-panel-icv6ob2bq1c0" 或 "douyin-login-new-id"）
 
 ### 3. get_all_online_status() -> Dict
 - **功能：** 获取所有平台的登录状态
@@ -94,6 +104,10 @@ from hotlist_crawler import PlatformType
 | **工具** | validate_destination | 目录验证等辅助功能 |
 
 ---
+
+
+
+
 
 ## 🌟 核心特性
 

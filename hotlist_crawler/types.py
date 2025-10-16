@@ -25,3 +25,14 @@ PLATFORM_LOGIN_URLS = {
     PlatformType.DOUYIN: "https://www.douyin.com/",
     PlatformType.BILIBILI: "https://passport.bilibili.com/login"
 }
+
+# 平台登录状态检测URL映射
+PLATFORM_CHECK_URLS = {
+    PlatformType.ZHIHU: "https://www.zhihu.com/settings/profile",
+    PlatformType.WEIBO: "https://weibo.com/set/index",
+    PlatformType.XIAOHONGSHU: "https://www.xiaohongshu.com/explore/683fe17f0000000023017c6a?xsec_token=ABiqWIzMrzlIqlcQ8I5Ywig4rtiMtgvr2LQ5Jp02z1EDw=",
+    PlatformType.BILIBILI: "https://account.bilibili.com/account/home",
+    # 微信和抖音暂不实现
+    # PlatformType.WEIXIN: None,
+    # PlatformType.DOUYIN: None,
+}

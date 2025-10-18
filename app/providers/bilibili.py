@@ -145,24 +145,16 @@ class BilibiliVideoProvider(BaseProvider):
                 raise Exception(f"API请求失败: {str(e)}")
 
     async def get_video_detail(self) -> Dict[str, Any]:
-        """
-        获取视频详细信息
-
-        Returns:
-            包含视频详细信息的字典
-        """
-        params = {"bvid": self.bvid}
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL, params)
+        """获取视频详细信息"""
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL, {"bvid": self.bvid})
 
     async def get_video_tags(self) -> Dict[str, Any]:
         """获取视频标签"""
-        params = {"bvid": self.bvid}
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS, params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS, {"bvid": self.bvid})
 
     async def get_video_pages(self) -> Dict[str, Any]:
         """获取视频分P信息"""
-        params = {"bvid": self.bvid}
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, {"bvid": self.bvid})
 
     async def get_video_download_url(self, cid: Optional[int] = None, qn: int = 80) -> Dict[str, Any]:
         """

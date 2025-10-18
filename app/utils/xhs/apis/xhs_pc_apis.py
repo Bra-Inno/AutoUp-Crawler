@@ -1,4 +1,3 @@
-# encoding: utf-8
 import json
 import re
 import urllib
@@ -13,12 +12,6 @@ from ..xhs_utils.xhs_util import (
 )
 
 
-"""
-    获小红书的api
-    :param cookies_str: 你的cookies
-"""
-
-
 class XHS_Apis:
     def __init__(self):
         self.base_url = "https://edith.xiaohongshu.com"
@@ -26,7 +19,8 @@ class XHS_Apis:
     def get_homefeed_all_channel(self, cookies_str: str, proxies: dict = None):
         """
         获取主页的所有频道
-        返回主页的所有频道
+
+        :param cookies_str: 你的cookies
         """
         res_json = None
         try:

@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
 from playwright.sync_api import sync_playwright
 
-
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem, ImageInfo
 from app.file_utils import get_file_extension
@@ -403,9 +402,7 @@ class WeixinMpProvider(BaseProvider):
         try:
             img_filename = f"image_{self.img_counter['count']}"
 
-            import requests
-
-            response = requests.get(img_url, timeout=30)
+            response = httpx.get(img_url, timeout=30)
             response.raise_for_status()
 
             # 检查文件大小
@@ -499,9 +496,7 @@ class WeixinMpProvider(BaseProvider):
             return None
 
         try:
-            import requests
-
-            response = requests.get(img_url, timeout=30)
+            response = httpx.get(img_url, timeout=30)
             response.raise_for_status()
 
             # 检查文件大小

@@ -1,6 +1,4 @@
-import redis.asyncio as redis
 import json
-import asyncio
 from typing import Optional, Dict, Any
 from loguru import logger
 
@@ -35,9 +33,7 @@ class InMemoryCache:
         # 清理过期项（简单实现）
         if len(self._cache) > 1000:  # 防止内存无限增长
             current_time = time.time()
-            expired_keys = [
-                k for k, v in self._cache.items() if current_time >= v["expires_at"]
-            ]
+            expired_keys = [k for k, v in self._cache.items() if current_time >= v["expires_at"]]
             for k in expired_keys:
                 del self._cache[k]
 
@@ -61,11 +57,17 @@ class CacheManager:
 
         self._init_attempted = True
         try:
+            import redis.asyncio as redis
+
             self.redis_client = redis.from_url(self.redis_url)
             # 测试连接
             await self.redis_client.ping()
             self.use_redis = True
             logger.info("✅ Redis 连接成功")
+        except ImportError as e:
+            logger.error(f"⚠️  未导入 redis 库，使用内存缓存")
+            self.use_redis = False
+            self.redis_client = None
         except Exception as e:
             logger.error(f"⚠️  Redis 连接失败，使用内存缓存: {e}")
             self.use_redis = False

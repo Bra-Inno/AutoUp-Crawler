@@ -4,14 +4,15 @@ hotlist_crawler 登录模块 - 符合API设计规范
 """
 
 import os
-import asyncio
+import time
 import json
+import asyncio
+from loguru import logger
 from typing import Dict, Optional
 from playwright.async_api import async_playwright
-import time
+
 
 from .types import PlatformType, USER_DATA_DIR, PLATFORM_LOGIN_URLS, PLATFORM_CHECK_URLS
-from loguru import logger
 
 
 def login(platform: PlatformType, headless: bool = False) -> bool:

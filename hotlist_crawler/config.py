@@ -1,11 +1,5 @@
-"""
-hotlist_crawler 配置管理模块
-提供动态修改配置的接口,支持保存到 .env 文件
-"""
-
 import sys
 import os
-from typing import Optional
 from pathlib import Path
 from loguru import logger
 

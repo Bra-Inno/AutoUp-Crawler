@@ -1,4 +1,3 @@
-# hotlist_crawler package
 """
 通用热榜内容爬虫包
 支持知乎、微博、微信公众号等平台的内容抓取
@@ -185,11 +184,11 @@ __all__ = [
     # 数据模型
     "ScrapedDataItem",  # 数据项模型
     # 便捷别名
-    "zhihu",  # scrape_zhihu 的别名
-    "weibo",  # scrape_weibo 的别名
-    "weixin",  # scrape_weixin 的别名
-    "bilibili",  # scrape_bilibili 的别名
-    "douyin",  # scrape_douyin 的别名
+    "zhihu",
+    "weibo",
+    "weixin",
+    "bilibili",
+    "douyin",
     # 版本信息
     "__version__",
 ]
@@ -246,7 +245,6 @@ def health_check() -> Dict[str, Any]:
 
 # 包初始化时的提示信息
 if _import_success:
-    # 成功导入时的静默模式，避免过多输出
     pass
 else:
     logger.warning(f"⚠️ hotlist_crawler包导入时遇到问题: {_import_error}")

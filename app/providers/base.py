@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-import httpx
 from typing import Any
+import httpx
 
 
 class BaseProvider(ABC):

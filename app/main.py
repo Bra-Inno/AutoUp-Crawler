@@ -1,5 +1,6 @@
 import sys
 import asyncio
+from loguru import logger
 from fastapi import FastAPI, HTTPException
 from urllib.parse import urlparse
 from datetime import datetime, timezone, timedelta
@@ -13,7 +14,7 @@ from app.providers.weixin import WeixinMpProvider
 from app.providers.weibo import WeiboProvider
 from app.providers.bilibili import BilibiliVideoProvider
 from app.providers.douyin import DouyinVideoProvider
-from loguru import logger
+
 
 # Windows 系统上修复异步问题
 if sys.platform == "win32":

@@ -1,13 +1,8 @@
-"""
-抖音视频Provider - 支持不完整链接自动获取用户ID
-使用Playwright浏览器自动化技术获取完整链接
-从浏览器数据自动加载Cookie和User-Agent
-"""
-
-import asyncio
 import re
 import os
 import json
+import asyncio
+from loguru import logger
 from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -18,7 +13,6 @@ from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.dy_downloader import DouyinVideoDownloader
 from ..config import settings
-from loguru import logger
 
 
 class DouyinVideoProvider(BaseProvider):

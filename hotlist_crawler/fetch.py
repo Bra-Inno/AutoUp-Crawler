@@ -6,6 +6,7 @@ fetch 函数实现
 import os
 import sys
 import asyncio
+from loguru import logger
 from typing import List, Optional
 
 # 添加app目录到路径，以便导入现有模块
@@ -24,13 +25,9 @@ try:
     from app.providers.xhs import XiaohongshuProvider
     from app.providers.douyin import DouyinVideoProvider
     from app.config import settings
-    from app.models import ScrapedDataItem
     from app.storage import storage_manager
 except ImportError as e:
     raise ImportError(f"无法导入核心模块: {e}")
-
-from .types import PlatformType
-from loguru import logger
 
 
 def identify_platform_from_url(url: str) -> Optional[str]:

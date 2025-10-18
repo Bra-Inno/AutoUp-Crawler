@@ -2,8 +2,8 @@
 平台类型定义和常量
 """
 
-from enum import StrEnum
 import os
+from enum import StrEnum
 
 
 class PlatformType(StrEnum):
@@ -36,7 +36,7 @@ PLATFORM_CHECK_URLS = {
     PlatformType.WEIBO: "https://weibo.com/set/index",
     PlatformType.XIAOHONGSHU: "https://www.xiaohongshu.com/explore/683fe17f0000000023017c6a?xsec_token=ABiqWIzMrzlIqlcQ8I5Ywig4rtiMtgvr2LQ5Jp02z1EDw=",
     PlatformType.BILIBILI: "https://account.bilibili.com/account/home",
-    # 微信和抖音暂不实现
+    # 微信和抖音使用其他方法，详情见README.md
     # PlatformType.WEIXIN: None,
     # PlatformType.DOUYIN: None,
 }

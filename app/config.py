@@ -10,8 +10,8 @@ class Settings(BaseSettings):
 
     # 从 .env 文件加载配置
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="allow"  # 允许额外的字段
-    )
+        env_file=".env", env_file_encoding="utf-8", extra="allow"
+    )  # 允许额外的字段
 
     # Redis 配置
     REDIS_URL: str

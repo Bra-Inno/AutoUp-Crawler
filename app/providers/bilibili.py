@@ -5,14 +5,15 @@ B站视频Provider - 支持获取视频信息和下载链接
 import os
 import re
 import json
+import httpx
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
+from loguru import logger
+
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
 from app.config import settings
-import httpx
-from loguru import logger
 
 
 class BilibiliVideoEndpoints:
@@ -86,19 +87,13 @@ class BilibiliVideoProvider(BaseProvider):
     def _load_saved_cookies(self) -> Optional[str]:
         """加载已保存的B站登录cookies"""
         try:
-            cookies_file = os.path.join(
-                settings.LOGIN_DATA_DIR, "bilibili_cookies.json"
-            )
+            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "bilibili_cookies.json")
             if os.path.exists(cookies_file):
                 with open(cookies_file, "r", encoding="utf-8") as f:
                     cookies_list = json.load(f)
                     # 转换为cookie字符串
-                    cookie_str = "; ".join(
-                        [f"{c['name']}={c['value']}" for c in cookies_list]
-                    )
-                    logger.info(
-                        f"📂 加载已保存的B站登录状态，共 {len(cookies_list)} 个cookies"
-                    )
+                    cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
+                    logger.info(f"📂 加载已保存的B站登录状态，共 {len(cookies_list)} 个cookies")
                     return cookie_str
         except Exception as e:
             logger.warning(f"⚠️ 加载B站登录状态失败: {e}")
@@ -123,9 +118,7 @@ class BilibiliVideoProvider(BaseProvider):
 
         raise ValueError(f"无法从URL中提取BVID: {url}")
 
-    async def _request_api(
-        self, endpoint: str, params: dict | None = None
-    ) -> Dict[str, Any]:
+    async def _request_api(self, endpoint: str, params: dict | None = None) -> Dict[str, Any]:
         """
         统一的API请求方法
 
@@ -143,9 +136,7 @@ class BilibiliVideoProvider(BaseProvider):
         if self.cookies:
             headers["Cookie"] = self.cookies
 
-        async with httpx.AsyncClient(
-            follow_redirects=True, headers=headers, timeout=30.0
-        ) as client:
+        async with httpx.AsyncClient(follow_redirects=True, headers=headers, timeout=30.0) as client:
             try:
                 response = await client.get(endpoint)
                 response.raise_for_status()
@@ -173,9 +164,7 @@ class BilibiliVideoProvider(BaseProvider):
         params = {"bvid": self.bvid}
         return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, params)
 
-    async def get_video_download_url(
-        self, cid: Optional[int] = None, qn: int = 80
-    ) -> Dict[str, Any]:
+    async def get_video_download_url(self, cid: Optional[int] = None, qn: int = 80) -> Dict[str, Any]:
         """
         获取视频下载链接
 
@@ -217,9 +206,7 @@ class BilibiliVideoProvider(BaseProvider):
             detail = await self.get_video_detail()
 
             if detail.get("code") != 0:
-                raise Exception(
-                    f"获取视频详情失败: {detail.get('message', '未知错误')}"
-                )
+                raise Exception(f"获取视频详情失败: {detail.get('message', '未知错误')}")
 
             data = detail.get("data", {})
 
@@ -251,14 +238,8 @@ class BilibiliVideoProvider(BaseProvider):
                     "danmaku": data.get("stat", {}).get("danmaku"),  # 弹幕
                 },
                 "cid": data.get("cid"),
-                "tags": (
-                    tags_result.get("data", []) if tags_result.get("code") == 0 else []
-                ),
-                "pages": (
-                    pages_result.get("data", [])
-                    if pages_result.get("code") == 0
-                    else []
-                ),
+                "tags": (tags_result.get("data", []) if tags_result.get("code") == 0 else []),
+                "pages": (pages_result.get("data", []) if pages_result.get("code") == 0 else []),
             }
 
             # 格式化内容文本
@@ -281,27 +262,19 @@ class BilibiliVideoProvider(BaseProvider):
 
                 # 保存markdown格式
                 markdown_content = self._format_video_info_markdown(video_info)
-                storage_manager.save_markdown_content(
-                    storage_info, markdown_content, video_info["title"]
-                )
+                storage_manager.save_markdown_content(storage_info, markdown_content, video_info["title"])
 
                 # 保存文章索引
-                storage_manager.save_article_index(
-                    storage_info, video_info.get("desc", "")[:200]
-                )
+                storage_manager.save_article_index(storage_info, video_info.get("desc", "")[:200])
 
                 # 自动下载视频（如果启用）
                 if self.auto_download_video:
                     logger.info(f"\n🎬 开始下载视频...")
                     download_result = await self.download_video(qn=self.video_quality)
                     if download_result.get("success"):
-                        logger.info(
-                            f"✅ 视频已保存到: {download_result.get('file_path')}"
-                        )
+                        logger.info(f"✅ 视频已保存到: {download_result.get('file_path')}")
                     else:
-                        logger.error(
-                            f"❌ 视频下载失败: {download_result.get('message')}"
-                        )
+                        logger.error(f"❌ 视频下载失败: {download_result.get('message')}")
 
             return ScrapedDataItem(
                 title=video_info["title"],
@@ -309,9 +282,7 @@ class BilibiliVideoProvider(BaseProvider):
                 content=content_text,
                 markdown_content=self._format_video_info_markdown(video_info),
                 images=[],
-                save_directory=(
-                    storage_info.get("article_dir") if storage_info else None
-                ),
+                save_directory=(storage_info.get("article_dir") if storage_info else None),
             )
 
         except Exception as e:
@@ -341,9 +312,7 @@ class BilibiliVideoProvider(BaseProvider):
         if len(info["pages"]) > 1:
             lines.append(f"\n分P信息 (共{len(info['pages'])}P):")
             for page in info["pages"]:
-                lines.append(
-                    f"  P{page.get('page')}: {page.get('part')} ({page.get('duration')}秒)"
-                )
+                lines.append(f"  P{page.get('page')}: {page.get('part')} ({page.get('duration')}秒)")
 
         return "\n".join(lines)
 
@@ -383,9 +352,7 @@ class BilibiliVideoProvider(BaseProvider):
             lines.append(f"## 📑 分P信息 (共{len(info['pages'])}P)")
             lines.append("")
             for page in info["pages"]:
-                lines.append(
-                    f"- **P{page.get('page')}**: {page.get('part')} ({page.get('duration')}秒)"
-                )
+                lines.append(f"- **P{page.get('page')}**: {page.get('part')} ({page.get('duration')}秒)")
             lines.append("")
 
         return "\n".join(lines)
@@ -488,9 +455,7 @@ class BilibiliVideoProvider(BaseProvider):
         except Exception as e:
             return {"success": False, "message": str(e)}
 
-    async def download_video(
-        self, qn: int = 80, page: int = 1, merge_video: bool = True
-    ) -> Dict[str, Any]:
+    async def download_video(self, qn: int = 80, page: int = 1, merge_video: bool = True) -> Dict[str, Any]:
         """
         下载视频到本地
 
@@ -574,13 +539,9 @@ class BilibiliVideoProvider(BaseProvider):
 
                 # 合并视频和音频
                 if merge_video:
-                    output_file = os.path.join(
-                        video_dir, f"{storage_info['safe_title']}.mp4"
-                    )
+                    output_file = os.path.join(video_dir, f"{storage_info['safe_title']}.mp4")
                     logger.info(f"🔄 合并视频和音频...")
-                    success = await self._merge_video_audio(
-                        video_file, audio_file, output_file
-                    )
+                    success = await self._merge_video_audio(video_file, audio_file, output_file)
 
                     if success:
                         # 删除临时文件
@@ -590,15 +551,11 @@ class BilibiliVideoProvider(BaseProvider):
                         return {
                             "success": True,
                             "file_path": output_file,
-                            "title": (
-                                f"{title} - {part_title}" if len(pages) > 1 else title
-                            ),
+                            "title": (f"{title} - {part_title}" if len(pages) > 1 else title),
                             "format": "mp4",
                         }
                     else:
-                        logger.warning(
-                            f"⚠️ 视频和音频已下载，但合并失败。文件保存在: {video_dir}"
-                        )
+                        logger.warning(f"⚠️ 视频和音频已下载，但合并失败。文件保存在: {video_dir}")
                         return {
                             "success": True,
                             "video_file": video_file,
@@ -617,9 +574,7 @@ class BilibiliVideoProvider(BaseProvider):
             durl = download_data.get("durl")
             if durl:
                 video_url = durl[0].get("url")
-                output_file = os.path.join(
-                    video_dir, f"{storage_info['safe_title']}.flv"
-                )
+                output_file = os.path.join(video_dir, f"{storage_info['safe_title']}.flv")
 
                 logger.info(f"📥 开始下载视频...")
                 await self._download_file(video_url, output_file)
@@ -637,9 +592,7 @@ class BilibiliVideoProvider(BaseProvider):
         except Exception as e:
             return {"success": False, "message": f"下载失败: {str(e)}"}
 
-    async def _download_file(
-        self, url: str, save_path: str, chunk_size: int = 1024 * 1024
-    ):
+    async def _download_file(self, url: str, save_path: str, chunk_size: int = 1024 * 1024):
         """
         下载文件
 
@@ -652,9 +605,7 @@ class BilibiliVideoProvider(BaseProvider):
         if self.cookies:
             headers["Cookie"] = self.cookies
 
-        async with httpx.AsyncClient(
-            follow_redirects=True, headers=headers, timeout=300.0
-        ) as client:
+        async with httpx.AsyncClient(follow_redirects=True, headers=headers, timeout=300.0) as client:
             async with client.stream("GET", url) as response:
                 response.raise_for_status()
 
@@ -676,9 +627,7 @@ class BilibiliVideoProvider(BaseProvider):
 
                 print()  # 换行
 
-    async def _merge_video_audio(
-        self, video_file: str, audio_file: str, output_file: str
-    ) -> bool:
+    async def _merge_video_audio(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """
         合并视频和音频（支持多种方案）
         优先级: ffmpeg > moviepy > 纯Python方案
@@ -709,9 +658,7 @@ class BilibiliVideoProvider(BaseProvider):
 
         return False
 
-    async def _merge_with_ffmpeg(
-        self, video_file: str, audio_file: str, output_file: str
-    ) -> bool:
+    async def _merge_with_ffmpeg(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """使用 ffmpeg 合并（最优方案）"""
         try:
             import subprocess
@@ -758,9 +705,7 @@ class BilibiliVideoProvider(BaseProvider):
             logger.error(f"❌ ffmpeg合并失败: {e}")
             return False
 
-    async def _merge_with_moviepy(
-        self, video_file: str, audio_file: str, output_file: str
-    ) -> bool:
+    async def _merge_with_moviepy(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """使用 moviepy 合并（纯Python方案）"""
         try:
             # 尝试导入 moviepy
@@ -782,9 +727,7 @@ class BilibiliVideoProvider(BaseProvider):
             audio = AudioFileClip(audio_file)
 
             # 合并
-            final_video = video.with_audio(
-                audio
-            )  # 2.x 使用 with_audio 而不是 set_audio
+            final_video = video.with_audio(audio)  # 2.x 使用 with_audio 而不是 set_audio
 
             # 写入文件
             final_video.write_videofile(
@@ -808,9 +751,7 @@ class BilibiliVideoProvider(BaseProvider):
             logger.error(f"❌ moviepy合并失败: {e}")
             return False
 
-    async def _merge_simple(
-        self, video_file: str, audio_file: str, output_file: str
-    ) -> bool:
+    async def _merge_simple(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """简单的MP4容器合并（使用mp4box格式，兼容性最好）"""
         try:
             logger.info("🔄 使用简单方法合并...")

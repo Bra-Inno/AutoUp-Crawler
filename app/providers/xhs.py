@@ -584,10 +584,10 @@ class XiaohongshuProvider(BaseProvider):
         # 统计数据
         interact_info = note.get("interact_info", {})
         statistics = {
-            "liked_count": interact_info.get("liked_count", 0),  # 点赞数
-            "collected_count": interact_info.get("collected_count", 0),  # 收藏数
-            "comment_count": interact_info.get("comment_count", 0),  # 评论数
-            "share_count": interact_info.get("share_count", 0),  # 分享数
+            "liked_count": interact_info.get("liked_count", 0),
+            "collected_count": interact_info.get("collected_count", 0),
+            "comment_count": interact_info.get("comment_count", 0),
+            "share_count": interact_info.get("share_count", 0),
         }
 
         # 作者信息
@@ -652,7 +652,7 @@ class XiaohongshuProvider(BaseProvider):
             "content": content_info,
             "hashtags": hashtags,
             "link": f"https://www.xiaohongshu.com/explore/{note_id}",
-            "raw_data": note,  # 保留原始数据以备需要
+            "raw_data": note,  # 原始数据
         }
 
     @staticmethod

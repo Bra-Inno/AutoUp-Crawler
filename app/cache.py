@@ -2,8 +2,9 @@ import redis.asyncio as redis
 import json
 import asyncio
 from typing import Optional, Dict, Any
-from app.config import settings
 from loguru import logger
+
+from app.config import settings
 
 
 class InMemoryCache:

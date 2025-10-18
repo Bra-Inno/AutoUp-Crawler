@@ -4,11 +4,10 @@ import random
 import os
 import execjs
 from pathlib import Path
+
 from ..xhs_utils.cookie_util import trans_cookies
 
-# 获取正确的静态文件路径
-# xhs_util.py 在: app/utils/xhs/xhs_utils/
-# 静态文件在: app/static/
+
 current_dir = Path(__file__).parent
 static_dir = current_dir.parent.parent.parent / "static"
 

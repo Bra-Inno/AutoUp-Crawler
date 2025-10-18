@@ -3,13 +3,15 @@ import json
 import re
 import urllib
 import httpx
+from loguru import logger
+
 from ..xhs_utils.xhs_util import (
     splice_str,
     generate_request_params,
     generate_x_b3_traceid,
     get_common_headers,
 )
-from loguru import logger
+
 
 """
     获小红书的api

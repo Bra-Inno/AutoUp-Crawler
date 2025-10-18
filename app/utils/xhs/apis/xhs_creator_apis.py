@@ -1,7 +1,8 @@
 import httpx
+from loguru import logger
+
 from ..xhs_utils.cookie_util import trans_cookies
 from ..xhs_utils.xhs_creator_util import get_common_headers, generate_xs, splice_str
-from loguru import logger
 
 
 class XHS_Creator_Apis:

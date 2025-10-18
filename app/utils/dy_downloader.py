@@ -12,12 +12,9 @@ import json
 from pathlib import Path
 from urllib.parse import urlencode
 from typing import Dict, Any, Optional
-from ..config import settings
 from loguru import logger
 
-# ============================================
-# 配置区域
-# ============================================
+from ..config import settings
 
 
 def load_cookie_from_browser() -> str:
@@ -52,12 +49,7 @@ USER_AGENT = load_user_agent_from_browser()
 # 如果浏览器数据不可用，使用手动配置的Cookie（向后兼容）
 if not COOKIE:
     logger.info("💡 提示: 未找到浏览器数据，可以手动在下方配置Cookie")
-    # 从浏览器开发者工具的Network标签页复制完整的Cookie字符串
     COOKIE = """__ac_nonce=068e36ed20084903da92d; __ac_signature=_02B4Z6wo00f01tdVnwgAAIDCmnSmocHh-0bXZJuAAN1D54; __security_mc_1_s_sdk_cert_key=efc4b9a3-458e-ad5d; __security_mc_1_s_sdk_crypt_sdk=b7c45f8d-4613-a463; __security_mc_1_s_sdk_sign_data_key_web_protect=56392f0a-4435-8c35; __security_server_data_status=1; _bd_ticket_crypt_cookie=cfd07fb8d2a0d1025f42c2ee17c61466; architecture=amd64; bd_ticket_guard_client_data=eyJiZC10aWNrZXQtZ3VhcmQtdmVyc2lvbiI6MiwiYmQtdGlja2V0LWd1YXJkLWl0ZXJhdGlvbi12ZXJzaW9uIjoxLCJiZC10aWNrZXQtZ3VhcmQtcmVlLXB1YmxpYy1rZXkiOiJCTEZPeTFzelRCNnVwN3JidytORXVWc3U2WlRuMFlnUFJIVnhqWVVndWZpelNJK2tBNmsyM3kzZmw3NlcyT2dOOHhQRTZLaVExNTA3eGNDVThCdWVxZEk9IiwiYmQtdGlja2V0LWd1YXJkLXdlYi12ZXJzaW9uIjoyfQ==; bd_ticket_guard_client_data_v2=eyJyZWVfcHVibGljX2tleSI6IkJMRk95MXN6VEI2dXA3cmJ3K05FdVZzdTZaVG4wWWdQUkhWeGpZVWd1Zml6U0kra0E2azIzeTNmbDc2VzJPZ044eFBFNktpUTE1MDd4Y0NVOEJ1ZXFkST0iLCJ0c19zaWduIjoidHMuMi5jYjkyMGJlZjRiY2I0OTg2OGFiNTI2YTBhZTRlOThhNzA2YzI5NzE3MDdhNTBhNjNmYjk1MDRjYjZiYzA3MTFkYzRmYmU4N2QyMzE5Y2YwNTMxODYyNGNlZGExNDkxMWNhNDA2ZGVkYmViZWRkYjJlMzBmY2U4ZDRmYTAyNTc1ZCIsInJlcV9jb250ZW50Ijoic2VjX3RzIiwicmVxX3NpZ24iOiJGdm1HWGVQQXNYQVhDSTN4dXBVRGd6Z3o2dmtSdm1iTGwvTU9tZ2hGVWVBPSIsInNlY190cyI6IiNlSWoyRFdVdDlwMTNHdUZwQlNvZUxXbXJ5aC9Oa1hHRFlkMTRwMzg4UHowRGtRNWh1eXBIUmdEbTZTeEUifQ==; bd_ticket_guard_client_web_domain=2; sessionid=56d86eaa9e312f2179f3fad262f61f71; sessionid_ss=56d86eaa9e312f2179f3fad262f61f71; ttwid=1|kua-ocR2BbNzx6ePnQHIFsTgf1Yvln-g-DbFs4qBros|1759735568|78957873a464e1589cf8218af687e7d1120ec20d5b7e14a056ef4fe50021ced1"""
-
-# ============================================
-# ABogus签名生成 (简化版)
-# ============================================
 
 
 class SimpleBogus:
@@ -69,11 +61,6 @@ class SimpleBogus:
         # 注意:实际的ABogus算法很复杂,这里使用占位符
         # 如果需要完整功能,请使用原项目的signature.py
         return "placeholder_abogus"
-
-
-# ============================================
-# 视频下载器类
-# ============================================
 
 
 class DouyinVideoDownloader:

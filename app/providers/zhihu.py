@@ -3,15 +3,16 @@ import re
 import json
 import asyncio
 import httpx
+from typing import Any, List, Dict
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from loguru import logger
+
 from app.providers.base import BaseProvider
 from app.models import ScrapedDataItem
 from app.storage import storage_manager
 from app.file_utils import get_file_extension
 from app.config import settings
-from typing import Any, List, Dict
 
 
 class ZhihuArticleProvider(BaseProvider):

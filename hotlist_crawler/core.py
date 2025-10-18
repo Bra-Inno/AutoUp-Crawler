@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 # 添加app目录到路径，以便导入现有模块
 _current_dir = os.path.dirname(os.path.abspath(__file__))
 _project_root = os.path.dirname(_current_dir)
-_app_dir = os.path.join(_project_root, 'app')
+_app_dir = os.path.join(_project_root, "app")
 
 if _app_dir not in sys.path:
     sys.path.insert(0, _app_dir)
@@ -49,28 +49,30 @@ def _run_async(coro):
     except RuntimeError:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-    
+
     return loop.run_until_complete(coro)
 
 
-def scrape(url: str, 
-          save_images: bool = True, 
-          output_format: str = "markdown",
-          max_answers: int = 3,
-          force_save: bool = True) -> List[ScrapedDataItem]:
+def scrape(
+    url: str,
+    save_images: bool = True,
+    output_format: str = "markdown",
+    max_answers: int = 3,
+    force_save: bool = True,
+) -> List[ScrapedDataItem]:
     """
     通用爬取函数，自动识别平台并抓取内容
-    
+
     Args:
         url: 要抓取的URL
         save_images: 是否下载图片到本地
         output_format: 输出格式 ("text" 或 "markdown")
         max_answers: 知乎问题最大回答数
         force_save: 是否强制保存到本地
-    
+
     Returns:
         抓取到的内容项列表
-    
+
     Raises:
         ValueError: 不支持的平台
         Exception: 抓取失败
@@ -78,7 +80,7 @@ def scrape(url: str,
     platform = identify_platform(url)
     if not platform:
         raise ValueError(f"不支持的平台，URL: {url}")
-    
+
     async def _scrape():
         if platform == "zhihu":
             provider = ZhihuArticleProvider(
@@ -87,7 +89,7 @@ def scrape(url: str,
                 save_images=save_images,
                 output_format=output_format,
                 force_save=force_save,
-                max_answers=max_answers
+                max_answers=max_answers,
             )
         elif platform == "weibo":
             provider = WeiboProvider(
@@ -95,7 +97,7 @@ def scrape(url: str,
                 rules=settings.PLATFORMS[platform]["rules"],
                 save_images=save_images,
                 output_format=output_format,
-                force_save=force_save
+                force_save=force_save,
             )
         elif platform == "weixin":
             provider = WeixinMpProvider(
@@ -103,13 +105,13 @@ def scrape(url: str,
                 rules=settings.PLATFORMS[platform]["rules"],
                 save_images=save_images,
                 output_format=output_format,
-                force_save=force_save
+                force_save=force_save,
             )
         else:
             raise ValueError(f"平台 '{platform}' 的抓取逻辑未实现")
-        
+
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape())
         if result is None:
@@ -119,28 +121,30 @@ def scrape(url: str,
         raise Exception(f"抓取过程中发生错误: {str(e)}")
 
 
-def scrape_zhihu(url: str,
-                save_images: bool = True,
-                output_format: str = "markdown", 
-                max_answers: int = 3,
-                force_save: bool = True) -> List[ScrapedDataItem]:
+def scrape_zhihu(
+    url: str,
+    save_images: bool = True,
+    output_format: str = "markdown",
+    max_answers: int = 3,
+    force_save: bool = True,
+) -> List[ScrapedDataItem]:
     """
     专门的知乎内容爬取函数
     支持知乎问题页面和专栏文章
-    
+
     Args:
         url: 知乎URL (问题页面或专栏文章)
         save_images: 是否下载图片
         output_format: 输出格式
         max_answers: 问题页面最大回答数
         force_save: 是否强制保存
-    
+
     Returns:
         抓取到的内容项列表
     """
     if not any(domain in url for domain in ["zhihu.com", "zhuanlan.zhihu.com"]):
         raise ValueError("不是有效的知乎URL")
-    
+
     async def _scrape_zhihu():
         provider = ZhihuArticleProvider(
             url=url,
@@ -148,10 +152,10 @@ def scrape_zhihu(url: str,
             save_images=save_images,
             output_format=output_format,
             force_save=force_save,
-            max_answers=max_answers
+            max_answers=max_answers,
         )
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape_zhihu())
         if result is None:
@@ -161,36 +165,38 @@ def scrape_zhihu(url: str,
         raise Exception(f"知乎抓取错误: {str(e)}")
 
 
-def scrape_weibo(url: str,
-                save_images: bool = True,
-                output_format: str = "text",
-                force_save: bool = True) -> List[ScrapedDataItem]:
+def scrape_weibo(
+    url: str,
+    save_images: bool = True,
+    output_format: str = "text",
+    force_save: bool = True,
+) -> List[ScrapedDataItem]:
     """
     专门的微博内容爬取函数
     支持微博搜索页面
-    
+
     Args:
         url: 微博搜索URL
         save_images: 是否下载图片和视频
         output_format: 输出格式
         force_save: 是否强制保存
-    
+
     Returns:
         抓取到的内容项列表
     """
     if not any(domain in url for domain in ["weibo.com", "s.weibo.com"]):
         raise ValueError("不是有效的微博URL")
-    
+
     async def _scrape_weibo():
         provider = WeiboProvider(
             url=url,
             rules=settings.PLATFORMS["weibo"]["rules"],
             save_images=save_images,
             output_format=output_format,
-            force_save=force_save
+            force_save=force_save,
         )
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape_weibo())
         if result is None:
@@ -200,35 +206,37 @@ def scrape_weibo(url: str,
         raise Exception(f"微博抓取错误: {str(e)}")
 
 
-def scrape_weixin(url: str,
-                 save_images: bool = True,
-                 output_format: str = "markdown",
-                 force_save: bool = True) -> List[ScrapedDataItem]:
+def scrape_weixin(
+    url: str,
+    save_images: bool = True,
+    output_format: str = "markdown",
+    force_save: bool = True,
+) -> List[ScrapedDataItem]:
     """
     专门的微信公众号文章爬取函数
-    
+
     Args:
         url: 微信公众号文章URL
         save_images: 是否下载图片
         output_format: 输出格式
         force_save: 是否强制保存
-    
+
     Returns:
         抓取到的内容项列表
     """
     if "mp.weixin.qq.com" not in url:
         raise ValueError("不是有效的微信公众号文章URL")
-    
+
     async def _scrape_weixin():
         provider = WeixinMpProvider(
             url=url,
             rules=settings.PLATFORMS["weixin"]["rules"],
             save_images=save_images,
             output_format=output_format,
-            force_save=force_save
+            force_save=force_save,
         )
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape_weixin())
         if result is None:
@@ -238,17 +246,19 @@ def scrape_weixin(url: str,
         raise Exception(f"微信抓取错误: {str(e)}")
 
 
-def scrape_bilibili(url: str,
-                   save_images: bool = False,
-                   output_format: str = "json",
-                   force_save: bool = True,
-                   auto_download_video: bool = False,
-                   video_quality: int = 80,
-                   cookies: Optional[str] = None) -> List[ScrapedDataItem]:
+def scrape_bilibili(
+    url: str,
+    save_images: bool = False,
+    output_format: str = "json",
+    force_save: bool = True,
+    auto_download_video: bool = False,
+    video_quality: int = 80,
+    cookies: Optional[str] = None,
+) -> List[ScrapedDataItem]:
     """
     专门的B站视频爬取函数
     支持获取视频详细信息和下载链接
-    
+
     Args:
         url: B站视频URL (支持BV号和av号)
         save_images: 是否下载封面图 (默认False)
@@ -257,13 +267,13 @@ def scrape_bilibili(url: str,
         auto_download_video: 是否自动下载视频文件
         video_quality: 视频清晰度 (16=360P, 32=480P, 64=720P, 80=1080P)
         cookies: B站登录cookie (获取高清画质需要)
-    
+
     Returns:
         抓取到的视频信息项列表
     """
     if not any(domain in url for domain in ["bilibili.com", "b23.tv"]):
         raise ValueError("不是有效的B站视频URL")
-    
+
     async def _scrape_bilibili():
         provider = BilibiliVideoProvider(
             url=url,
@@ -273,10 +283,10 @@ def scrape_bilibili(url: str,
             force_save=force_save,
             auto_download_video=auto_download_video,
             video_quality=video_quality,
-            cookies=cookies
+            cookies=cookies,
         )
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape_bilibili())
         if result is None:
@@ -286,16 +296,18 @@ def scrape_bilibili(url: str,
         raise Exception(f"B站抓取错误: {str(e)}")
 
 
-def scrape_douyin(url: str,
-                  save_images: bool = False,
-                  output_format: str = "json",
-                  force_save: bool = True,
-                  auto_download_video: bool = False,
-                  cookies: Optional[str] = None) -> List[ScrapedDataItem]:
+def scrape_douyin(
+    url: str,
+    save_images: bool = False,
+    output_format: str = "json",
+    force_save: bool = True,
+    auto_download_video: bool = False,
+    cookies: Optional[str] = None,
+) -> List[ScrapedDataItem]:
     """
     专门的抖音视频爬取函数
     支持不完整链接自动补全和视频下载
-    
+
     Args:
         url: 抖音视频URL (支持不完整链接)
         save_images: 是否下载封面图 (默认False)
@@ -303,13 +315,13 @@ def scrape_douyin(url: str,
         force_save: 是否强制保存
         auto_download_video: 是否自动下载视频文件
         cookies: 抖音登录cookie (可选，会自动从浏览器数据加载)
-    
+
     Returns:
         抓取到的视频信息项列表
     """
     if not any(domain in url for domain in ["douyin.com"]):
         raise ValueError("不是有效的抖音视频URL")
-    
+
     async def _scrape_douyin():
         provider = DouyinVideoProvider(
             url=url,
@@ -318,10 +330,10 @@ def scrape_douyin(url: str,
             output_format=output_format,
             force_save=force_save,
             cookies=cookies,
-            auto_download_video=auto_download_video
+            auto_download_video=auto_download_video,
         )
         return await provider.fetch_and_parse()
-    
+
     try:
         result = _run_async(_scrape_douyin())
         if result is None:

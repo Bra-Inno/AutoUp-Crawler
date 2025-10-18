@@ -28,12 +28,26 @@ if _parent_dir not in sys.path:
 
 try:
     # 导入核心功能
-    from .core import scrape, scrape_zhihu, scrape_weibo, scrape_weixin, scrape_bilibili, scrape_douyin, identify_platform
+    from .core import (
+        scrape,
+        scrape_zhihu,
+        scrape_weibo,
+        scrape_weixin,
+        scrape_bilibili,
+        scrape_douyin,
+        identify_platform,
+    )
     from .auth import login, is_online, login_sync, get_all_online_status
-    from .fetch import fetch, batch_fetch, validate_destination, list_supported_platforms, get_platform_info
+    from .fetch import (
+        fetch,
+        batch_fetch,
+        validate_destination,
+        list_supported_platforms,
+        get_platform_info,
+    )
     from .types import PlatformType, USER_DATA_DIR
     from .models import ScrapedDataItem
-    
+
     # 导入配置管理功能
     from .config import (
         set_user_data_dir,
@@ -46,11 +60,11 @@ try:
         get_all_config,
         print_config,
     )
-    
+
     # 成功导入标志
     _import_success = True
     _import_error = None
-    
+
 except ImportError as e:
     # 如果相对导入失败，尝试绝对导入
     try:
@@ -59,7 +73,7 @@ except ImportError as e:
         import hotlist_crawler.fetch as fetch_module
         import hotlist_crawler.models as models
         import hotlist_crawler.types as types_module
-        
+
         # 导入函数
         scrape = core.scrape
         scrape_zhihu = core.scrape_zhihu
@@ -68,35 +82,35 @@ except ImportError as e:
         scrape_bilibili = core.scrape_bilibili
         scrape_douyin = core.scrape_douyin
         identify_platform = core.identify_platform
-        
+
         login = auth_module.login
         is_online = auth_module.is_online
         login_sync = auth_module.login_sync
         get_all_online_status = auth_module.get_all_online_status
-        
+
         fetch = fetch_module.fetch
         batch_fetch = fetch_module.batch_fetch
         validate_destination = fetch_module.validate_destination
         list_supported_platforms = fetch_module.list_supported_platforms
         get_platform_info = fetch_module.get_platform_info
-        
+
         PlatformType = types_module.PlatformType
         USER_DATA_DIR = types_module.USER_DATA_DIR
-        
+
         ScrapedDataItem = models.ScrapedDataItem
-        
+
         _import_success = True
         _import_error = None
-        
+
     except ImportError as e2:
         # 导入失败，记录错误但不崩溃
         _import_success = False
         _import_error = str(e2)
-        
+
         # 提供错误提示函数
         def _import_error_func(*args, **kwargs):
             raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
-        
+
         # 用错误函数替代主要功能
         scrape = _import_error_func
         scrape_zhihu = _import_error_func
@@ -114,7 +128,7 @@ except ImportError as e:
         validate_destination = _import_error_func
         list_supported_platforms = _import_error_func
         get_platform_info = _import_error_func
-        
+
         # 配置管理函数
         set_user_data_dir = _import_error_func
         set_user_agent = _import_error_func
@@ -126,63 +140,58 @@ except ImportError as e:
         set_download_dir = _import_error_func
         get_all_config = _import_error_func
         print_config = _import_error_func
-        
+
         PlatformType = None
-        USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")  # 固定保存到工作目录
+        USER_DATA_DIR = os.path.join(
+            os.getcwd(), "chrome_user_data"
+        )  # 固定保存到工作目录
         ScrapedDataItem = None
 
 # 导出的公共接口
 __all__ = [
     # 核心爬虫功能
-    'scrape',           # 通用爬取函数
-    'scrape_zhihu',     # 知乎专用爬取
-    'scrape_weibo',     # 微博专用爬取
-    'scrape_weixin',    # 微信专用爬取
-    'scrape_bilibili',  # B站专用爬取
-    'scrape_douyin',    # 抖音专用爬取
-    'identify_platform', # 平台识别
-    
+    "scrape",  # 通用爬取函数
+    "scrape_zhihu",  # 知乎专用爬取
+    "scrape_weibo",  # 微博专用爬取
+    "scrape_weixin",  # 微信专用爬取
+    "scrape_bilibili",  # B站专用爬取
+    "scrape_douyin",  # 抖音专用爬取
+    "identify_platform",  # 平台识别
     # Fetch功能 - 符合API设计
-    'fetch',            # 核心fetch函数 -> bool
-    'batch_fetch',      # 批量抓取
-    'validate_destination', # 验证目标目录
-    'list_supported_platforms', # 获取支持的平台
-    'get_platform_info', # 获取平台信息
-    
+    "fetch",  # 核心fetch函数 -> bool
+    "batch_fetch",  # 批量抓取
+    "validate_destination",  # 验证目标目录
+    "list_supported_platforms",  # 获取支持的平台
+    "get_platform_info",  # 获取平台信息
     # 登录功能 - 符合API设计
-    'login',            # 登录函数 -> bool
-    'is_online',        # 检查在线状态 -> bool
-    'login_sync',       # 同步版登录
-    'get_all_online_status', # 获取所有平台状态
-    
+    "login",  # 登录函数 -> bool
+    "is_online",  # 检查在线状态 -> bool
+    "login_sync",  # 同步版登录
+    "get_all_online_status",  # 获取所有平台状态
     # 配置管理功能
-    'set_user_data_dir',      # 设置浏览器数据目录
-    'set_user_agent',         # 设置User-Agent
-    'set_login_data_dir',     # 设置登录数据目录
-    'get_user_data_dir',      # 获取浏览器数据目录
-    'get_user_agent',         # 获取User-Agent
-    'get_login_data_dir',     # 获取登录数据目录
-    'set_playwright_headless', # 设置无头模式
-    'set_download_dir',       # 设置下载目录
-    'get_all_config',         # 获取所有配置
-    'print_config',           # 打印配置信息
-    
+    "set_user_data_dir",  # 设置浏览器数据目录
+    "set_user_agent",  # 设置User-Agent
+    "set_login_data_dir",  # 设置登录数据目录
+    "get_user_data_dir",  # 获取浏览器数据目录
+    "get_user_agent",  # 获取User-Agent
+    "get_login_data_dir",  # 获取登录数据目录
+    "set_playwright_headless",  # 设置无头模式
+    "set_download_dir",  # 设置下载目录
+    "get_all_config",  # 获取所有配置
+    "print_config",  # 打印配置信息
     # 类型和常量
-    'PlatformType',     # 平台类型枚举
-    'USER_DATA_DIR',    # 用户数据目录
-    
+    "PlatformType",  # 平台类型枚举
+    "USER_DATA_DIR",  # 用户数据目录
     # 数据模型
-    'ScrapedDataItem',  # 数据项模型
-    
+    "ScrapedDataItem",  # 数据项模型
     # 便捷别名
-    'zhihu',           # scrape_zhihu 的别名
-    'weibo',           # scrape_weibo 的别名
-    'weixin',          # scrape_weixin 的别名
-    'bilibili',        # scrape_bilibili 的别名
-    'douyin',          # scrape_douyin 的别名
-    
+    "zhihu",  # scrape_zhihu 的别名
+    "weibo",  # scrape_weibo 的别名
+    "weixin",  # scrape_weixin 的别名
+    "bilibili",  # scrape_bilibili 的别名
+    "douyin",  # scrape_douyin 的别名
     # 版本信息
-    '__version__',
+    "__version__",
 ]
 
 
@@ -231,7 +240,7 @@ def health_check() -> Dict[str, Any]:
         "import_error": _import_error,
         "supported_platforms": get_supported_platforms(),
         "python_version": sys.version,
-        "platform": sys.platform
+        "platform": sys.platform,
     }
 
 

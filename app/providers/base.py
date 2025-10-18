@@ -2,12 +2,21 @@ from abc import ABC, abstractmethod
 import httpx
 from typing import Any
 
+
 class BaseProvider(ABC):
     """
     所有爬虫 Provider 的抽象基类
     """
-    def __init__(self, url: str, rules: dict, save_images: bool = True, output_format: str = "markdown", 
-                 force_save: bool = True, platform_name: str = "unknown"):
+
+    def __init__(
+        self,
+        url: str,
+        rules: dict,
+        save_images: bool = True,
+        output_format: str = "markdown",
+        force_save: bool = True,
+        platform_name: str = "unknown",
+    ):
         self.url = url
         self.rules = rules
         self.save_images = save_images
@@ -29,7 +38,9 @@ class BaseProvider(ABC):
         pass
 
     async def _get_html(self) -> str:
-        async with httpx.AsyncClient(follow_redirects=True, headers=self.headers) as client:
+        async with httpx.AsyncClient(
+            follow_redirects=True, headers=self.headers
+        ) as client:
             response = await client.get(self.url)
             response.raise_for_status()
             return response.text

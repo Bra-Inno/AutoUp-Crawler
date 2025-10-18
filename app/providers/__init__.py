@@ -14,10 +14,10 @@ except ImportError:
 from app.providers.xhs import XiaohongshuProvider
 
 __all__ = [
-    'ZhihuArticleProvider',
-    'WeixinMpProvider', 
-    'WeiboProvider',
-    'BilibiliVideoProvider',
-    'DouyinVideoProvider',
-    'XiaohongshuProvider'
+    "ZhihuArticleProvider",
+    "WeixinMpProvider",
+    "WeiboProvider",
+    "BilibiliVideoProvider",
+    "DouyinVideoProvider",
+    "XiaohongshuProvider",
 ]

@@ -17,10 +17,9 @@ class PlatformType(StrEnum):
     BILIBILI = "bilibili"
 
 
-# 用户数据目录常量 - 固定保存到工作目录
 USER_DATA_DIR: str = os.path.join(os.getcwd(), "chrome_user_data")
+"""浏览器用户数据目录（默认是工作目录下的 chrome_user_data 文件夹）"""
 
-# 平台登录页面映射
 PLATFORM_LOGIN_URLS = {
     PlatformType.ZHIHU: "https://www.zhihu.com/signin",
     PlatformType.WEIBO: "https://passport.weibo.cn/signin/login",
@@ -29,8 +28,8 @@ PLATFORM_LOGIN_URLS = {
     PlatformType.DOUYIN: "https://www.douyin.com/",
     PlatformType.BILIBILI: "https://passport.bilibili.com/login",
 }
+"""各平台的登录页 URL"""
 
-# 平台登录状态检测URL映射
 PLATFORM_CHECK_URLS = {
     PlatformType.ZHIHU: "https://www.zhihu.com/settings/profile",
     PlatformType.WEIBO: "https://weibo.com/set/index",
@@ -40,3 +39,4 @@ PLATFORM_CHECK_URLS = {
     # PlatformType.WEIXIN: None,
     # PlatformType.DOUYIN: None,
 }
+"""各平台的状态检测 URL"""

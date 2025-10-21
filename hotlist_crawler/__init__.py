@@ -141,7 +141,7 @@ except ImportError as e:
         print_config = _import_error_func
 
         PlatformType = None
-        USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")  # 固定保存到工作目录
+        USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")
         ScrapedDataItem = None
 
 # 导出的公共接口
@@ -192,35 +192,22 @@ __all__ = [
 ]
 
 
-# 创建便捷别名
-def _create_aliases():
-    """创建便捷别名"""
-    global zhihu, weibo, weixin, bilibili, douyin
-    if _import_success:
-        zhihu = scrape_zhihu
-        weibo = scrape_weibo
-        weixin = scrape_weixin
-        bilibili = scrape_bilibili
-        douyin = scrape_douyin
-    else:
+if _import_success:
+    zhihu = scrape_zhihu
+    weibo = scrape_weibo
+    weixin = scrape_weixin
+    bilibili = scrape_bilibili
+    douyin = scrape_douyin
+else:
 
-        def _error_func(*args, **kwargs):
-            raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
+    def _error_func(*args, **kwargs):
+        raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
 
-        zhihu = _error_func
-        weibo = _error_func
-        weixin = _error_func
-        bilibili = _error_func
-        douyin = _error_func
-
-
-# 执行别名创建
-_create_aliases()
-
-
-def get_version() -> str:
-    """获取包版本号"""
-    return __version__
+    zhihu = _error_func
+    weibo = _error_func
+    weixin = _error_func
+    bilibili = _error_func
+    douyin = _error_func
 
 
 def get_supported_platforms() -> List[str]:
@@ -242,8 +229,6 @@ def health_check() -> Dict[str, Any]:
 
 
 # 包初始化时的提示信息
-if _import_success:
-    pass
-else:
+if not _import_success:
     logger.warning(f"⚠️ hotlist_crawler包导入时遇到问题: {_import_error}")
     logger.info("💡 请确保所有依赖已正确安装，或查看文档获取帮助")

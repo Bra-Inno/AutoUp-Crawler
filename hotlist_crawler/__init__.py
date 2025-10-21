@@ -36,7 +36,7 @@ try:
         scrape_douyin,
         identify_platform,
     )
-    from .auth import login, is_online, login_sync, get_all_online_status
+    from .auth import login, is_online, get_all_online_status
     from .fetch import (
         fetch,
         batch_fetch,
@@ -44,7 +44,7 @@ try:
         list_supported_platforms,
         get_platform_info,
     )
-    from .types import PlatformType, USER_DATA_DIR
+    from .types import PlatformType
     from .models import ScrapedDataItem
 
     # 导入配置管理功能
@@ -84,7 +84,6 @@ except ImportError as e:
 
         login = auth_module.login
         is_online = auth_module.is_online
-        login_sync = auth_module.login_sync
         get_all_online_status = auth_module.get_all_online_status
 
         fetch = fetch_module.fetch
@@ -94,7 +93,6 @@ except ImportError as e:
         get_platform_info = fetch_module.get_platform_info
 
         PlatformType = types_module.PlatformType
-        USER_DATA_DIR = types_module.USER_DATA_DIR
 
         ScrapedDataItem = models.ScrapedDataItem
 
@@ -120,7 +118,6 @@ except ImportError as e:
         identify_platform = _import_error_func
         login = _import_error_func
         is_online = _import_error_func
-        login_sync = _import_error_func
         get_all_online_status = _import_error_func
         fetch = _import_error_func
         batch_fetch = _import_error_func
@@ -141,7 +138,6 @@ except ImportError as e:
         print_config = _import_error_func
 
         PlatformType = None
-        USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")
         ScrapedDataItem = None
 
 # 导出的公共接口
@@ -163,7 +159,6 @@ __all__ = [
     # 登录功能 - 符合API设计
     "login",  # 登录函数 -> bool
     "is_online",  # 检查在线状态 -> bool
-    "login_sync",  # 同步版登录
     "get_all_online_status",  # 获取所有平台状态
     # 配置管理功能
     "set_user_data_dir",  # 设置浏览器数据目录
@@ -178,7 +173,6 @@ __all__ = [
     "print_config",  # 打印配置信息
     # 类型和常量
     "PlatformType",  # 平台类型枚举
-    "USER_DATA_DIR",  # 用户数据目录
     # 数据模型
     "ScrapedDataItem",  # 数据项模型
     # 便捷别名

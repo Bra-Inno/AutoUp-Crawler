@@ -12,7 +12,8 @@ from typing import Dict, Optional
 from playwright.async_api import async_playwright
 
 
-from .types import PlatformType, USER_DATA_DIR, PLATFORM_LOGIN_URLS, PLATFORM_CHECK_URLS
+from .types import PlatformType, PLATFORM_LOGIN_URLS, PLATFORM_CHECK_URLS
+from .config import settings
 
 
 def login(platform: PlatformType, headless: bool = False) -> bool:
@@ -50,11 +51,11 @@ def login(platform: PlatformType, headless: bool = False) -> bool:
         return False
 
     # 确保用户数据目录存在
-    os.makedirs(USER_DATA_DIR, exist_ok=True)
+    os.makedirs(settings.USER_DATA_DIR, exist_ok=True)
 
     logger.info(f"🚀 开始登录 {platform.upper()} 平台...")
     logger.info(f"📍 登录页面: {login_url}")
-    logger.info(f"📁 用户数据目录: {USER_DATA_DIR}")
+    logger.info(f"📁 用户数据目录: {settings.USER_DATA_DIR}")
 
     # 同步调用异步函数
     try:
@@ -86,7 +87,7 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
         async with async_playwright() as p:
             # 启动浏览器，使用持久化用户数据 - 最强反检测配置
             browser = await p.chromium.launch_persistent_context(
-                user_data_dir=USER_DATA_DIR,
+                user_data_dir=settings.USER_DATA_DIR,
                 headless=headless,
                 args=[
                     "--no-sandbox",
@@ -289,7 +290,7 @@ async def _wait_for_user_action(page, platform: PlatformType, timeout: int = 45)
 async def _save_login_data(platform: PlatformType, cookies: list, page) -> bool:
     """保存登录数据，返回是否保存成功"""
     try:
-        login_data_dir = os.path.join(USER_DATA_DIR, "login_data")
+        login_data_dir = os.path.join(settings.USER_DATA_DIR, "login_data")
         os.makedirs(login_data_dir, exist_ok=True)
 
         # 准备用户信息
@@ -351,7 +352,7 @@ def is_online(platform: PlatformType) -> bool:
         return False
 
     # 检查是否有cookies文件
-    cookies_file = os.path.join(USER_DATA_DIR, "login_data", f"{platform}_cookies.json")
+    cookies_file = os.path.join(settings.USER_DATA_DIR, "login_data", f"{platform}_cookies.json")
     if not os.path.exists(cookies_file):
         return False
 
@@ -518,21 +519,6 @@ async def _check_online_async(platform: PlatformType, check_url: Optional[str], 
     except Exception as e:
         logger.error(f"⚠️ 异步检测失败: {e}")
         return False
-
-
-# 同步版本的login函数（如果需要的话）
-def login_sync(platform: PlatformType, headless: bool = False) -> bool:
-    """
-    同步版本的登录函数（现在login本身就是同步的，这个函数保持兼容性）
-
-    Args:
-        platform: 平台类型
-        headless: 是否无头模式
-
-    Returns:
-        bool: 登录是否成功
-    """
-    return login(platform, headless)
 
 
 # 便捷函数：获取所有平台的在线状态

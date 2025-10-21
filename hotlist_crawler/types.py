@@ -17,9 +17,6 @@ class PlatformType(StrEnum):
     BILIBILI = "bilibili"
 
 
-USER_DATA_DIR: str = os.path.join(os.getcwd(), "chrome_user_data")
-"""浏览器用户数据目录（默认是工作目录下的 chrome_user_data 文件夹）"""
-
 PLATFORM_LOGIN_URLS = {
     PlatformType.ZHIHU: "https://www.zhihu.com/signin",
     PlatformType.WEIBO: "https://passport.weibo.cn/signin/login",

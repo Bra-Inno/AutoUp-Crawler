@@ -39,6 +39,11 @@ def _ensure_env_file() -> None:
 # 在导入时自动检查并创建 .env 文件
 _ensure_env_file()
 
+# 获取 .env 文件的绝对路径
+_current_dir = Path(__file__).parent
+_project_root = _current_dir.parent
+_env_file_path = _project_root / ".env"
+
 
 class Settings(BaseSettings):
     """
@@ -46,8 +51,8 @@ class Settings(BaseSettings):
     所有配置从 .env 文件加载
     """
 
-    # 从 .env 文件加载配置
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
+    # 从 .env 文件加载配置（使用绝对路径）
+    model_config = SettingsConfigDict(env_file=str(_env_file_path), env_file_encoding="utf-8", extra="allow")
 
     # Redis 配置
     REDIS_URL: str

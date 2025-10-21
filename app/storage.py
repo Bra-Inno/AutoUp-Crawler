@@ -39,9 +39,7 @@ class StorageManager:
         content = f"{url}_{title}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
 
-    def create_article_storage(
-        self, platform: str, title: str, url: str, author: str = None
-    ) -> Dict[str, str]:
+    def create_article_storage(self, platform: str, title: str, url: str, author: str = None) -> Dict[str, str]:
         """
         为文章创建存储目录结构
 
@@ -137,9 +135,6 @@ class StorageManager:
         if author:
             markdown_parts.append(f"**作者:** {author}\n")
 
-        markdown_parts.append(
-            f"**抓取时间:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        )
         markdown_parts.append("---\n\n")
         markdown_parts.append(content)
 
@@ -203,9 +198,7 @@ class StorageManager:
 
         return image_info
 
-    def save_article_index(
-        self, storage_info: Dict[str, str], content_preview: str = ""
-    ) -> str:
+    def save_article_index(self, storage_info: Dict[str, str], content_preview: str = "") -> str:
         """保存文章索引文件，方便浏览"""
         platform_dir = self._get_platform_dir(storage_info["platform"])
         index_file = os.path.join(platform_dir, "articles_index.json")
@@ -224,11 +217,7 @@ class StorageManager:
             "safe_title": storage_info["safe_title"],
             "article_dir": os.path.basename(storage_info["article_dir"]),
             "created_at": datetime.now().isoformat(),
-            "preview": (
-                content_preview[:200] + "..."
-                if len(content_preview) > 200
-                else content_preview
-            ),
+            "preview": (content_preview[:200] + "..." if len(content_preview) > 200 else content_preview),
         }
 
         # 检查是否已存在，如果存在则更新
@@ -254,9 +243,7 @@ class StorageManager:
 
         return index_file
 
-    def _update_metadata(
-        self, storage_info: Dict[str, str], updates: Dict, increment: bool = False
-    ):
+    def _update_metadata(self, storage_info: Dict[str, str], updates: Dict, increment: bool = False):
         """更新元数据文件"""
         metadata_file = storage_info["metadata_file"]
 

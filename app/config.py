@@ -1,6 +1,44 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Dict, Any
 
+import shutil
+from pathlib import Path
+from loguru import logger
+
+
+def _ensure_env_file() -> None:
+    """
+    确保 .env 文件存在
+    如果不存在，则从 .env.example 自动创建
+    """
+    # 获取本根目录（app目录的上一级）
+    current_dir = Path(__file__).parent
+    project_root = current_dir.parent
+
+    env_file = project_root / ".env"
+    env_example = project_root / ".env.example"
+
+    # 如果 .env 已存在，直接返回
+    if env_file.exists():
+        return
+
+    # 如果 .env.example 存在，复制为 .env
+    if env_example.exists():
+        try:
+            shutil.copy2(env_example, env_file)
+            logger.info(f"✅ 已自动从 .env.example 创建 .env 文件: {env_file}")
+            logger.info(f"💡 提示: 请根据需要修改 .env 文件中的配置")
+        except Exception as e:
+            logger.warning(f"⚠️ 无法创建 .env 文件: {e}")
+            logger.info(f"💡 请手动复制 .env.example 为 .env")
+    else:
+        logger.warning(f"⚠️ 未找到 .env.example 文件")
+        logger.info(f"💡 请确保项目根目录下存在 .env.example 文件")
+
+
+# 在导入时自动检查并创建 .env 文件
+_ensure_env_file()
+
 
 class Settings(BaseSettings):
     """
@@ -9,9 +47,7 @@ class Settings(BaseSettings):
     """
 
     # 从 .env 文件加载配置
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="allow"
-    )  # 允许额外的字段
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="allow")
 
     # Redis 配置
     REDIS_URL: str

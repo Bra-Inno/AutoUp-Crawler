@@ -95,10 +95,7 @@ def handle_note_info(data):
             pass
     if note_type == "视频":
         video_cover = image_list[0]
-        video_addr = (
-            "https://sns-video-bd.xhscdn.com/"
-            + data["note_card"]["video"]["consumer"]["origin_video_key"]
-        )
+        video_addr = "https://sns-video-bd.xhscdn.com/" + data["note_card"]["video"]["consumer"]["origin_video_key"]
         # success, msg, video_addr = XHS_Apis.get_note_no_water_video(note_id)
     else:
         video_cover = None

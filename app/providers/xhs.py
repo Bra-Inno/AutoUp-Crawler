@@ -95,30 +95,18 @@ class XiaohongshuProvider(BaseProvider):
 
                     # 处理两种可能的格式
                     if isinstance(cookies_data, dict):
-                        if "value" in cookies_data and isinstance(
-                            cookies_data["value"], list
-                        ):
+                        if "value" in cookies_data and isinstance(cookies_data["value"], list):
                             # 格式: {"value": [{"name": "xxx", "value": "yyy"}, ...]}
                             cookie_list = cookies_data["value"]
-                            cookies_str = "; ".join(
-                                [f"{c['name']}={c['value']}" for c in cookie_list]
-                            )
-                            logger.info(
-                                f"成功加载保存的cookies，共{len(cookie_list)}个"
-                            )
+                            cookies_str = "; ".join([f"{c['name']}={c['value']}" for c in cookie_list])
+                            logger.info(f"成功加载保存的cookies，共{len(cookie_list)}个")
                         else:
                             # 格式: {"name1": "value1", "name2": "value2", ...}
-                            cookies_str = "; ".join(
-                                [f"{k}={v}" for k, v in cookies_data.items()]
-                            )
-                            logger.info(
-                                f"成功加载保存的cookies，共{len(cookies_data)}个"
-                            )
+                            cookies_str = "; ".join([f"{k}={v}" for k, v in cookies_data.items()])
+                            logger.info(f"成功加载保存的cookies，共{len(cookies_data)}个")
                     elif isinstance(cookies_data, list):
                         # 格式: [{"name": "xxx", "value": "yyy"}, ...]
-                        cookies_str = "; ".join(
-                            [f"{c['name']}={c['value']}" for c in cookies_data]
-                        )
+                        cookies_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_data])
                         logger.info(f"成功加载保存的cookies，共{len(cookies_data)}个")
                     else:
                         logger.warning(f"未知的cookies格式: {type(cookies_data)}")
@@ -128,9 +116,7 @@ class XiaohongshuProvider(BaseProvider):
             except Exception as e:
                 logger.warning(f"加载cookies失败: {e}")
 
-        logger.warning(
-            "未找到保存的cookies，请先运行 scripts/save_xiaohongshu_cookies.py"
-        )
+        logger.warning("未找到保存的cookies，请先运行 scripts/save_xiaohongshu_cookies.py")
         return ""
 
     def _load_user_agent(self) -> str:
@@ -139,9 +125,7 @@ class XiaohongshuProvider(BaseProvider):
         logger.info("使用配置的User-Agent")
         return settings.USER_AGENT
 
-    async def fetch_and_parse(
-        self, note_url: Optional[str] = None
-    ) -> Optional[ScrapedDataItem]:
+    async def fetch_and_parse(self, note_url: Optional[str] = None) -> Optional[ScrapedDataItem]:
         """
         实现BaseProvider要求的方法：获取并解析单个笔记
 
@@ -204,14 +188,10 @@ class XiaohongshuProvider(BaseProvider):
         )
 
         # 保存Markdown内容
-        storage_manager.save_markdown_content(
-            storage_info=storage_info, content=markdown_content
-        )
+        storage_manager.save_markdown_content(storage_info=storage_info, content=markdown_content)
 
         # 保存纯文本内容
-        storage_manager.save_text_content(
-            storage_info=storage_info, content=content_text
-        )
+        storage_manager.save_text_content(storage_info=storage_info, content=content_text)
 
         # 保存原始JSON数据
         raw_data_path = os.path.join(storage_info["article_dir"], "raw_data.json")
@@ -230,9 +210,7 @@ class XiaohongshuProvider(BaseProvider):
             save_directory=storage_info["article_dir"],
         )
 
-    async def fetch_note(
-        self, note_url: str, proxies: Optional[Dict] = None
-    ) -> Dict[str, Any]:
+    async def fetch_note(self, note_url: str, proxies: Optional[Dict] = None) -> Dict[str, Any]:
         """
         获取单个笔记的详细信息
 
@@ -251,18 +229,12 @@ class XiaohongshuProvider(BaseProvider):
             try:
                 if attempt > 0:
                     # 计算延时时间，每次重试增加延时
-                    delay = self.base_delay * (2 ** (attempt - 1)) + random.uniform(
-                        1, 3
-                    )
+                    delay = self.base_delay * (2 ** (attempt - 1)) + random.uniform(1, 3)
                     logger.info(f"第{attempt}次重试，等待{delay:.1f}秒...")
                     await asyncio.sleep(delay)
 
-                success, msg, response_data = self.xhs_apis.get_note_info(
-                    note_url, self.cookies, proxies or {}
-                )
-                logger.info(
-                    f"API调用结果 (尝试{attempt + 1}): success={success}, msg={msg}"
-                )
+                success, msg, response_data = self.xhs_apis.get_note_info(note_url, self.cookies, proxies or {})
+                logger.info(f"API调用结果 (尝试{attempt + 1}): success={success}, msg={msg}")
 
                 # 检查是否是限流错误
                 if response_data and isinstance(response_data, dict):
@@ -291,9 +263,7 @@ class XiaohongshuProvider(BaseProvider):
                         msg = f'data中没有items字段，可用字段: {list(response_data["data"].keys())}'
                     elif not isinstance(response_data["data"]["items"], list):
                         success = False
-                        msg = (
-                            f'items不是列表格式: {type(response_data["data"]["items"])}'
-                        )
+                        msg = f'items不是列表格式: {type(response_data["data"]["items"])}'
                     elif len(response_data["data"]["items"]) == 0:
                         success = False
                         msg = "items列表为空"
@@ -325,9 +295,7 @@ class XiaohongshuProvider(BaseProvider):
         else:
             raise Exception(f"获取笔记失败: {msg}")
 
-    async def fetch_multiple_notes(
-        self, note_urls: List[str], proxies: Optional[Dict] = None
-    ) -> List[Dict[str, Any]]:
+    async def fetch_multiple_notes(self, note_urls: List[str], proxies: Optional[Dict] = None) -> List[Dict[str, Any]]:
         """
         批量获取多个笔记的信息
 
@@ -350,9 +318,7 @@ class XiaohongshuProvider(BaseProvider):
             try:
                 note_info = await self.fetch_note(note_url, proxies)
                 note_list.append(note_info)
-                logger.info(
-                    f"✓ 笔记爬取完成: {note_info.get('title', '未知标题')[:30]}..."
-                )
+                logger.info(f"✓ 笔记爬取完成: {note_info.get('title', '未知标题')[:30]}...")
 
             except Exception as e:
                 logger.error(f"✗ 笔记爬取失败: {e}")
@@ -393,17 +359,11 @@ class XiaohongshuProvider(BaseProvider):
         logger.info(f"开始爬取用户的所有笔记: {user_url}")
 
         try:
-            success, msg, all_note_info = self.xhs_apis.get_user_all_notes(
-                user_url, self.cookies, proxies or {}
-            )
+            success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, self.cookies, proxies or {})
 
             if not success:
                 # 如果是JavaScript相关的错误或者解析错误，返回空结果
-                if (
-                    "list index out of range" in msg
-                    or "Cannot find module" in msg
-                    or "js" in msg.lower()
-                ):
+                if "list index out of range" in msg or "Cannot find module" in msg or "js" in msg.lower():
                     logger.warning(f"用户笔记获取功能受限: {msg}")
                     logger.warning(f"⚠️ 用户笔记获取功能暂时受限，返回空结果")
                     return []
@@ -479,9 +439,7 @@ class XiaohongshuProvider(BaseProvider):
         logger.info("\n" + "=" * 60)
         logger.info("批量爬取完成!")
         logger.info(f"成功: {sum(1 for notes in results.values() if notes)} 个用户")
-        logger.error(
-            f"失败: {sum(1 for notes in results.values() if not notes)} 个用户"
-        )
+        logger.error(f"失败: {sum(1 for notes in results.values() if not notes)} 个用户")
         logger.info(f"总笔记数: {sum(len(notes) for notes in results.values())} 个")
         logger.info("=" * 60 + "\n")
 
@@ -536,9 +494,7 @@ class XiaohongshuProvider(BaseProvider):
                 # 如果是JavaScript相关的错误，返回空结果而不是抛出异常
                 if "Cannot find module" in msg or "js" in msg.lower():
                     logger.warning(f"搜索功能因JavaScript问题被禁用: {msg}")
-                    logger.warning(
-                        f"⚠️ 搜索功能暂时不可用（JavaScript依赖问题），返回空结果"
-                    )
+                    logger.warning(f"⚠️ 搜索功能暂时不可用（JavaScript依赖问题），返回空结果")
                     return []
                 else:
                     raise Exception(f"搜索失败: {msg}")
@@ -602,11 +558,7 @@ class XiaohongshuProvider(BaseProvider):
         # 内容信息
         content_info = {
             "type": note.get("type", ""),  # 笔记类型：normal/video
-            "cover": (
-                note.get("cover", {}).get("url_default", "")
-                if note.get("cover")
-                else ""
-            ),
+            "cover": (note.get("cover", {}).get("url_default", "") if note.get("cover") else ""),
             "images": [],
             "video_url": "",
         }
@@ -656,9 +608,7 @@ class XiaohongshuProvider(BaseProvider):
         }
 
     @staticmethod
-    def extract_note_details_batch(
-        note_list: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def extract_note_details_batch(note_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         批量提取笔记详细信息
 
@@ -685,9 +635,7 @@ class XiaohongshuProvider(BaseProvider):
 
         logger.debug(f"\n📝 基本信息:")
         logger.info(f"  标题: {detail['title']}")
-        logger.info(
-            f"  描述: {detail['desc'][:100]}{'...' if len(detail['desc']) > 100 else ''}"
-        )
+        logger.info(f"  描述: {detail['desc'][:100]}{'...' if len(detail['desc']) > 100 else ''}")
         logger.info(f"  发布时间: {detail['time']}")
         logger.info(f"  链接: {detail['link']}")
 
@@ -705,17 +653,13 @@ class XiaohongshuProvider(BaseProvider):
             logger.info(f"  图片数: {len(content['images'])}")
         if content["video_url"]:
             logger.info(f"  视频: 有")
-        logger.info(
-            f"  封面: {content['cover'][:60]}..." if content["cover"] else "  封面: 无"
-        )
+        logger.info(f"  封面: {content['cover'][:60]}..." if content["cover"] else "  封面: 无")
 
         logger.info(f"\n👤 作者信息:")
         author = detail["author"]
         logger.info(f"  昵称: {author['nickname']}")
         logger.info(f"  用户ID: {author['user_id']}")
-        logger.info(
-            f"  签名: {author['desc'][:50]}{'...' if len(author['desc']) > 50 else ''}"
-        )
+        logger.info(f"  签名: {author['desc'][:50]}{'...' if len(author['desc']) > 50 else ''}")
 
         if detail["hashtags"]:
             logger.info(f"\n🏷️  话题标签:")
@@ -796,9 +740,7 @@ class XiaohongshuProvider(BaseProvider):
 
         return details
 
-    def save_note_to_file(
-        self, note: Dict[str, Any], user_id: Optional[str] = None
-    ) -> str:
+    def save_note_to_file(self, note: Dict[str, Any], user_id: Optional[str] = None) -> str:
         """
         保存单个笔记数据到文件
 
@@ -820,11 +762,7 @@ class XiaohongshuProvider(BaseProvider):
         # 确定保存路径
         if user_id:
             # 尝试多种方式获取昵称（适配不同的数据结构）
-            nickname = (
-                note.get("nickname")
-                or note.get("user", {}).get("nickname")
-                or "unknown"
-            )
+            nickname = note.get("nickname") or note.get("user", {}).get("nickname") or "unknown"
             safe_nickname = norm_str(nickname)[:20]
             if not safe_nickname.strip():
                 safe_nickname = "unknown"
@@ -847,9 +785,7 @@ class XiaohongshuProvider(BaseProvider):
         logger.info(f"笔记已保存到: {filepath}")
         return filepath
 
-    def save_notes_to_file(
-        self, notes: List[Dict[str, Any]], user_id: Optional[str] = None
-    ) -> List[str]:
+    def save_notes_to_file(self, notes: List[Dict[str, Any]], user_id: Optional[str] = None) -> List[str]:
         """
         批量保存笔记数据到文件
 
@@ -888,11 +824,7 @@ class XiaohongshuProvider(BaseProvider):
         # 获取用户信息
         first_note = notes[0]
         # 尝试多种方式获取昵称
-        nickname = (
-            first_note.get("nickname")
-            or first_note.get("user", {}).get("nickname")
-            or "unknown"
-        )
+        nickname = first_note.get("nickname") or first_note.get("user", {}).get("nickname") or "unknown"
         safe_nickname = norm_str(nickname)[:20]
         if not safe_nickname.strip():
             safe_nickname = "unknown"
@@ -1000,9 +932,7 @@ class XiaohongshuProvider(BaseProvider):
                     "directories": [],
                     "statistics": {
                         "error": "未搜索到任何笔记",
-                        "duration_seconds": (
-                            datetime.now() - start_time
-                        ).total_seconds(),
+                        "duration_seconds": (datetime.now() - start_time).total_seconds(),
                     },
                 }
 
@@ -1041,9 +971,7 @@ class XiaohongshuProvider(BaseProvider):
                     # 生成唯一ID和目录名
                     import hashlib
 
-                    article_id = hashlib.md5(
-                        f"{note_url}_{title}".encode()
-                    ).hexdigest()[:12]
+                    article_id = hashlib.md5(f"{note_url}_{title}".encode()).hexdigest()[:12]
                     # 清理标题作为文件夹名
                     safe_title = re.sub(r'[\\/:*?"<>|]', "_", title).strip()[:100]
                     if not safe_title:
@@ -1058,9 +986,7 @@ class XiaohongshuProvider(BaseProvider):
 
                     # 构建内容（使用 raw_note 以获取正确的统计数据）
                     content_text = self._build_note_content_text(raw_note, detail)
-                    markdown_content = self._build_note_content_markdown(
-                        raw_note, detail
-                    )
+                    markdown_content = self._build_note_content_markdown(raw_note, detail)
 
                     # 保存文本内容
                     text_file = os.path.join(article_dir, f"{safe_title}.txt")
@@ -1105,9 +1031,7 @@ class XiaohongshuProvider(BaseProvider):
                             ),
                             "collected_count": (
                                 int(raw_note.get("collected_count", 0))
-                                if isinstance(
-                                    raw_note.get("collected_count"), (int, str)
-                                )
+                                if isinstance(raw_note.get("collected_count"), (int, str))
                                 else 0
                             ),
                             "comment_count": (
@@ -1126,16 +1050,8 @@ class XiaohongshuProvider(BaseProvider):
                         "tags": raw_note.get("tags", []),
                         "files": {
                             "text_file": f"{safe_title}.txt",
-                            "markdown_file": (
-                                f"{safe_title}.md"
-                                if save_format in ["markdown", "both"]
-                                else None
-                            ),
-                            "raw_data": (
-                                "raw_data.json"
-                                if save_format in ["json", "both"]
-                                else None
-                            ),
+                            "markdown_file": (f"{safe_title}.md" if save_format in ["markdown", "both"] else None),
+                            "raw_data": ("raw_data.json" if save_format in ["json", "both"] else None),
                         },
                     }
 
@@ -1152,20 +1068,13 @@ class XiaohongshuProvider(BaseProvider):
 
                 except Exception as e:
                     logger.error(f"保存笔记失败 {detail.get('title', 'Unknown')}: {e}")
-                    import traceback
-
-                    traceback.print_exc()
                     continue
 
             logger.info(f"✅ 保存完成: {successful_saves}/{len(raw_notes)} 个笔记\n")
 
             # 5. 统计数据
             total_likes = sum(
-                (
-                    int(raw_note.get("liked_count", 0))
-                    if isinstance(raw_note.get("liked_count"), (int, str))
-                    else 0
-                )
+                (int(raw_note.get("liked_count", 0)) if isinstance(raw_note.get("liked_count"), (int, str)) else 0)
                 for raw_note in raw_notes
             )
             total_collects = sum(
@@ -1177,19 +1086,11 @@ class XiaohongshuProvider(BaseProvider):
                 for raw_note in raw_notes
             )
             total_comments = sum(
-                (
-                    int(raw_note.get("comment_count", 0))
-                    if isinstance(raw_note.get("comment_count"), (int, str))
-                    else 0
-                )
+                (int(raw_note.get("comment_count", 0)) if isinstance(raw_note.get("comment_count"), (int, str)) else 0)
                 for raw_note in raw_notes
             )
             total_shares = sum(
-                (
-                    int(raw_note.get("share_count", 0))
-                    if isinstance(raw_note.get("share_count"), (int, str))
-                    else 0
-                )
+                (int(raw_note.get("share_count", 0)) if isinstance(raw_note.get("share_count"), (int, str)) else 0)
                 for raw_note in raw_notes
             )
 
@@ -1231,9 +1132,7 @@ class XiaohongshuProvider(BaseProvider):
                 },
             }
 
-            logger.info(
-                f"搜索保存完成: {query}, 成功: {successful_saves}/{len(raw_notes)}"
-            )
+            logger.info(f"搜索保存完成: {query}, 成功: {successful_saves}/{len(raw_notes)}")
             return result
 
         except Exception as e:
@@ -1252,9 +1151,7 @@ class XiaohongshuProvider(BaseProvider):
                 },
             }
 
-    def _build_note_content_text(
-        self, raw_note: Dict[str, Any], detail: Dict[str, Any]
-    ) -> str:
+    def _build_note_content_text(self, raw_note: Dict[str, Any], detail: Dict[str, Any]) -> str:
         """
         构建笔记的纯文本内容
 
@@ -1314,9 +1211,7 @@ class XiaohongshuProvider(BaseProvider):
 
         return "\n".join(parts)
 
-    def _build_note_content_markdown(
-        self, raw_note: Dict[str, Any], detail: Dict[str, Any]
-    ) -> str:
+    def _build_note_content_markdown(self, raw_note: Dict[str, Any], detail: Dict[str, Any]) -> str:
         """
         构建笔记的 Markdown 内容（和其他平台格式一致）
 
@@ -1392,15 +1287,13 @@ class XiaohongshuProvider(BaseProvider):
 
 ---
 
-*本文件由小红书爬虫自动生成*  
+*本文件由小红书爬虫自动生成*
 *生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
 
         return md_content
 
-    async def _download_note_images(
-        self, raw_note: Dict[str, Any], storage_info: Dict[str, Any]
-    ) -> None:
+    async def _download_note_images(self, raw_note: Dict[str, Any], storage_info: Dict[str, Any]) -> None:
         """
         下载笔记的所有图片
 
@@ -1450,9 +1343,7 @@ class XiaohongshuProvider(BaseProvider):
                                     f.write(content)
                                 downloaded_count += 1
                             else:
-                                logger.warning(
-                                    f"图片下载失败 (状态码 {response.status}): {image_url}"
-                                )
+                                logger.warning(f"图片下载失败 (状态码 {response.status}): {image_url}")
 
                         # 避免请求过快
                         await asyncio.sleep(0.2)
@@ -1502,9 +1393,7 @@ class Data_Spider:
         # 确保保存目录存在
         os.makedirs(save_dir, exist_ok=True)
 
-    def spider_note(
-        self, note_url: str, cookies_str: str, proxies=None, max_retries=3, base_delay=5
-    ):
+    def spider_note(self, note_url: str, cookies_str: str, proxies=None, max_retries=3, base_delay=5):
         """
         爬取一个笔记的信息，带重试和延时机制
         :param note_url: 笔记URL
@@ -1526,12 +1415,8 @@ class Data_Spider:
                     logger.info(f"第{attempt}次重试，等待{delay:.1f}秒...")
                     time.sleep(delay)
 
-                success, msg, response_data = self.xhs_apis.get_note_info(
-                    note_url, cookies_str, proxies or {}
-                )
-                logger.info(
-                    f"API调用结果 (尝试{attempt + 1}): success={success}, msg={msg}"
-                )
+                success, msg, response_data = self.xhs_apis.get_note_info(note_url, cookies_str, proxies or {})
+                logger.info(f"API调用结果 (尝试{attempt + 1}): success={success}, msg={msg}")
 
                 # 检查是否是限流错误
                 if response_data and isinstance(response_data, dict):
@@ -1560,9 +1445,7 @@ class Data_Spider:
                         msg = f'data中没有items字段，可用字段: {list(response_data["data"].keys())}'
                     elif not isinstance(response_data["data"]["items"], list):
                         success = False
-                        msg = (
-                            f'items不是列表格式: {type(response_data["data"]["items"])}'
-                        )
+                        msg = f'items不是列表格式: {type(response_data["data"]["items"])}'
                     elif len(response_data["data"]["items"]) == 0:
                         success = False
                         msg = "items列表为空"
@@ -1615,9 +1498,7 @@ class Data_Spider:
         """
         note_list = []
         try:
-            success, msg, all_note_info = self.xhs_apis.get_user_all_notes(
-                user_url, cookies_str, proxies or {}
-            )
+            success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, cookies_str, proxies or {})
             if success:
                 logger.info(f"用户 {user_url} 作品数量: {len(all_note_info)}")
                 for simple_note_info in all_note_info:
@@ -1686,9 +1567,7 @@ class Data_Spider:
         logger.info(f"搜索关键词 {query} 笔记: {success}, msg: {msg}")
         return [], success, msg
 
-    def save_note_to_file(
-        self, note: Dict[str, Any], user_id: Optional[str] = None
-    ) -> str:
+    def save_note_to_file(self, note: Dict[str, Any], user_id: Optional[str] = None) -> str:
         """
         保存单个笔记数据到文件
 
@@ -1710,11 +1589,7 @@ class Data_Spider:
         # 确定保存路径
         if user_id:
             # 尝试多种方式获取昵称（适配不同的数据结构）
-            nickname = (
-                note.get("nickname")
-                or note.get("user", {}).get("nickname")
-                or "unknown"
-            )
+            nickname = note.get("nickname") or note.get("user", {}).get("nickname") or "unknown"
             safe_nickname = norm_str(nickname)[:20]
             if not safe_nickname.strip():
                 safe_nickname = "unknown"
@@ -1795,11 +1670,7 @@ class Data_Spider:
         # 获取用户信息
         first_note = notes[0]
         # 尝试多种方式获取昵称
-        nickname = (
-            first_note.get("nickname")
-            or first_note.get("user", {}).get("nickname")
-            or "unknown"
-        )
+        nickname = first_note.get("nickname") or first_note.get("user", {}).get("nickname") or "unknown"
         safe_nickname = norm_str(nickname)[:20]
         if not safe_nickname.strip():
             safe_nickname = "unknown"

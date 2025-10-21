@@ -77,9 +77,7 @@ class ZhihuArticleProvider(BaseProvider):
                 return None
             title = title_element.text.strip()
 
-            content_element = soup.select_one(
-                self.rules.get("content_selector", ".Post-Main")
-            )
+            content_element = soup.select_one(self.rules.get("content_selector", ".Post-Main"))
             if content_element:
                 # 清理内容中的非文本元素，例如 "收起" 按钮
                 for element in content_element.find_all("button"):
@@ -152,14 +150,10 @@ class ZhihuArticleProvider(BaseProvider):
                     logger.info("✅ 页面已稳定！")
 
                     # 检查是否需要登录
-                    if page.is_visible(
-                        'button.Button--primary.Button--blue:has-text("登录")'
-                    ):
+                    if page.is_visible('button.Button--primary.Button--blue:has-text("登录")'):
                         logger.debug("\n🔐 需要登录知乎账号，请在浏览器中手动登录...")
                         try:
-                            page.wait_for_selector(
-                                "div.AppHeader-profile", timeout=120000
-                            )
+                            page.wait_for_selector("div.AppHeader-profile", timeout=120000)
                             logger.info("✅ 登录成功！")
                         except:
                             logger.warning("⚠️ 登录超时，尝试继续...")
@@ -170,9 +164,7 @@ class ZhihuArticleProvider(BaseProvider):
                     if page.is_visible(show_all_button_selector):
                         try:
                             page.click(show_all_button_selector, timeout=5000)
-                            logger.debug(
-                                "  - 成功点击 '显示全部' 按钮，等待内容加载..."
-                            )
+                            logger.debug("  - 成功点击 '显示全部' 按钮，等待内容加载...")
                             page.wait_for_timeout(2000)
                         except Exception as e:
                             logger.warning(f"  - 点击 '显示全部' 按钮失败: {e}")
@@ -188,22 +180,14 @@ class ZhihuArticleProvider(BaseProvider):
                     soup = BeautifulSoup(final_html, "html.parser")
 
                     # 提取问题信息
-                    question_title_element = soup.find(
-                        "h1", class_="QuestionHeader-title"
-                    )
+                    question_title_element = soup.find("h1", class_="QuestionHeader-title")
                     question_title = (
-                        question_title_element.get_text(strip=True)
-                        if question_title_element
-                        else "未知问题标题"
+                        question_title_element.get_text(strip=True) if question_title_element else "未知问题标题"
                     )
 
-                    question_detail_element = soup.find(
-                        "div", class_="QuestionRichText"
-                    )
+                    question_detail_element = soup.find("div", class_="QuestionRichText")
                     question_detail = (
-                        question_detail_element.get_text("\n", strip=True)
-                        if question_detail_element
-                        else ""
+                        question_detail_element.get_text("\n", strip=True) if question_detail_element else ""
                     )
 
                     logger.info(f"📋 问题标题: {question_title}")
@@ -220,18 +204,14 @@ class ZhihuArticleProvider(BaseProvider):
 
                         # 下载问题描述中的图片
                         if question_detail_element and self.save_images:
-                            question_images = self._sync_download_question_images(
-                                question_detail_element, storage_info
-                            )
+                            question_images = self._sync_download_question_images(question_detail_element, storage_info)
 
                     # 解析回答
                     answers_list = []
                     downloaded_images = []
                     answer_items = soup.find_all("div", class_="AnswerItem")
 
-                    logger.debug(
-                        f"📊 页面共加载了 {len(answer_items)} 个回答，将处理前 {self.max_answers} 个。"
-                    )
+                    logger.debug(f"📊 页面共加载了 {len(answer_items)} 个回答，将处理前 {self.max_answers} 个。")
 
                     for index, item in enumerate(answer_items[: self.max_answers]):
                         # 使用字符串操作来提取信息，避免类型问题
@@ -246,14 +226,8 @@ class ZhihuArticleProvider(BaseProvider):
                             author = author_match.group(1)
                         else:
                             # 尝试从用户链接获取
-                            author_match = re.search(
-                                r'class="UserLink-link"[^>]*>([^<]+)<', item_html
-                            )
-                            author = (
-                                author_match.group(1).strip()
-                                if author_match
-                                else "匿名用户"
-                            )
+                            author_match = re.search(r'class="UserLink-link"[^>]*>([^<]+)<', item_html)
+                            author = author_match.group(1).strip() if author_match else "匿名用户"
 
                         # 获取点赞数
                         vote_match = re.search(
@@ -292,9 +266,7 @@ class ZhihuArticleProvider(BaseProvider):
                             }
                         )
 
-                        logger.debug(
-                            f"  ✅ 处理完成第 {index + 1} 个回答 (作者: {author}, 👍 {upvotes})"
-                        )
+                        logger.debug(f"  ✅ 处理完成第 {index + 1} 个回答 (作者: {author}, 👍 {upvotes})")
 
                     # 组装完整内容
                     full_content = f"# {question_title}\n\n"
@@ -311,12 +283,8 @@ class ZhihuArticleProvider(BaseProvider):
                         storage_manager.save_text_content(storage_info, full_content)
 
                         if self.output_format == "markdown":
-                            markdown_content = self._convert_to_markdown(
-                                question_title, question_detail, answers_list
-                            )
-                            storage_manager.save_markdown_content(
-                                storage_info, markdown_content, question_title
-                            )
+                            markdown_content = self._convert_to_markdown(question_title, question_detail, answers_list)
+                            storage_manager.save_markdown_content(storage_info, markdown_content, question_title)
 
                         # 保存完整的JSON数据
                         json_data = {
@@ -328,15 +296,11 @@ class ZhihuArticleProvider(BaseProvider):
                             "answers": answers_list,
                         }
 
-                        json_path = os.path.join(
-                            storage_info["article_dir"], "data.json"
-                        )
+                        json_path = os.path.join(storage_info["article_dir"], "data.json")
                         with open(json_path, "w", encoding="utf-8") as f:
                             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
-                        storage_manager.save_article_index(
-                            storage_info, full_content[:200]
-                        )
+                        storage_manager.save_article_index(storage_info, full_content[:200])
 
                         logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
 
@@ -359,15 +323,11 @@ class ZhihuArticleProvider(BaseProvider):
                         author="知乎用户",
                         images=all_image_infos,
                         markdown_content=(
-                            self._convert_to_markdown(
-                                question_title, question_detail, answers_list
-                            )
+                            self._convert_to_markdown(question_title, question_detail, answers_list)
                             if self.output_format == "markdown"
                             else None
                         ),
-                        save_directory=(
-                            storage_info["article_dir"] if storage_info else None
-                        ),
+                        save_directory=(storage_info["article_dir"] if storage_info else None),
                     )
 
                 except Exception as e:
@@ -381,9 +341,7 @@ class ZhihuArticleProvider(BaseProvider):
         with ThreadPoolExecutor() as executor:
             return await loop.run_in_executor(executor, _sync_playwright_parse)
 
-    def _sync_download_question_images(
-        self, question_element, storage_info: dict
-    ) -> List[str]:
+    def _sync_download_question_images(self, question_element, storage_info: dict) -> List[str]:
         """下载问题描述中的图片"""
         downloaded_images = []
         question_image_dir = os.path.join(storage_info["images_dir"], "question_images")
@@ -393,11 +351,7 @@ class ZhihuArticleProvider(BaseProvider):
         logger.debug(f"🖼️ 正在处理... 发现 {len(images)} 张")
 
         for img_index, img_tag in enumerate(images):
-            img_url = (
-                img_tag.get("data-original")
-                or img_tag.get("data-actualsrc")
-                or img_tag.get("src")
-            )
+            img_url = img_tag.get("data-original") or img_tag.get("data-actualsrc") or img_tag.get("src")
 
             if not img_url or not img_url.startswith("http"):
                 continue
@@ -433,22 +387,14 @@ class ZhihuArticleProvider(BaseProvider):
 
         # 创建回答专用图片目录
         safe_author = re.sub(r'[\\/:*?"<>|]', "_", author)
-        answer_image_dir = os.path.join(
-            storage_info["images_dir"], f"answer_{answer_index + 1}_{safe_author}"
-        )
+        answer_image_dir = os.path.join(storage_info["images_dir"], f"answer_{answer_index + 1}_{safe_author}")
         os.makedirs(answer_image_dir, exist_ok=True)
 
         images = content_element.find_all("img")
-        logger.debug(
-            f"  🖼️ 正在处理第 {answer_index + 1} 个回答中的图片，发现 {len(images)} 张"
-        )
+        logger.debug(f"  🖼️ 正在处理第 {answer_index + 1} 个回答中的图片，发现 {len(images)} 张")
 
         for img_index, img_tag in enumerate(images):
-            img_url = (
-                img_tag.get("data-original")
-                or img_tag.get("data-actualsrc")
-                or img_tag.get("src")
-            )
+            img_url = img_tag.get("data-original") or img_tag.get("data-actualsrc") or img_tag.get("src")
 
             if not img_url or not img_url.startswith("http"):
                 continue
@@ -476,9 +422,7 @@ class ZhihuArticleProvider(BaseProvider):
 
         return downloaded_images
 
-    def _convert_to_markdown(
-        self, question_title: str, question_detail: str, answers_list: List[Dict]
-    ) -> str:
+    def _convert_to_markdown(self, question_title: str, question_detail: str, answers_list: List[Dict]) -> str:
         """将知乎问题和回答转换为Markdown格式"""
         markdown = f"# {question_title}\n\n"
 
@@ -488,9 +432,7 @@ class ZhihuArticleProvider(BaseProvider):
         markdown += f"## 回答 ({len(answers_list)}个)\n\n"
 
         for i, answer in enumerate(answers_list, 1):
-            markdown += (
-                f"### 回答 {i} - {answer['author']} (👍 {answer['upvotes']})\n\n"
-            )
+            markdown += f"### 回答 {i} - {answer['author']} (👍 {answer['upvotes']})\n\n"
             markdown += f"{answer['content']}\n\n"
 
             if answer["images"]:

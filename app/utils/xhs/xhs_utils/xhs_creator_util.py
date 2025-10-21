@@ -2,9 +2,7 @@ import json
 import execjs
 
 try:
-    js = execjs.compile(
-        open(r"../static/xhs_creator_xs.js", "r", encoding="utf-8").read()
-    )
+    js = execjs.compile(open(r"../static/xhs_creator_xs.js", "r", encoding="utf-8").read())
 except:
     js = execjs.compile(open(r"static/xhs_creator_xs.js", "r", encoding="utf-8").read())
 

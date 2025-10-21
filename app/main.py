@@ -67,9 +67,7 @@ async def scrape_url(request: ScrapeRequest):
 
     provider_class = PROVIDER_MAP.get(platform)
     if not provider_class:
-        raise HTTPException(
-            status_code=501, detail=f"平台 '{platform}' 的抓取逻辑未实现"
-        )
+        raise HTTPException(status_code=501, detail=f"平台 '{platform}' 的抓取逻辑未实现")
 
     provider = provider_class(
         url=url_str,
@@ -131,8 +129,6 @@ async def get_platform_details(platform: str):
     """获取特定平台的详细存储信息"""
     summary = storage_manager.get_platform_summary(platform)
     if summary["total_articles"] == 0:
-        raise HTTPException(
-            status_code=404, detail=f"平台 '{platform}' 没有找到任何文章"
-        )
+        raise HTTPException(status_code=404, detail=f"平台 '{platform}' 没有找到任何文章")
 
     return summary

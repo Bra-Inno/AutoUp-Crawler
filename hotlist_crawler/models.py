@@ -66,9 +66,7 @@ except ImportError as e:
     class ScrapeRequest:
         """抓取请求简化版本"""
 
-        def __init__(
-            self, url: str, save_images: bool = True, output_format: str = "markdown"
-        ):
+        def __init__(self, url: str, save_images: bool = True, output_format: str = "markdown"):
             self.url = url
             self.save_images = save_images
             self.output_format = output_format

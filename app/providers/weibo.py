@@ -126,7 +126,9 @@ class WeiboProvider(BaseProvider):
                     logger.info("✅ 页面初步加载完成。")
 
                     logger.debug("⏳ 正在等待搜索结果加载...")
-                    robust_post_xpath = "(//*[@id='pl_feedlist_index']//div[@class='card-wrap' and .//div[@class='info']])[1]"
+                    robust_post_xpath = (
+                        "(//*[@id='pl_feedlist_index']//div[@class='card-wrap' and .//div[@class='info']])[1]"
+                    )
                     page.wait_for_selector(f"xpath={robust_post_xpath}", timeout=60000)
                     logger.info("✅ 目标帖子元素已加载。")
 
@@ -134,52 +136,35 @@ class WeiboProvider(BaseProvider):
 
                     # 提取帖子信息
                     try:
-                        author_name = (
-                            first_post.locator("a.name").first.inner_text(timeout=5000)
-                            or "未知作者"
-                        )
+                        author_name = first_post.locator("a.name").first.inner_text(timeout=5000) or "未知作者"
                     except:
                         author_name = "未知作者"
 
                     # 提取帖子内容
                     post_content = ""
                     try:
-                        full_content_locator = first_post.locator(
-                            'p.txt[node-type="feed_list_content_full"]'
-                        )
-                        standard_content_locator = first_post.locator(
-                            'p.txt[node-type="feed_list_content"]'
-                        )
+                        full_content_locator = first_post.locator('p.txt[node-type="feed_list_content_full"]')
+                        standard_content_locator = first_post.locator('p.txt[node-type="feed_list_content"]')
                         if full_content_locator.count() > 0:
                             post_content = full_content_locator.inner_text(timeout=5000)
                         elif standard_content_locator.count() > 0:
-                            post_content = standard_content_locator.first.inner_text(
-                                timeout=5000
-                            )
+                            post_content = standard_content_locator.first.inner_text(timeout=5000)
                     except PlaywrightTimeoutError:
                         post_content = "内容提取失败"
 
                     # 提取互动数据
                     try:
                         action_buttons = first_post.locator("div.card-act > ul > li")
-                        reposts_count = self._parse_count(
-                            action_buttons.nth(0).inner_text(timeout=5000)
-                        )
-                        comments_count = self._parse_count(
-                            action_buttons.nth(1).inner_text(timeout=5000)
-                        )
-                        likes_count = self._parse_count(
-                            action_buttons.nth(2).inner_text(timeout=5000)
-                        )
+                        reposts_count = self._parse_count(action_buttons.nth(0).inner_text(timeout=5000))
+                        comments_count = self._parse_count(action_buttons.nth(1).inner_text(timeout=5000))
+                        likes_count = self._parse_count(action_buttons.nth(2).inner_text(timeout=5000))
                     except:
                         reposts_count = comments_count = likes_count = "0"
 
                     logger.info(f"\\n--- 帖子信息 ---")
                     logger.debug(f"作者: {author_name}")
                     logger.debug(f"内容: {post_content[:100]}...")
-                    logger.debug(
-                        f"转发: {reposts_count}, 评论: {comments_count}, 赞: {likes_count}"
-                    )
+                    logger.debug(f"转发: {reposts_count}, 评论: {comments_count}, 赞: {likes_count}")
                     logger.debug("------------------")
 
                     # 创建存储结构
@@ -196,14 +181,10 @@ class WeiboProvider(BaseProvider):
 
                         # 下载图片
                         if self.save_images:
-                            downloaded_images = self._sync_download_images(
-                                first_post, page, storage_info
-                            )
+                            downloaded_images = self._sync_download_images(first_post, page, storage_info)
 
                             # 下载视频
-                            downloaded_videos = self._sync_download_videos(
-                                first_post, page, storage_info
-                            )
+                            downloaded_videos = self._sync_download_videos(first_post, page, storage_info)
 
                     # 组装完整内容
                     full_content = f"# {search_query} - 微博搜索结果\\n\\n"
@@ -237,9 +218,7 @@ class WeiboProvider(BaseProvider):
                         storage_manager.save_text_content(storage_info, full_content)
 
                         if self.output_format == "markdown":
-                            storage_manager.save_markdown_content(
-                                storage_info, full_content, title
-                            )
+                            storage_manager.save_markdown_content(storage_info, full_content, title)
 
                         # 保存完整的JSON数据
                         timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -258,15 +237,11 @@ class WeiboProvider(BaseProvider):
                             "scraped_timestamp": timestamp,
                         }
 
-                        json_path = os.path.join(
-                            storage_info["article_dir"], "post_data.json"
-                        )
+                        json_path = os.path.join(storage_info["article_dir"], "post_data.json")
                         with open(json_path, "w", encoding="utf-8") as f:
                             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
-                        storage_manager.save_article_index(
-                            storage_info, post_content[:200]
-                        )
+                        storage_manager.save_article_index(storage_info, post_content[:200])
 
                         logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
 
@@ -296,12 +271,8 @@ class WeiboProvider(BaseProvider):
                         content=full_content,
                         author=author_name,
                         images=all_media_infos,
-                        markdown_content=(
-                            full_content if self.output_format == "markdown" else None
-                        ),
-                        save_directory=(
-                            storage_info["article_dir"] if storage_info else None
-                        ),
+                        markdown_content=(full_content if self.output_format == "markdown" else None),
+                        save_directory=(storage_info["article_dir"] if storage_info else None),
                     )
 
                 except Exception as e:
@@ -336,9 +307,7 @@ class WeiboProvider(BaseProvider):
                             continue
 
                         # 获取高质量图片URL
-                        large_img_url = img_url.replace("/orj360/", "/large/").replace(
-                            "/thumbnail/", "/large/"
-                        )
+                        large_img_url = img_url.replace("/orj360/", "/large/").replace("/thumbnail/", "/large/")
 
                         response = httpx.get(large_img_url, timeout=20)
                         response.raise_for_status()
@@ -349,9 +318,7 @@ class WeiboProvider(BaseProvider):
                         ext = get_file_extension(content_type, large_img_url, content)
 
                         img_filename = f"image_{i + 1}.{ext}"
-                        local_img_path = os.path.join(
-                            storage_info["images_dir"], img_filename
-                        )
+                        local_img_path = os.path.join(storage_info["images_dir"], img_filename)
 
                         with open(local_img_path, "wb") as f:
                             f.write(content)
@@ -389,9 +356,7 @@ class WeiboProvider(BaseProvider):
                         logger.debug(f" {video_url}")
                         logger.debug("⬇️ 开始下载视频...")
 
-                        video_file_path = os.path.join(
-                            storage_info["attachments_dir"], "video.mp4"
-                        )
+                        video_file_path = os.path.join(storage_info["attachments_dir"], "video.mp4")
 
                         response = httpx.get(video_url, stream=True, timeout=300)
                         response.raise_for_status()

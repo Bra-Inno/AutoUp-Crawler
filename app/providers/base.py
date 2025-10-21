@@ -38,9 +38,7 @@ class BaseProvider(ABC):
         pass
 
     async def _get_html(self) -> str:
-        async with httpx.AsyncClient(
-            follow_redirects=True, headers=self.headers
-        ) as client:
+        async with httpx.AsyncClient(follow_redirects=True, headers=self.headers) as client:
             response = await client.get(self.url)
             response.raise_for_status()
             return response.text

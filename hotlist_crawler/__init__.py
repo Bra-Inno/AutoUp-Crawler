@@ -141,9 +141,7 @@ except ImportError as e:
         print_config = _import_error_func
 
         PlatformType = None
-        USER_DATA_DIR = os.path.join(
-            os.getcwd(), "chrome_user_data"
-        )  # 固定保存到工作目录
+        USER_DATA_DIR = os.path.join(os.getcwd(), "chrome_user_data")  # 固定保存到工作目录
         ScrapedDataItem = None
 
 # 导出的公共接口

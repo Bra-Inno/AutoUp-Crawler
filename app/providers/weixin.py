@@ -53,9 +53,7 @@ class WeixinMpProvider(BaseProvider):
                     return None
 
                 content_type = img_response.headers.get("Content-Type")
-                ext = get_file_extension(
-                    content_type=content_type, url=img_url, content=img_response.content
-                )
+                ext = get_file_extension(content_type=content_type, url=img_url, content=img_response.content)
 
                 img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
                 with open(img_save_path, "wb") as f:
@@ -87,9 +85,7 @@ class WeixinMpProvider(BaseProvider):
                     if self.save_images and save_dir:
                         # 使用同步方式处理图片下载（在异步环境中需要特殊处理）
                         loop = asyncio.get_event_loop()
-                        img_local_path = loop.run_until_complete(
-                            self.download_image(img_src, save_dir)
-                        )
+                        img_local_path = loop.run_until_complete(self.download_image(img_src, save_dir))
                         if img_local_path:
                             markdown_str += f"![{alt_text}]({img_local_path})\n"
                     else:
@@ -102,13 +98,9 @@ class WeixinMpProvider(BaseProvider):
 
         elif tag.name == "blockquote":
             content = tag.get_text(separator="\n", strip=True)
-            markdown_str = (
-                "".join([f"> {line}\n" for line in content.split("\n")]) + "\n"
-            )
+            markdown_str = "".join([f"> {line}\n" for line in content.split("\n")]) + "\n"
 
-        elif tag.name == "pre" or (
-            tag.name == "section" and "code-snippet__js" in tag.get("class", [])
-        ):
+        elif tag.name == "pre" or (tag.name == "section" and "code-snippet__js" in tag.get("class", [])):
             code_content = tag.get_text()
             markdown_str = f"```\n{code_content.strip()}\n```\n\n"
 
@@ -152,9 +144,7 @@ class WeixinMpProvider(BaseProvider):
                     if title_element:
                         title = title_element.get_text(strip=True)
                         if title and len(title) > 5:  # 确保标题有意义
-                            logger.debug(
-                                f"✅ 使用选择器 '{selector}' 找到标题: {title[:30]}..."
-                            )
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到标题: {title[:30]}...")
                             break
                 except Exception:
                     continue
@@ -183,9 +173,7 @@ class WeixinMpProvider(BaseProvider):
                         temp_author = author_element.get_text(strip=True)
                         if temp_author and len(temp_author) < 50:  # 合理的作者名长度
                             author = temp_author
-                            logger.debug(
-                                f"✅ 使用选择器 '{selector}' 找到作者: {author}"
-                            )
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到作者: {author}")
                             break
                 except Exception:
                     continue
@@ -210,9 +198,7 @@ class WeixinMpProvider(BaseProvider):
                     if content_element:
                         content = content_element.get_text(strip=True)
                         if content and len(content) > 100:  # 确保内容有意义
-                            logger.debug(
-                                f"✅ 使用选择器 '{selector}' 找到内容，长度: {len(content)} 字符"
-                            )
+                            logger.debug(f"✅ 使用选择器 '{selector}' 找到内容，长度: {len(content)} 字符")
                             break
                 except Exception:
                     continue
@@ -228,9 +214,7 @@ class WeixinMpProvider(BaseProvider):
                 logger.error("❌ 无法找到有效内容")
                 return None
 
-            logger.info(
-                f"✅ 降级方案抓取成功 - 标题: {title[:30]}..., 内容长度: {len(content)}"
-            )
+            logger.info(f"✅ 降级方案抓取成功 - 标题: {title[:30]}..., 内容长度: {len(content)}")
 
             return ScrapedDataItem(
                 title=title,
@@ -296,11 +280,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 提取作者
                 author_element = soup.find(id="js_name")
-                author = (
-                    author_element.get_text(strip=True)
-                    if author_element
-                    else "未知作者"
-                )
+                author = author_element.get_text(strip=True) if author_element else "未知作者"
 
                 # 提取正文内容
                 content_element = soup.find(id="js_content")
@@ -312,11 +292,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 创建存储结构（如果启用强制保存或需要保存图片/Markdown）
                 storage_info = None
-                if (
-                    self.force_save
-                    or self.save_images
-                    or self.output_format == "markdown"
-                ):
+                if self.force_save or self.save_images or self.output_format == "markdown":
                     storage_info = storage_manager.create_article_storage(
                         platform=self.platform_name,
                         title=title,
@@ -341,9 +317,7 @@ class WeixinMpProvider(BaseProvider):
 
                     # 保存 Markdown 文件
                     if storage_info:
-                        storage_manager.save_markdown_content(
-                            storage_info, markdown_content, title, author
-                        )
+                        storage_manager.save_markdown_content(storage_info, markdown_content, title, author)
 
                 # 收集图片信息
                 images = []
@@ -360,9 +334,7 @@ class WeixinMpProvider(BaseProvider):
                             if img_src:
                                 local_path = None
                                 if self.save_images and storage_info:
-                                    local_path = self._sync_download_and_save_image(
-                                        img_src, storage_info, alt_text
-                                    )
+                                    local_path = self._sync_download_and_save_image(img_src, storage_info, alt_text)
 
                                 images.append(
                                     {
@@ -382,9 +354,7 @@ class WeixinMpProvider(BaseProvider):
                     "content": content,
                     "markdown_content": markdown_content,
                     "images": images,
-                    "save_directory": (
-                        storage_info["article_dir"] if storage_info else None
-                    ),
+                    "save_directory": (storage_info["article_dir"] if storage_info else None),
                     "storage_info": storage_info,
                 }
 
@@ -412,9 +382,7 @@ class WeixinMpProvider(BaseProvider):
                 return None
 
             content_type = response.headers.get("Content-Type")
-            ext = get_file_extension(
-                content_type=content_type, url=img_url, content=response.content
-            )
+            ext = get_file_extension(content_type=content_type, url=img_url, content=response.content)
 
             img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
             with open(img_save_path, "wb") as f:
@@ -444,9 +412,7 @@ class WeixinMpProvider(BaseProvider):
                     img_src = child.get("data-src") or child.get("src")
                     alt_text = child.get("alt", "image")
                     if self.save_images and storage_info:
-                        img_local_path = self._sync_download_and_save_image(
-                            str(img_src), storage_info, str(alt_text)
-                        )
+                        img_local_path = self._sync_download_and_save_image(str(img_src), storage_info, str(alt_text))
                         if img_local_path:
                             # 使用相对路径在Markdown中引用图片
                             relative_path = f"images/{os.path.basename(img_local_path)}"
@@ -458,20 +424,14 @@ class WeixinMpProvider(BaseProvider):
                 elif child.name == "br":
                     markdown_str += "\n"
                 else:
-                    markdown_str += self._sync_convert_tag_to_markdown(
-                        child, storage_info
-                    )
+                    markdown_str += self._sync_convert_tag_to_markdown(child, storage_info)
             markdown_str += "\n\n"
 
         elif tag.name == "blockquote":
             content = tag.get_text(separator="\n", strip=True)
-            markdown_str = (
-                "".join([f"> {line}\n" for line in content.split("\n")]) + "\n"
-            )
+            markdown_str = "".join([f"> {line}\n" for line in content.split("\n")]) + "\n"
 
-        elif tag.name == "pre" or (
-            tag.name == "section" and "code-snippet__js" in tag.get("class", [])
-        ):
+        elif tag.name == "pre" or (tag.name == "section" and "code-snippet__js" in tag.get("class", [])):
             code_content = tag.get_text()
             markdown_str = f"```\n{code_content.strip()}\n```\n\n"
 
@@ -488,9 +448,7 @@ class WeixinMpProvider(BaseProvider):
 
         return markdown_str
 
-    def _sync_download_and_save_image(
-        self, img_url: str, storage_info: dict, alt_text: str = ""
-    ) -> Optional[str]:
+    def _sync_download_and_save_image(self, img_url: str, storage_info: dict, alt_text: str = "") -> Optional[str]:
         """同步版本的图片下载和保存，使用存储管理器"""
         if not img_url or not img_url.startswith("http"):
             return None
@@ -528,9 +486,7 @@ class WeixinMpProvider(BaseProvider):
         # 使用 ThreadPoolExecutor 来运行同步代码
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             try:
-                result_dict = await loop.run_in_executor(
-                    executor, self._sync_playwright_parse
-                )
+                result_dict = await loop.run_in_executor(executor, self._sync_playwright_parse)
 
                 # 转换回 ScrapedDataItem 对象
                 images = [ImageInfo(**img_data) for img_data in result_dict["images"]]

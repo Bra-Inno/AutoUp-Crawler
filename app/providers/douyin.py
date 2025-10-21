@@ -61,9 +61,7 @@ class DouyinVideoProvider(BaseProvider):
         self.user_agent = self._load_user_agent()
 
         # 初始化下载器（使用加载的Cookie和UA）
-        self.downloader = DouyinVideoDownloader(
-            cookie=self.cookies or "", user_agent=self.user_agent
-        )
+        self.downloader = DouyinVideoDownloader(cookie=self.cookies or "", user_agent=self.user_agent)
 
     def _load_saved_cookies(self) -> Optional[str]:
         """
@@ -79,12 +77,8 @@ class DouyinVideoProvider(BaseProvider):
                 with open(cookies_file, "r", encoding="utf-8") as f:
                     cookies_list = json.load(f)
                     # 转换为cookie字符串
-                    cookie_str = "; ".join(
-                        [f"{c['name']}={c['value']}" for c in cookies_list]
-                    )
-                    logger.info(
-                        f"📂 加载已保存的抖音登录状态，共 {len(cookies_list)} 个cookies"
-                    )
+                    cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
+                    logger.info(f"📂 加载已保存的抖音登录状态，共 {len(cookies_list)} 个cookies")
                     return cookie_str
             else:
                 logger.warning(f"⚠️ 未找到保存的抖音Cookie: {cookies_file}")
@@ -195,9 +189,7 @@ class DouyinVideoProvider(BaseProvider):
             ScrapedDataItem: 包含视频信息的数据项
         """
         try:
-            logger.debug(
-                "\n" + "=" * 80 + "\n🎬 抖音视频Provider - 开始处理\n" + "=" * 80
-            )
+            logger.debug("\n" + "=" * 80 + "\n🎬 抖音视频Provider - 开始处理\n" + "=" * 80)
             logger.debug(f"\n📎 输入链接: {self.url}")
 
             # 1. 处理链接（如果需要补全）
@@ -257,9 +249,7 @@ class DouyinVideoProvider(BaseProvider):
                 logger.info(f"\n📥 开始下载视频...")
 
                 # 获取视频下载地址
-                video_url = video_info["video"].get("download_url") or video_info[
-                    "video"
-                ].get("play_url")
+                video_url = video_info["video"].get("download_url") or video_info["video"].get("play_url")
 
                 if not video_url:
                     logger.warning("   ⚠️ 未找到视频下载地址")
@@ -305,14 +295,10 @@ class DouyinVideoProvider(BaseProvider):
                 storage_manager.save_text_content(storage_info, content_text)
 
                 # 保存markdown格式
-                storage_manager.save_markdown_content(
-                    storage_info, markdown_content, title
-                )
+                storage_manager.save_markdown_content(storage_info, markdown_content, title)
 
                 # 保存文章索引
-                storage_manager.save_article_index(
-                    storage_info, video_info.get("desc", "")[:200]
-                )
+                storage_manager.save_article_index(storage_info, video_info.get("desc", "")[:200])
 
             item = ScrapedDataItem(
                 title=title,
@@ -320,9 +306,7 @@ class DouyinVideoProvider(BaseProvider):
                 content=content_text,
                 markdown_content=markdown_content,
                 images=[],
-                save_directory=(
-                    storage_info.get("article_dir") if storage_info else None
-                ),
+                save_directory=(storage_info.get("article_dir") if storage_info else None),
             )
 
             logger.info("\n" + "=" * 80)
@@ -375,13 +359,9 @@ class DouyinVideoProvider(BaseProvider):
                 "duration": video.get("duration"),
                 "ratio": video.get("ratio"),
                 "cover": video.get("cover", {}).get("url_list", [None])[0],
-                "dynamic_cover": video.get("dynamic_cover", {}).get("url_list", [None])[
-                    0
-                ],
+                "dynamic_cover": video.get("dynamic_cover", {}).get("url_list", [None])[0],
                 "play_addr": video.get("play_addr", {}).get("url_list", [None])[0],
-                "download_addr": video.get("download_addr", {}).get("url_list", [None])[
-                    0
-                ],
+                "download_addr": video.get("download_addr", {}).get("url_list", [None])[0],
             },
             # 音乐信息
             "music": {
@@ -459,9 +439,7 @@ class DouyinVideoProvider(BaseProvider):
 
         return "\n".join(md_lines)
 
-    def _format_as_markdown_from_downloader_info(
-        self, video_info: Dict[str, Any]
-    ) -> str:
+    def _format_as_markdown_from_downloader_info(self, video_info: Dict[str, Any]) -> str:
         """
         将下载器返回的视频信息格式化为Markdown
 

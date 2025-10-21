@@ -8,9 +8,7 @@ class ScrapeRequest(BaseModel):
 
     url: HttpUrl = Field(..., description="需要抓取的文章链接")
     save_images: bool = Field(True, description="是否下载图片到本地（默认开启）")
-    output_format: str = Field(
-        "markdown", description="输出格式: text, markdown（默认markdown）"
-    )
+    output_format: str = Field("markdown", description="输出格式: text, markdown（默认markdown）")
     force_save: bool = Field(True, description="是否强制保存所有内容到本地（默认开启）")
 
 
@@ -29,9 +27,7 @@ class ScrapedDataItem(BaseModel):
     author: Optional[str] = Field(None, description="作者")
     content: str | None = Field(None, description="抓取到的主要内容文本")
     markdown_content: Optional[str] = Field(None, description="Markdown格式的内容")
-    images: List[ImageInfo] = Field(
-        default_factory=list, description="文章中的图片信息"
-    )
+    images: List[ImageInfo] = Field(default_factory=list, description="文章中的图片信息")
     save_directory: Optional[str] = Field(None, description="内容保存目录")
 
 

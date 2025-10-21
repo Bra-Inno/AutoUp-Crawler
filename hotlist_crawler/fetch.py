@@ -140,9 +140,7 @@ async def _fetch_async(
                         logger.info(f"📂 保存位置: {result['save_directory']}")
                         return True
                     else:
-                        logger.error(
-                            f"❌ 小红书搜索失败: {result.get('error', '未知错误')}"
-                        )
+                        logger.error(f"❌ 小红书搜索失败: {result.get('error', '未知错误')}")
                         return False
                 else:
                     # 普通小红书笔记URL（暂未实现）
@@ -253,9 +251,7 @@ def fetch(
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    return loop.run_until_complete(
-        _fetch_async(url, destination, save_images, output_format, max_answers)
-    )
+    return loop.run_until_complete(_fetch_async(url, destination, save_images, output_format, max_answers))
 
 
 def batch_fetch(

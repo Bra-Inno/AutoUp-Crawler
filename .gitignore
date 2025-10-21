@@ -19,6 +19,8 @@ env/
 .idea/
 *.sublime-project
 *.sublime-workspace
+!.vscode/extensions.json
+!.vscode/settings.json
 
 # 日志文件
 *.log
@@ -40,9 +42,8 @@ downloads/
 chrome_user_data/
 
 # 修复文件
-bug.md
-
 bilibili_video/
 dy_video_download/
 
+# Node 库
 node_modules/

@@ -26,9 +26,7 @@ class XHS_Apis:
         try:
             api = "/api/sns/web/v1/homefeed/category"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(
-                self.base_url + api, headers=headers, cookies=cookies, proxies=proxies
-            )
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -71,9 +69,7 @@ class XHS_Apis:
                 "image_formats": ["jpg", "webp", "avif"],
                 "need_filter_image": False,
             }
-            headers, cookies, trans_data = generate_request_params(
-                cookies_str, api, data
-            )
+            headers, cookies, trans_data = generate_request_params(cookies_str, api, data)
             response = httpx.post(
                 self.base_url + api,
                 headers=headers,
@@ -88,9 +84,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def get_homefeed_recommend_by_num(
-        self, category, require_num, cookies_str: str, proxies: dict = None
-    ):
+    def get_homefeed_recommend_by_num(self, category, require_num, cookies_str: str, proxies: dict = None):
         """
         根据数量获取主页推荐的笔记
         :param category: 你想要获取的频道
@@ -164,9 +158,7 @@ class XHS_Apis:
         try:
             api = f"/api/sns/web/v1/user/selfinfo"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(
-                self.base_url + api, headers=headers, cookies=cookies, proxies=proxies
-            )
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -184,9 +176,7 @@ class XHS_Apis:
         try:
             api = f"/api/sns/web/v2/user/me"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(
-                self.base_url + api, headers=headers, cookies=cookies, proxies=proxies
-            )
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -251,9 +241,7 @@ class XHS_Apis:
             kvs = urlParse.query.split("&")
             kvDist = {kv.split("=")[0]: kv.split("=")[1] for kv in kvs}
             xsec_token = kvDist["xsec_token"] if "xsec_token" in kvDist else ""
-            xsec_source = (
-                kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"
-            )
+            xsec_source = kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"
             while True:
                 success, msg, res_json = self.get_user_note_info(
                     user_id, cursor, cookies_str, xsec_token, xsec_source, proxies
@@ -315,9 +303,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def get_user_all_like_note_info(
-        self, user_url: str, cookies_str: str, proxies: dict = None
-    ):
+    def get_user_all_like_note_info(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
         获取用户所有喜欢笔记
         :param user_id: 你想要获取的用户的id
@@ -332,9 +318,7 @@ class XHS_Apis:
             kvs = urlParse.query.split("&")
             kvDist = {kv.split("=")[0]: kv.split("=")[1] for kv in kvs}
             xsec_token = kvDist["xsec_token"] if "xsec_token" in kvDist else ""
-            xsec_source = (
-                kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_user"
-            )
+            xsec_source = kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_user"
             while True:
                 success, msg, res_json = self.get_user_like_note_info(
                     user_id, cursor, cookies_str, xsec_token, xsec_source, proxies
@@ -396,9 +380,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def get_user_all_collect_note_info(
-        self, user_url: str, cookies_str: str, proxies: dict = None
-    ):
+    def get_user_all_collect_note_info(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
         获取用户所有收藏笔记
         :param user_id: 你想要获取的用户的id
@@ -413,9 +395,7 @@ class XHS_Apis:
             kvs = urlParse.query.split("&")
             kvDist = {kv.split("=")[0]: kv.split("=")[1] for kv in kvs}
             xsec_token = kvDist["xsec_token"] if "xsec_token" in kvDist else ""
-            xsec_source = (
-                kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"
-            )
+            xsec_source = kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"
             while True:
                 success, msg, res_json = self.get_user_collect_note_info(
                     user_id, cursor, cookies_str, xsec_token, xsec_source, proxies
@@ -454,9 +434,7 @@ class XHS_Apis:
                 "source_note_id": note_id,
                 "image_formats": ["jpg", "webp", "avif"],
                 "extra": {"need_body_topic": "1"},
-                "xsec_source": (
-                    kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"
-                ),
+                "xsec_source": (kvDist["xsec_source"] if "xsec_source" in kvDist else "pc_search"),
                 "xsec_token": kvDist["xsec_token"],
             }
             headers, cookies, data = generate_request_params(cookies_str, api, data)
@@ -690,9 +668,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def search_some_user(
-        self, query: str, require_num: int, cookies_str: str, proxies: dict = None
-    ):
+    def search_some_user(self, query: str, require_num: int, cookies_str: str, proxies: dict = None):
         """
         指定数量搜索用户
         :param query 搜索的关键词
@@ -704,9 +680,7 @@ class XHS_Apis:
         user_list = []
         try:
             while True:
-                success, msg, res_json = self.search_user(
-                    query, cookies_str, page, proxies
-                )
+                success, msg, res_json = self.search_user(query, cookies_str, page, proxies)
                 if not success:
                     raise Exception(msg)
                 if "users" not in res_json["data"]:
@@ -763,9 +737,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def get_note_all_out_comment(
-        self, note_id: str, xsec_token: str, cookies_str: str, proxies: dict = None
-    ):
+    def get_note_all_out_comment(self, note_id: str, xsec_token: str, cookies_str: str, proxies: dict = None):
         """
         获取笔记的全部一级评论
         :param note_id 笔记的id
@@ -776,9 +748,7 @@ class XHS_Apis:
         note_out_comment_list = []
         try:
             while True:
-                success, msg, res_json = self.get_note_out_comment(
-                    note_id, cursor, xsec_token, cookies_str, proxies
-                )
+                success, msg, res_json = self.get_note_out_comment(note_id, cursor, xsec_token, cookies_str, proxies)
                 if not success:
                     raise Exception(msg)
                 comments = res_json["data"]["comments"]
@@ -836,9 +806,7 @@ class XHS_Apis:
             msg = str(e)
         return success, msg, res_json
 
-    def get_note_all_inner_comment(
-        self, comment: dict, xsec_token: str, cookies_str: str, proxies: dict = None
-    ):
+    def get_note_all_inner_comment(self, comment: dict, xsec_token: str, cookies_str: str, proxies: dict = None):
         """
         获取笔记的全部二级评论
         :param comment 笔记的一级评论
@@ -851,9 +819,7 @@ class XHS_Apis:
             cursor = comment["sub_comment_cursor"]
             inner_comment_list = []
             while True:
-                success, msg, res_json = self.get_note_inner_comment(
-                    comment, cursor, xsec_token, cookies_str, proxies
-                )
+                success, msg, res_json = self.get_note_inner_comment(comment, cursor, xsec_token, cookies_str, proxies)
                 if not success:
                     raise Exception(msg)
                 comments = res_json["data"]["comments"]
@@ -909,9 +875,7 @@ class XHS_Apis:
         try:
             api = "/api/sns/web/unread_count"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(
-                self.base_url + api, headers=headers, cookies=cookies, proxies=proxies
-            )
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -1007,9 +971,7 @@ class XHS_Apis:
         likesAndcollects_list = []
         try:
             while True:
-                success, msg, res_json = self.get_likesAndcollects(
-                    cursor, cookies_str, proxies
-                )
+                success, msg, res_json = self.get_likesAndcollects(cursor, cookies_str, proxies)
                 if not success:
                     raise Exception(msg)
                 likesAndcollects = res_json["data"]["message_list"]
@@ -1061,9 +1023,7 @@ class XHS_Apis:
         connections_list = []
         try:
             while True:
-                success, msg, res_json = self.get_new_connections(
-                    cursor, cookies_str, proxies
-                )
+                success, msg, res_json = self.get_new_connections(cursor, cookies_str, proxies)
                 if not success:
                     raise Exception(msg)
                 connections = res_json["data"]["message_list"]
@@ -1113,9 +1073,7 @@ class XHS_Apis:
         try:
             # https://sns-webpic-qc.xhscdn.com/202403211626/c4fcecea4bd012a1fe8d2f1968d6aa91/110/0/01e50c1c135e8c010010000000018ab74db332_0.jpg!nd_dft_wlteh_webp_3
             if ".jpg" in img_url:
-                img_id = "/".join([split for split in img_url.split("/")[-3:]]).split(
-                    "!"
-                )[0]
+                img_id = "/".join([split for split in img_url.split("/")[-3:]]).split("!")[0]
                 # return f"http://ci.xiaohongshu.com/{img_id}?imageview2/2/w/1920/format/png"
                 # return f"http://ci.xiaohongshu.com/{img_id}?imageview2/2/w/format/png"
                 # return f'https://sns-img-hw.xhscdn.com/{img_id}'
@@ -1125,9 +1083,7 @@ class XHS_Apis:
             elif "spectrum" in img_url:
                 img_id = "/".join(img_url.split("/")[-2:]).split("!")[0]
                 # return f'http://sns-webpic.xhscdn.com/{img_id}?imageView2/2/w/1920/format/jpg'
-                new_url = (
-                    f"http://sns-webpic.xhscdn.com/{img_id}?imageView2/2/w/format/jpg"
-                )
+                new_url = f"http://sns-webpic.xhscdn.com/{img_id}?imageView2/2/w/format/jpg"
             else:
                 # 'http://sns-webpic-qc.xhscdn.com/202403181511/64ad2ea67ce04159170c686a941354f5/1040g008310cs1hii6g6g5ngacg208q5rlf1gld8!nd_dft_wlteh_webp_3'
                 img_id = img_url.split("/")[-1].split("!")[0]
@@ -1151,44 +1107,26 @@ if __name__ == "__main__":
     cookies_str = r""
     # 获取用户信息
     user_url = "https://www.xiaohongshu.com/user/profile/67a332a2000000000d008358?xsec_token=ABTf9yz4cLHhTycIlksF0jOi1yIZgfcaQ6IXNNGdKJ8xg=&xsec_source=pc_feed"
-    success, msg, user_info = xhs_apis.get_user_info(
-        "67a332a2000000000d008358", cookies_str
-    )
-    logger.info(
-        f"获取用户信息结果 {json.dumps(user_info, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    success, msg, user_info = xhs_apis.get_user_info("67a332a2000000000d008358", cookies_str)
+    logger.info(f"获取用户信息结果 {json.dumps(user_info, ensure_ascii=False)}: {success}, msg: {msg}")
     success, msg, note_list = xhs_apis.get_user_all_notes(user_url, cookies_str)
-    logger.info(
-        f"获取用户所有笔记结果 {json.dumps(note_list, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    logger.info(f"获取用户所有笔记结果 {json.dumps(note_list, ensure_ascii=False)}: {success}, msg: {msg}")
     # 获取笔记信息
     note_url = r"https://www.xiaohongshu.com/explore/67d7c713000000000900e391?xsec_token=AB1ACxbo5cevHxV_bWibTmK8R1DDz0NnAW1PbFZLABXtE=&xsec_source=pc_user"
     success, msg, note_info = xhs_apis.get_note_info(note_url, cookies_str)
-    logger.info(
-        f"获取笔记信息结果 {json.dumps(note_info, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    logger.info(f"获取笔记信息结果 {json.dumps(note_info, ensure_ascii=False)}: {success}, msg: {msg}")
     # 获取搜索关键词
     query = "榴莲"
     success, msg, search_keyword = xhs_apis.get_search_keyword(query, cookies_str)
-    logger.info(
-        f"获取搜索关键词结果 {json.dumps(search_keyword, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    logger.info(f"获取搜索关键词结果 {json.dumps(search_keyword, ensure_ascii=False)}: {success}, msg: {msg}")
     # 搜索笔记
     query = "榴莲"
     query_num = 10
     sort = "general"
     note_type = 0
-    success, msg, notes = xhs_apis.search_some_note(
-        query, query_num, cookies_str, sort, note_type
-    )
-    logger.info(
-        f"搜索笔记结果 {json.dumps(notes, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    success, msg, notes = xhs_apis.search_some_note(query, query_num, cookies_str, sort, note_type)
+    logger.info(f"搜索笔记结果 {json.dumps(notes, ensure_ascii=False)}: {success}, msg: {msg}")
     # 获取笔记评论
     note_url = r"https://www.xiaohongshu.com/explore/67d7c713000000000900e391?xsec_token=AB1ACxbo5cevHxV_bWibTmK8R1DDz0NnAW1PbFZLABXtE=&xsec_source=pc_user"
-    success, msg, note_all_comment = xhs_apis.get_note_all_comment(
-        note_url, cookies_str
-    )
-    logger.info(
-        f"获取笔记评论结果 {json.dumps(note_all_comment, ensure_ascii=False)}: {success}, msg: {msg}"
-    )
+    success, msg, note_all_comment = xhs_apis.get_note_all_comment(note_url, cookies_str)
+    logger.info(f"获取笔记评论结果 {json.dumps(note_all_comment, ensure_ascii=False)}: {success}, msg: {msg}")

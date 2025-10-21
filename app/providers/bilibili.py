@@ -612,12 +612,10 @@ class BilibiliVideoProvider(BaseProvider):
                         # 显示进度
                         if total_size > 0:
                             progress = (downloaded / total_size) * 100
-                            logger.info(
+                            logger.debug(
                                 f"\r进度: {progress:.1f}% ({downloaded}/{total_size} 字节)",
                                 end="",
                             )
-
-                print()  # 换行
 
     async def _merge_video_audio(self, video_file: str, audio_file: str, output_file: str) -> bool:
         """

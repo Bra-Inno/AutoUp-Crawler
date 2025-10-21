@@ -151,10 +151,10 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                     Object.defineProperty(navigator, 'webdriver', {
                         get: () => undefined,
                     });
-                    
+
                     // 删除自动化相关属性
                     delete navigator.__proto__.webdriver;
-                    
+
                     // 修改chrome对象
                     window.navigator.chrome = {
                         runtime: {},
@@ -162,7 +162,7 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                         csi: function() {},
                         app: {}
                     };
-                    
+
                     // 覆盖插件信息，模拟真实浏览器
                     Object.defineProperty(navigator, 'plugins', {
                         get: () => [{
@@ -171,21 +171,21 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                             description: "Portable Document Format"
                         }],
                     });
-                    
+
                     // 覆盖语言信息
                     Object.defineProperty(navigator, 'languages', {
                         get: () => ['zh-CN', 'zh', 'en-US', 'en'],
                     });
-                    
+
                     // 覆盖自动化检测相关属性
                     Object.defineProperty(navigator, 'platform', {
                         get: () => 'Win32',
                     });
-                    
+
                     // 隐藏Selenium相关属性
                     window.document.$cdc_asdjflasutopfhvcZLmcfl_ = undefined;
                     window.document.$chrome_asyncScriptInfo = undefined;
-                    
+
                     // 修改permission API
                     const originalQuery = window.navigator.permissions.query;
                     window.navigator.permissions.query = (parameters) => (
@@ -193,7 +193,7 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
                             Promise.resolve({ state: Notification.permission }) :
                             originalQuery(parameters)
                     );
-                    
+
                     // 覆盖getTimezoneOffset
                     Date.prototype.getTimezoneOffset = function() {
                         return -480; // UTC+8 (中国时区)
@@ -371,18 +371,14 @@ def is_online(platform: PlatformType) -> bool:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        return loop.run_until_complete(
-            _check_online_async(platform, check_url, cookies_file)
-        )
+        return loop.run_until_complete(_check_online_async(platform, check_url, cookies_file))
 
     except Exception as e:
         logger.warning(f"⚠️ 检查在线状态时出错: {e}")
         return False
 
 
-async def _check_online_async(
-    platform: PlatformType, check_url: Optional[str], cookies_file: str
-) -> bool:
+async def _check_online_async(platform: PlatformType, check_url: Optional[str], cookies_file: str) -> bool:
     """异步检测登录状态"""
     try:
         # 读取cookies
@@ -407,15 +403,11 @@ async def _check_online_async(
 
                 # 微信平台特殊处理：直接访问测试文章
                 if platform == PlatformType.WEIXIN:
-                    test_article_url = (
-                        "https://mp.weixin.qq.com/s/T7PYt7UTYiKVT67ENmvtnw"
-                    )
+                    test_article_url = "https://mp.weixin.qq.com/s/T7PYt7UTYiKVT67ENmvtnw"
 
                     try:
                         # 访问文章页面
-                        await page.goto(
-                            test_article_url, wait_until="load", timeout=30000
-                        )
+                        await page.goto(test_article_url, wait_until="load", timeout=30000)
                         await asyncio.sleep(2)
 
                         # 获取页面内容
@@ -429,11 +421,7 @@ async def _check_online_async(
                         )
 
                         # 检查是否被重定向到验证页面
-                        is_blocked = (
-                            "验证" in content
-                            or "verify" in page.url.lower()
-                            or "captcha" in page.url.lower()
-                        )
+                        is_blocked = "验证" in content or "verify" in page.url.lower() or "captcha" in page.url.lower()
 
                         await browser.close()
                         return has_content and not is_blocked
@@ -449,18 +437,12 @@ async def _check_online_async(
 
                     try:
                         # 访问个人页面
-                        await page.goto(
-                            douyin_user_url, wait_until="load", timeout=30000
-                        )
+                        await page.goto(douyin_user_url, wait_until="load", timeout=30000)
                         await asyncio.sleep(2)
 
                         # 检查是否存在登录框元素（支持多个可能的登录框ID）
-                        login_panel_1 = await page.query_selector(
-                            "#login-full-panel-icv6ob2bq1c0"
-                        )
-                        login_panel_2 = await page.query_selector(
-                            "#douyin-login-new-id"
-                        )
+                        login_panel_1 = await page.query_selector("#login-full-panel-icv6ob2bq1c0")
+                        login_panel_2 = await page.query_selector("#douyin-login-new-id")
 
                         # 如果存在任一登录框，说明未登录
                         if login_panel_1 or login_panel_2:
@@ -483,9 +465,7 @@ async def _check_online_async(
                     return False
 
                 try:
-                    response = await page.goto(
-                        check_url, wait_until="load", timeout=30000
-                    )
+                    response = await page.goto(check_url, wait_until="load", timeout=30000)
                 except Exception as goto_error:
                     # 如果 goto 失败，尝试获取当前页面URL判断是否跳转
                     logger.error(f"⚠️ 页面加载超时或失败: {goto_error}")
@@ -506,9 +486,7 @@ async def _check_online_async(
 
                 # 检查是否跳转到登录页面
                 login_keywords = ["login", "signin", "passport", "auth"]
-                is_login_page = any(
-                    keyword in final_url.lower() for keyword in login_keywords
-                )
+                is_login_page = any(keyword in final_url.lower() for keyword in login_keywords)
 
                 # 平台特定检查
                 is_valid = True
@@ -527,9 +505,7 @@ async def _check_online_async(
 
                 elif platform == PlatformType.BILIBILI:
                     # B站：检查是否还在个人中心
-                    is_valid = (
-                        "account.bilibili.com" in final_domain and not is_login_page
-                    )
+                    is_valid = "account.bilibili.com" in final_domain and not is_login_page
 
                 await browser.close()
                 return is_valid

@@ -294,9 +294,7 @@ def print_config() -> None:
 
     logger.info("\n📁 存储配置:")
     logger.info(f"  DOWNLOAD_DIR       : {config['DOWNLOAD_DIR']}")
-    logger.info(
-        f"  MAX_IMAGE_SIZE     : {config['MAX_IMAGE_SIZE'] / (1024*1024):.1f}MB"
-    )
+    logger.info(f"  MAX_IMAGE_SIZE     : {config['MAX_IMAGE_SIZE'] / (1024*1024):.1f}MB")
 
     logger.info("\n💾 缓存配置:")
     logger.info(f"  REDIS_URL          : {config['REDIS_URL']}")

@@ -25,9 +25,7 @@ def load_cookie_from_browser() -> str:
         if os.path.exists(cookies_file):
             with open(cookies_file, "r", encoding="utf-8") as f:
                 cookies_list = json.load(f)
-                cookie_str = "; ".join(
-                    [f"{c['name']}={c['value']}" for c in cookies_list]
-                )
+                cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
                 logger.info(f"📂 从浏览器数据加载Cookie，共 {len(cookies_list)} 个")
                 return cookie_str
     except Exception as e:
@@ -85,9 +83,7 @@ class DouyinVideoDownloader:
             "Referer": "https://www.douyin.com/",
             "Cookie": cookie,
         }
-        self.client = httpx.AsyncClient(
-            headers=self.headers, timeout=30.0, follow_redirects=True, http2=True
-        )
+        self.client = httpx.AsyncClient(headers=self.headers, timeout=30.0, follow_redirects=True, http2=True)
 
     async def parse_share_url(self, share_url: str) -> Dict[str, str]:
         """
@@ -110,9 +106,7 @@ class DouyinVideoDownloader:
         try:
             # 如果是短链接,先重定向获取真实链接
             if "v.douyin.com" in share_url or "iesdouyin.com" in share_url:
-                async with httpx.AsyncClient(
-                    follow_redirects=True, timeout=10
-                ) as client:
+                async with httpx.AsyncClient(follow_redirects=True, timeout=10) as client:
                     response = await client.get(share_url)
                     real_url = str(response.url)
                     logger.info(f"   重定向: {real_url[:80]}...")
@@ -218,9 +212,7 @@ class DouyinVideoDownloader:
 
         return None
 
-    async def fetch_user_posts(
-        self, sec_user_id: str, max_cursor: int = 0, count: int = 20
-    ) -> Dict[str, Any]:
+    async def fetch_user_posts(self, sec_user_id: str, max_cursor: int = 0, count: int = 20) -> Dict[str, Any]:
         """获取用户作品列表"""
         params = {
             "device_platform": "webapp",
@@ -327,9 +319,7 @@ class DouyinVideoDownloader:
                 "Cookie": self.cookie,
             }
 
-            response = await self.client.get(
-                url, headers=headers, follow_redirects=True
-            )
+            response = await self.client.get(url, headers=headers, follow_redirects=True)
             response.raise_for_status()
 
             html = response.text
@@ -376,18 +366,14 @@ class DouyinVideoDownloader:
 
                                         # 递归搜索子字典
                                         for key, value in obj.items():
-                                            result = find_aweme_data(
-                                                value, depth + 1, max_depth
-                                            )
+                                            result = find_aweme_data(value, depth + 1, max_depth)
                                             if result:
                                                 return result
 
                                     elif isinstance(obj, list):
                                         # 搜索列表中的第一个元素
                                         for item in obj:
-                                            result = find_aweme_data(
-                                                item, depth + 1, max_depth
-                                            )
+                                            result = find_aweme_data(item, depth + 1, max_depth)
                                             if result:
                                                 return result
 
@@ -398,23 +384,17 @@ class DouyinVideoDownloader:
                                 if aweme:
                                     logger.info(f"   ✓ 找到包含视频数据的字典")
                                     if isinstance(aweme, dict):
-                                        logger.info(
-                                            f"   数据键(前10): {list(aweme.keys())[:10]}"
-                                        )
+                                        logger.info(f"   数据键(前10): {list(aweme.keys())[:10]}")
                                     return aweme
                                 else:
                                     logger.info(f"   × 未找到包含 aweme_id 的数据")
 
                                 # 打印app的结构以便调试
                                 if "app" in data and isinstance(data["app"], dict):
-                                    logger.info(
-                                        f"   app的键: {list(data['app'].keys())[:10]}"
-                                    )
+                                    logger.info(f"   app的键: {list(data['app'].keys())[:10]}")
                         except json.JSONDecodeError as je:
                             logger.error(f"   × JSON解析失败: {je}")
-                            logger.info(
-                                f"   前100字符: {decoded[:100] if 'decoded' in locals() else data_str[:100]}"
-                            )
+                            logger.info(f"   前100字符: {decoded[:100] if 'decoded' in locals() else data_str[:100]}")
                         except Exception as parse_e:
                             logger.info(f"   × 解析异常: {parse_e}")
             else:
@@ -427,9 +407,7 @@ class DouyinVideoDownloader:
             logger.error(f"   从网页获取失败: {e}")
             return None
 
-    async def find_video_in_posts(
-        self, sec_user_id: str, aweme_id: str, max_pages: int = 20
-    ) -> Optional[dict]:
+    async def find_video_in_posts(self, sec_user_id: str, aweme_id: str, max_pages: int = 20) -> Optional[dict]:
         """
         从用户作品列表中查找指定视频
 
@@ -591,9 +569,7 @@ class DouyinVideoDownloader:
                     # 写入文件
                     downloaded = 0
                     with open(save_path, "wb") as f:
-                        async for chunk in response.aiter_bytes(
-                            chunk_size=1024 * 1024
-                        ):  # 1MB
+                        async for chunk in response.aiter_bytes(chunk_size=1024 * 1024):  # 1MB
                             f.write(chunk)
                             downloaded += len(chunk)
 
@@ -615,9 +591,7 @@ class DouyinVideoDownloader:
             logger.error(f"\n❌ 下载失败: {e}")
             return False
 
-    async def download_from_url(
-        self, share_url: str, save_dir: str = "downloads"
-    ) -> str:
+    async def download_from_url(self, share_url: str, save_dir: str = "downloads") -> str:
         """
         从分享链接下载视频 (主要方法)
 
@@ -749,7 +723,9 @@ async def main():
     # 在这里修改要下载的视频链接
     # ============================================
 
-    share_url = "https://www.douyin.com/user/MS4wLjABAAAAac4yMAmgDe3eYvI3mwoFfg6W_-bNTvuc5YsAGoo-yaA/video/7520726025291058482"
+    share_url = (
+        "https://www.douyin.com/user/MS4wLjABAAAAac4yMAmgDe3eYvI3mwoFfg6W_-bNTvuc5YsAGoo-yaA/video/7520726025291058482"
+    )
 
     # 也支持短链接(如果包含用户信息)
     # share_url = "https://v.douyin.com/iRNBho6U/"

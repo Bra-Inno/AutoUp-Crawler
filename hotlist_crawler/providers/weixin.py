@@ -8,11 +8,10 @@ from bs4 import BeautifulSoup, Tag
 from bs4.element import NavigableString
 from playwright.sync_api import sync_playwright
 
-from app.providers.base import BaseProvider
-from app.models import ScrapedDataItem, ImageInfo
-from app.file_utils import get_file_extension
-from app.config import settings
-from app.storage import storage_manager
+from ..providers.base import BaseProvider
+from ..models import ScrapedDataItem, ImageInfo
+from ..file_utils import get_file_extension, get_random_user_agent
+from ..storage import storage_manager
 
 
 class WeixinMpProvider(BaseProvider):
@@ -28,11 +27,13 @@ class WeixinMpProvider(BaseProvider):
         rules: dict,
         save_images: bool = True,
         output_format: str = "markdown",
+        cookies: list | None = None,
         force_save: bool = True,
     ):
         super().__init__(url, rules, save_images, output_format, force_save, "weixin")
         self.storage_info = None
         self.img_counter = {"count": 1}
+        self.cookies = cookies
 
     async def download_image(self, img_url: str, save_dir: str) -> Optional[str]:
         """异步下载图片并保存到本地"""
@@ -48,12 +49,11 @@ class WeixinMpProvider(BaseProvider):
 
                 # 检查文件大小
                 content_length = img_response.headers.get("Content-Length")
-                if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
+                if content_length and int(content_length) > 10485760:  # 10MB
                     logger.debug(f"  - 图片过大，跳过: {img_url}")
                     return None
 
-                content_type = img_response.headers.get("Content-Type")
-                ext = get_file_extension(content_type=content_type, url=img_url, content=img_response.content)
+                ext = get_file_extension(content=img_response.content)
 
                 img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
                 with open(img_save_path, "wb") as f:
@@ -249,13 +249,27 @@ class WeixinMpProvider(BaseProvider):
         with sync_playwright() as playwright:
             # 使用持久化上下文，减少反爬虫检测
             try:
-                context = playwright.chromium.launch_persistent_context(
-                    settings.USER_DATA_DIR,
-                    headless=settings.PLAYWRIGHT_HEADLESS,
-                    user_agent=settings.USER_AGENT,
+                # 1. 启动一个 "干净" 的浏览器实例
+                #    (注意：launch 不接受 user_agent 参数)
+                browser = playwright.chromium.launch(
+                    headless=True,
                     ignore_default_args=["--enable-automation"],
                     args=["--disable-blink-features=AutomationControlled"],
                 )
+
+                # 2. 从浏览器实例创建 "上下文" (Context)
+                #    (user_agent 在这里设置)
+                context = browser.new_context(
+                    user_agent=get_random_user_agent("chrome"),
+                    # 你可以在这里添加其他设置，例如视口大小：
+                    # viewport={'width': 1920, 'height': 1080}
+                )
+
+                # 3. (可选) 如果你需要加载 cookies，在这里添加
+                cookies = self.cookies  # 假设你有这个函数
+                if cookies:
+                    context.add_cookies(cookies)
+
             except Exception as e:
                 raise Exception(f"Playwright 浏览器启动失败: {e}")
 
@@ -263,7 +277,7 @@ class WeixinMpProvider(BaseProvider):
 
             try:
                 logger.debug(f"🌐 正在访问页面: {self.url}")
-                page.goto(self.url, timeout=settings.PLAYWRIGHT_TIMEOUT)
+                page.goto(self.url, timeout=60000)
 
                 # 等待关键内容加载
                 page.wait_for_selector("#js_content", timeout=60000)
@@ -377,12 +391,11 @@ class WeixinMpProvider(BaseProvider):
 
             # 检查文件大小
             content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
+            if content_length and int(content_length) > 10485760:  # 10MB
                 logger.debug(f"  - 图片过大，跳过: {img_url}")
                 return None
 
-            content_type = response.headers.get("Content-Type")
-            ext = get_file_extension(content_type=content_type, url=img_url, content=response.content)
+            ext = get_file_extension(content=response.content)
 
             img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
             with open(img_save_path, "wb") as f:
@@ -459,7 +472,7 @@ class WeixinMpProvider(BaseProvider):
 
             # 检查文件大小
             content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > settings.MAX_IMAGE_SIZE:
+            if content_length and int(content_length) > 10485760:  # 10MB
                 logger.debug(f"  - 图片过大，跳过: {img_url}")
                 return None
 

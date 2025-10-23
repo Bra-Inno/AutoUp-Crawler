@@ -12,7 +12,7 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.dy_downloader import DouyinVideoDownloader
-from ..config import settings
+from ..file_utils import get_random_user_agent, format_cookies_to_string
 
 
 class DouyinVideoProvider(BaseProvider):
@@ -33,8 +33,8 @@ class DouyinVideoProvider(BaseProvider):
         rules: dict | None = None,
         save_images: bool = False,
         output_format: str = "markdown",
+        cookies: list | str | None = None,
         force_save: bool = True,
-        cookies: Optional[str] = None,
         auto_download_video: bool = False,
     ):
         """
@@ -57,50 +57,11 @@ class DouyinVideoProvider(BaseProvider):
         self.auto_download_video = auto_download_video
 
         # 加载Cookie和User-Agent
-        self.cookies = cookies or self._load_saved_cookies()
-        self.user_agent = self._load_user_agent()
+        self.cookies = format_cookies_to_string(cookies)
+        self.user_agent = get_random_user_agent()
 
         # 初始化下载器（使用加载的Cookie和UA）
         self.downloader = DouyinVideoDownloader(cookie=self.cookies or "", user_agent=self.user_agent)
-
-    def _load_saved_cookies(self) -> Optional[str]:
-        """
-        加载已保存的抖音登录cookies
-
-        Returns:
-            str: Cookie字符串，失败返回None
-        """
-        try:
-            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "douyin_cookies.json")
-
-            if os.path.exists(cookies_file):
-                with open(cookies_file, "r", encoding="utf-8") as f:
-                    cookies_list = json.load(f)
-                    # 转换为cookie字符串
-                    cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
-                    logger.info(f"📂 加载已保存的抖音登录状态，共 {len(cookies_list)} 个cookies")
-                    return cookie_str
-            else:
-                logger.warning(f"⚠️ 未找到保存的抖音Cookie: {cookies_file}")
-                logger.info(f"💡 提示: 可以运行浏览器登录脚本保存Cookie")
-        except Exception as e:
-            logger.warning(f"⚠️ 加载抖音登录状态失败: {e}")
-
-        return None
-
-    def _load_user_agent(self) -> str:
-        """
-        加载User-Agent,优先级:
-        1. user_agent.txt 文件
-        2. settings.USER_AGENT 配置
-
-        Returns:
-            str: User-Agent字符串
-        """
-
-        # 使用配置文件中的User-Agent
-        logger.debug(f"📝 使用配置的User-Agent")
-        return settings.USER_AGENT
 
     async def _get_user_id_from_browser(self, video_url: str) -> Optional[str]:
         """
@@ -117,9 +78,7 @@ class DouyinVideoProvider(BaseProvider):
         try:
             async with async_playwright() as p:
                 browser = await p.chromium.launch(headless=True)
-                context = await browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                )
+                context = await browser.new_context(user_agent=self.user_agent)
                 page = await context.new_page()
 
                 try:

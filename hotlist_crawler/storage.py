@@ -6,12 +6,11 @@
 import os
 import json
 from datetime import datetime
-from typing import Dict, List
-from urllib.parse import urlparse
+from typing import Dict, Optional
 from loguru import logger
 
-from app.file_utils import clean_filename, ensure_directory, get_file_extension
-from app.config import settings
+from .file_utils import clean_filename, ensure_directory, get_file_extension
+from .config import settings
 
 
 class StorageManager:
@@ -20,7 +19,7 @@ class StorageManager:
     按平台分类存储所有抓取的内容
     """
 
-    def __init__(self, base_dir: str = None):
+    def __init__(self, base_dir: Optional[str] = None):
         self.base_dir = base_dir or settings.DOWNLOAD_DIR
         self.platform_dirs = {}
 
@@ -39,7 +38,7 @@ class StorageManager:
         content = f"{url}_{title}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
 
-    def create_article_storage(self, platform: str, title: str, url: str, author: str = None) -> Dict[str, str]:
+    def create_article_storage(self, platform: str, title: str, url: str, author: str | None = None) -> Dict[str, str]:
         """
         为文章创建存储目录结构
 
@@ -120,8 +119,8 @@ class StorageManager:
         self,
         storage_info: Dict[str, str],
         content: str,
-        title: str = None,
-        author: str = None,
+        title: str | None = None,
+        author: str | None = None,
     ) -> str:
         """保存Markdown内容"""
         markdown_file = storage_info["markdown_file"]
@@ -171,7 +170,7 @@ class StorageManager:
         images_dir = storage_info["images_dir"]
 
         # 使用增强的格式识别（Content-Type + URL + 文件签名）
-        ext = get_file_extension(url=original_url, content=image_data)
+        ext = get_file_extension(content=image_data)
 
         # 生成文件名
         image_filename = f"image_{image_index:03d}.{ext}"
@@ -268,43 +267,6 @@ class StorageManager:
         # 保存更新后的元数据
         with open(metadata_file, "w", encoding="utf-8") as f:
             json.dump(metadata, f, ensure_ascii=False, indent=2)
-
-    def get_platform_summary(self, platform: str) -> Dict:
-        """获取平台的存储摘要"""
-        platform_dir = self._get_platform_dir(platform)
-        index_file = os.path.join(platform_dir, "articles_index.json")
-
-        if os.path.exists(index_file):
-            with open(index_file, "r", encoding="utf-8") as f:
-                index_data = json.load(f)
-            return {
-                "platform": platform,
-                "storage_dir": platform_dir,
-                "total_articles": len(index_data.get("articles", [])),
-                "last_updated": index_data.get("last_updated"),
-                "articles": index_data.get("articles", [])[:5],  # 最近5篇文章
-            }
-        else:
-            return {
-                "platform": platform,
-                "storage_dir": platform_dir,
-                "total_articles": 0,
-                "last_updated": None,
-                "articles": [],
-            }
-
-    def list_all_platforms(self) -> List[str]:
-        """列出所有已存储内容的平台"""
-        if not os.path.exists(self.base_dir):
-            return []
-
-        platforms = []
-        for item in os.listdir(self.base_dir):
-            item_path = os.path.join(self.base_dir, item)
-            if os.path.isdir(item_path):
-                platforms.append(item)
-
-        return platforms
 
 
 # 创建全局存储管理器实例

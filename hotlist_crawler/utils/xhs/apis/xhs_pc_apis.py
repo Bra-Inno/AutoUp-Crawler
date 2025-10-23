@@ -16,9 +16,9 @@ class XHS_Apis:
     def __init__(self):
         self.base_url = "https://edith.xiaohongshu.com"
 
-    def get_homefeed_all_channel(self, cookies_str: str, proxies: dict = None):
+    def get_homefeed_all_channel(self, cookies_str: str, proxies: dict | None = None):
         """
-        获取主页的所有频道
+        获取主页的所有频�?
 
         :param cookies_str: 你的cookies
         """
@@ -26,7 +26,7 @@ class XHS_Apis:
         try:
             api = "/api/sns/web/v1/homefeed/category"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxy=proxies)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -44,13 +44,13 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取主页推荐的笔记
+        获取主页推荐的笔�?
         :param category: 你想要获取的频道
         :param cursor_score: 你想要获取的笔记的cursor
-        :param refresh_type: 你想要获取的笔记的刷新类型
+        :param refresh_type: 你想要获取的笔记的刷新类�?
         :param note_index: 你想要获取的笔记的index
         :param cookies_str: 你的cookies
-        返回主页推荐的笔记
+        返回主页推荐的笔�?
         """
         res_json = None
         try:
@@ -75,7 +75,7 @@ class XHS_Apis:
                 headers=headers,
                 data=trans_data,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -86,11 +86,11 @@ class XHS_Apis:
 
     def get_homefeed_recommend_by_num(self, category, require_num, cookies_str: str, proxies: dict = None):
         """
-        根据数量获取主页推荐的笔记
+        根据数量获取主页推荐的笔�?
         :param category: 你想要获取的频道
-        :param require_num: 你想要获取的笔记的数量
+        :param require_num: 你想要获取的笔记的数�?
         :param cookies_str: 你的cookies
-        根据数量返回主页推荐的笔记
+        根据数量返回主页推荐的笔�?
         """
         cursor_score, refresh_type, note_index = "", 1, 0
         note_list = []
@@ -124,10 +124,10 @@ class XHS_Apis:
 
     def get_user_info(self, user_id: str, cookies_str: str, proxies: dict = None):
         """
-        获取用户的信息
+        获取用户的信�?
         :param user_id: 你想要获取的用户的id
         :param cookies_str: 你的cookies
-        返回用户的信息
+        返回用户的信�?
         """
         res_json = None
         try:
@@ -139,7 +139,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -150,15 +150,15 @@ class XHS_Apis:
 
     def get_user_self_info(self, cookies_str: str, proxies: dict = None):
         """
-        获取用户自己的信息1
+        获取用户自己的信�?
         :param cookies_str: 你的cookies
-        返回用户自己的信息1
+        返回用户自己的信�?
         """
         res_json = None
         try:
             api = f"/api/sns/web/v1/user/selfinfo"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxy=None)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -168,15 +168,15 @@ class XHS_Apis:
 
     def get_user_self_info2(self, cookies_str: str, proxies: dict = None):
         """
-        获取用户自己的信息2
+        获取用户自己的信�?
         :param cookies_str: 你的cookies
-        返回用户自己的信息2
+        返回用户自己的信�?
         """
         res_json = None
         try:
             api = f"/api/sns/web/v2/user/me"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxy=None)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -194,11 +194,11 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取用户指定位置的笔记
+        获取用户指定位置的笔�?
         :param user_id: 你想要获取的用户的id
         :param cursor: 你想要获取的笔记的cursor
         :param cookies_str: 你的cookies
-        返回用户指定位置的笔记
+        返回用户指定位置的笔�?
         """
         res_json = None
         try:
@@ -217,7 +217,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -228,10 +228,10 @@ class XHS_Apis:
 
     def get_user_all_notes(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
-        获取用户所有笔记
+        获取用户所有笔�?
         :param user_id: 你想要获取的用户的id
         :param cookies_str: 你的cookies
-        返回用户的所有笔记
+        返回用户的所有笔�?
         """
         cursor = ""
         note_list = []
@@ -271,11 +271,11 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取用户指定位置喜欢的笔记
+        获取用户指定位置喜欢的笔�?
         :param user_id: 你想要获取的用户的id
         :param cursor: 你想要获取的笔记的cursor
         :param cookies_str: 你的cookies
-        返回用户指定位置喜欢的笔记
+        返回用户指定位置喜欢的笔�?
         """
         res_json = None
         try:
@@ -294,7 +294,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -305,10 +305,10 @@ class XHS_Apis:
 
     def get_user_all_like_note_info(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
-        获取用户所有喜欢笔记
+        获取用户所有喜欢笔�?
         :param user_id: 你想要获取的用户的id
         :param cookies_str: 你的cookies
-        返回用户的所有喜欢笔记
+        返回用户的所有喜欢笔�?
         """
         cursor = ""
         note_list = []
@@ -348,11 +348,11 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取用户指定位置收藏的笔记
+        获取用户指定位置收藏的笔�?
         :param user_id: 你想要获取的用户的id
         :param cursor: 你想要获取的笔记的cursor
         :param cookies_str: 你的cookies
-        返回用户指定位置收藏的笔记
+        返回用户指定位置收藏的笔�?
         """
         res_json = None
         try:
@@ -371,7 +371,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -382,10 +382,10 @@ class XHS_Apis:
 
     def get_user_all_collect_note_info(self, user_url: str, cookies_str: str, proxies: dict = None):
         """
-        获取用户所有收藏笔记
+        获取用户所有收藏笔�?
         :param user_id: 你想要获取的用户的id
         :param cookies_str: 你的cookies
-        返回用户的所有收藏笔记
+        返回用户的所有收藏笔�?
         """
         cursor = ""
         note_list = []
@@ -417,11 +417,11 @@ class XHS_Apis:
 
     def get_note_info(self, url: str, cookies_str: str, proxies: dict = None):
         """
-        获取笔记的详细
+        获取笔记的详�?
         :param url: 你想要获取的笔记的url
         :param cookies_str: 你的cookies
         :param xsec_source: 你的xsec_source 默认为pc_search pc_user pc_feed
-        返回笔记的详细
+        返回笔记的详�?
         """
         res_json = None
         try:
@@ -443,7 +443,7 @@ class XHS_Apis:
                 headers=headers,
                 data=data,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -454,10 +454,10 @@ class XHS_Apis:
 
     def get_search_keyword(self, word: str, cookies_str: str, proxies: dict = None):
         """
-        获取搜索关键词
-        :param word: 你的关键词
+        获取搜索关键�?
+        :param word: 你的关键�?
         :param cookies_str: 你的cookies
-        返回搜索关键词
+        返回搜索关键�?
         """
         res_json = None
         try:
@@ -469,7 +469,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -495,13 +495,13 @@ class XHS_Apis:
         获取搜索笔记的结果
         :param query 搜索的关键词
         :param cookies_str 你的cookies
-        :param page 搜索的页数
-        :param sort_type_choice 排序方式 0 综合排序, 1 最新, 2 最多点赞, 3 最多评论, 4 最多收藏
-        :param note_type 笔记类型 0 不限, 1 视频笔记, 2 普通笔记
-        :param note_time 笔记时间 0 不限, 1 一天内, 2 一周内天, 3 半年内
-        :param note_range 笔记范围 0 不限, 1 已看过, 2 未看过, 3 已关注
-        :param pos_distance 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指定 geo
-        返回搜索的结果
+        :param page 搜索的页�?
+        :param sort_type_choice 排序方式 0 综合排序, 1 最�? 2 最多点�? 3 最多评�? 4 最多收�?
+        :param note_type 笔记类型 0 不限, 1 视频笔记, 2 普通笔�?
+        :param note_time 笔记时间 0 不限, 1 一天内, 2 一周内�? 3 半年�?
+        :param note_range 笔记范围 0 不限, 1 已看�? 2 未看�? 3 已关�?
+        :param pos_distance 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指�?geo
+        返回搜索的结�?
         """
         res_json = None
         sort_type = "general"
@@ -527,11 +527,11 @@ class XHS_Apis:
             filter_note_time = "半年内"
         filter_note_range = "不限"
         if note_range == 1:
-            filter_note_range = "已看过"
+            filter_note_range = "已看"
         elif note_range == 2:
-            filter_note_range = "未看过"
+            filter_note_range = "未看"
         elif note_range == 3:
-            filter_note_range = "已关注"
+            filter_note_range = "已关"
         filter_pos_distance = "不限"
         if pos_distance == 1:
             filter_pos_distance = "同城"
@@ -565,7 +565,7 @@ class XHS_Apis:
                 headers=headers,
                 data=data.encode("utf-8"),
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -588,17 +588,17 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        指定数量搜索笔记，设置排序方式和笔记类型和笔记数量
+        指定数量搜索笔记，设置排序方式和笔记类型和笔记数�?
         :param query 搜索的关键词
-        :param require_num 搜索的数量
+        :param require_num 搜索的数�?
         :param cookies_str 你的cookies
-        :param sort_type_choice 排序方式 0 综合排序, 1 最新, 2 最多点赞, 3 最多评论, 4 最多收藏
-        :param note_type 笔记类型 0 不限, 1 视频笔记, 2 普通笔记
-        :param note_time 笔记时间 0 不限, 1 一天内, 2 一周内天, 3 半年内
-        :param note_range 笔记范围 0 不限, 1 已看过, 2 未看过, 3 已关注
-        :param pos_distance 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指定 geo
-        :param geo: 定位信息 经纬度
-        返回搜索的结果
+        :param sort_type_choice 排序方式 0 综合排序, 1 最�? 2 最多点�? 3 最多评�? 4 最多收�?
+        :param note_type 笔记类型 0 不限, 1 视频笔记, 2 普通笔�?
+        :param note_time 笔记时间 0 不限, 1 一天内, 2 一周内�? 3 半年�?
+        :param note_range 笔记范围 0 不限, 1 已看�? 2 未看�? 3 已关�?
+        :param pos_distance 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指�?geo
+        :param geo: 定位信息 经纬�?
+        返回搜索的结�?
         """
         page = 1
         note_list = []
@@ -634,11 +634,11 @@ class XHS_Apis:
 
     def search_user(self, query: str, cookies_str: str, page=1, proxies: dict = None):
         """
-        获取搜索用户的结果
+        获取搜索用户的结�?
         :param query 搜索的关键词
         :param cookies_str 你的cookies
-        :param page 搜索的页数
-        返回搜索的结果
+        :param page 搜索的页�?
+        返回搜索的结�?
         """
         res_json = None
         try:
@@ -659,7 +659,7 @@ class XHS_Apis:
                 headers=headers,
                 data=data.encode("utf-8"),
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -672,9 +672,9 @@ class XHS_Apis:
         """
         指定数量搜索用户
         :param query 搜索的关键词
-        :param require_num 搜索的数量
+        :param require_num 搜索的数�?
         :param cookies_str 你的cookies
-        返回搜索的结果
+        返回搜索的结�?
         """
         page = 1
         user_list = []
@@ -706,11 +706,11 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取指定位置的笔记一级评论
+        获取指定位置的笔记一级评�?
         :param note_id 笔记的id
         :param cursor 指定位置的评论的cursor
         :param cookies_str 你的cookies
-        返回指定位置的笔记一级评论
+        返回指定位置的笔记一级评�?
         """
         res_json = None
         try:
@@ -728,7 +728,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -739,10 +739,10 @@ class XHS_Apis:
 
     def get_note_all_out_comment(self, note_id: str, xsec_token: str, cookies_str: str, proxies: dict = None):
         """
-        获取笔记的全部一级评论
+        获取笔记的全部一级评�?
         :param note_id 笔记的id
         :param cookies_str 你的cookies
-        返回笔记的全部一级评论
+        返回笔记的全部一级评�?
         """
         cursor = ""
         note_out_comment_list = []
@@ -773,11 +773,11 @@ class XHS_Apis:
         proxies: dict = None,
     ):
         """
-        获取指定位置的笔记二级评论
-        :param comment 笔记的一级评论
+        获取指定位置的笔记二级评�?
+        :param comment 笔记的一级评�?
         :param cursor 指定位置的评论的cursor
         :param cookies_str 你的cookies
-        返回指定位置的笔记二级评论
+        返回指定位置的笔记二级评�?
         """
         res_json = None
         try:
@@ -797,7 +797,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -808,10 +808,10 @@ class XHS_Apis:
 
     def get_note_all_inner_comment(self, comment: dict, xsec_token: str, cookies_str: str, proxies: dict = None):
         """
-        获取笔记的全部二级评论
-        :param comment 笔记的一级评论
+        获取笔记的全部二级评�?
+        :param comment 笔记的一级评�?
         :param cookies_str 你的cookies
-        返回笔记的全部二级评论
+        返回笔记的全部二级评�?
         """
         try:
             if not comment["sub_comment_has_more"]:
@@ -838,10 +838,10 @@ class XHS_Apis:
 
     def get_note_all_comment(self, url: str, cookies_str: str, proxies: dict = None):
         """
-        获取一篇文章的所有评论
+        获取一篇文章的所有评�?
         :param note_id: 你想要获取的笔记的id
         :param cookies_str: 你的cookies
-        返回一篇文章的所有评论
+        返回一篇文章的所有评�?
         """
         out_comment_list = []
         try:
@@ -875,7 +875,7 @@ class XHS_Apis:
         try:
             api = "/api/sns/web/unread_count"
             headers, cookies, data = generate_request_params(cookies_str, api)
-            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxies=proxies)
+            response = httpx.get(self.base_url + api, headers=headers, cookies=cookies, proxy=None)
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
@@ -900,7 +900,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -952,7 +952,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -963,9 +963,9 @@ class XHS_Apis:
 
     def get_all_likesAndcollects(self, cookies_str: str, proxies: dict = None):
         """
-        获取全部的赞和收藏
+        获取全部的赞和收�?
         :param cookies_str: 你的cookies
-        返回全部的赞和收藏
+        返回全部的赞和收�?
         """
         cursor = ""
         likesAndcollects_list = []
@@ -1004,7 +1004,7 @@ class XHS_Apis:
                 self.base_url + splice_api,
                 headers=headers,
                 cookies=cookies,
-                proxies=proxies,
+                proxy=None,
             )
             res_json = response.json()
             success, msg = res_json["success"], res_json["msg"]
@@ -1015,9 +1015,9 @@ class XHS_Apis:
 
     def get_all_new_connections(self, cookies_str: str, proxies: dict = None):
         """
-        获取全部的新增关注
+        获取全部的新增关�?
         :param cookies_str: 你的cookies
-        返回全部的新增关注
+        返回全部的新增关�?
         """
         cursor = ""
         connections_list = []
@@ -1042,9 +1042,9 @@ class XHS_Apis:
     @staticmethod
     def get_note_no_water_video(note_id):
         """
-        获取笔记无水印视频
+        获取笔记无水印视�?
         :param note_id: 你想要获取的笔记的id
-        返回笔记无水印视频
+        返回笔记无水印视�?
         """
         success = True
         msg = "成功"
@@ -1063,9 +1063,9 @@ class XHS_Apis:
     @staticmethod
     def get_note_no_water_img(img_url):
         """
-        获取笔记无水印图片
+        获取笔记无水印图�?
         :param img_url: 你想要获取的图片的url
-        返回笔记无水印图片
+        返回笔记无水印图�?
         """
         success = True
         msg = "成功"
@@ -1099,7 +1099,7 @@ class XHS_Apis:
 
 if __name__ == "__main__":
     """
-    此文件为小红书api的使用示例
+    此文件为小红书api的使用示�?
     所有涉及数据爬取的api都在此文件中
     数据注入的api违规请勿尝试
     """
@@ -1110,15 +1110,15 @@ if __name__ == "__main__":
     success, msg, user_info = xhs_apis.get_user_info("67a332a2000000000d008358", cookies_str)
     logger.info(f"获取用户信息结果 {json.dumps(user_info, ensure_ascii=False)}: {success}, msg: {msg}")
     success, msg, note_list = xhs_apis.get_user_all_notes(user_url, cookies_str)
-    logger.info(f"获取用户所有笔记结果 {json.dumps(note_list, ensure_ascii=False)}: {success}, msg: {msg}")
+    logger.info(f"获取用户所有笔记结�?{json.dumps(note_list, ensure_ascii=False)}: {success}, msg: {msg}")
     # 获取笔记信息
     note_url = r"https://www.xiaohongshu.com/explore/67d7c713000000000900e391?xsec_token=AB1ACxbo5cevHxV_bWibTmK8R1DDz0NnAW1PbFZLABXtE=&xsec_source=pc_user"
     success, msg, note_info = xhs_apis.get_note_info(note_url, cookies_str)
     logger.info(f"获取笔记信息结果 {json.dumps(note_info, ensure_ascii=False)}: {success}, msg: {msg}")
-    # 获取搜索关键词
+    # 获取搜索关键�?
     query = "榴莲"
     success, msg, search_keyword = xhs_apis.get_search_keyword(query, cookies_str)
-    logger.info(f"获取搜索关键词结果 {json.dumps(search_keyword, ensure_ascii=False)}: {success}, msg: {msg}")
+    logger.info(f"获取搜索关键词结�?{json.dumps(search_keyword, ensure_ascii=False)}: {success}, msg: {msg}")
     # 搜索笔记
     query = "榴莲"
     query_num = 10

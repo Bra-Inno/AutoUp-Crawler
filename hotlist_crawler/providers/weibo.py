@@ -11,11 +11,10 @@ from urllib.parse import urlparse, parse_qs, unquote
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from bs4 import BeautifulSoup
 
-from app.providers.base import BaseProvider
-from app.models import ScrapedDataItem, ImageInfo
-from app.storage import storage_manager
-from app.file_utils import get_file_extension
-from app.config import settings
+from ..providers.base import BaseProvider
+from ..models import ScrapedDataItem, ImageInfo
+from ..storage import storage_manager
+from ..file_utils import get_file_extension, get_random_user_agent
 
 
 class WeiboProvider(BaseProvider):
@@ -34,22 +33,11 @@ class WeiboProvider(BaseProvider):
         rules: dict,
         save_images: bool = True,
         output_format: str = "markdown",
+        cookies: list | None = None,
         force_save: bool = True,
     ):
         super().__init__(url, rules, save_images, output_format, force_save, "weibo")
-
-    def _load_saved_cookies(self):
-        """加载已保存的登录cookies"""
-        try:
-            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "weibo_cookies.json")
-            if os.path.exists(cookies_file):
-                with open(cookies_file, "r", encoding="utf-8") as f:
-                    cookies = json.load(f)
-                    logger.info(f"📂 加载已保存的登录状态，共 {len(cookies)} 个cookies")
-                    return cookies
-        except Exception as e:
-            logger.warning(f"⚠️ 加载登录状态失败: {e}")
-        return None
+        self.cookies = cookies
 
     def _is_weibo_search_page(self) -> bool:
         """判断是否为微博搜索页面"""
@@ -102,23 +90,29 @@ class WeiboProvider(BaseProvider):
             logger.info(f"已解析搜索关键词为: {search_query}")
 
             with sync_playwright() as playwright:
-                # 创建持久化上下文，保持登录状态
-                context = playwright.chromium.launch_persistent_context(
-                    settings.USER_DATA_DIR,
-                    headless=True,  # 抓取时使用无头模式
+                # 1. 启动一个 "干净" 的浏览器
+                browser = playwright.chromium.launch(
+                    headless=True,
                     slow_mo=50,
-                    user_agent=settings.USER_AGENT,
                     ignore_default_args=["--enable-automation"],
                     args=["--disable-blink-features=AutomationControlled"],
                 )
 
-                page = context.new_page()
+                # 2. 创建一个新的、独立的上下文
+                # 你的 User-Agent 等选项在这里设置
+                context = browser.new_context(
+                    user_agent=get_random_user_agent("chrome"),
+                    java_script_enabled=True,
+                    # 如果需要，还可以在这里设置 viewport, locale 等
+                    # viewport={"width": 1920, "height": 1080}
+                )
 
                 # 加载已保存的登录cookies
-                saved_cookies = self._load_saved_cookies()
+                saved_cookies = self.cookies
                 if saved_cookies:
                     context.add_cookies(saved_cookies)
                     logger.info("✅ 登录状态已加载")
+                page = context.new_page()
 
                 try:
                     logger.debug("🌐 导航至目标页面...")
@@ -313,9 +307,8 @@ class WeiboProvider(BaseProvider):
                         response.raise_for_status()
 
                         # 获取正确的文件扩展名
-                        content_type = response.headers.get("Content-Type")
                         content = response.content
-                        ext = get_file_extension(content_type, large_img_url, content)
+                        ext = get_file_extension(content=content)
 
                         img_filename = f"image_{i + 1}.{ext}"
                         local_img_path = os.path.join(storage_info["images_dir"], img_filename)
@@ -358,12 +351,11 @@ class WeiboProvider(BaseProvider):
 
                         video_file_path = os.path.join(storage_info["attachments_dir"], "video.mp4")
 
-                        response = httpx.get(video_url, stream=True, timeout=300)
-                        response.raise_for_status()
-
-                        with open(video_file_path, "wb") as f:
-                            for chunk in response.iter_content(chunk_size=1024 * 1024):
-                                f.write(chunk)
+                        with httpx.stream("GET", video_url, timeout=300) as response:
+                            response.raise_for_status()
+                            with open(video_file_path, "wb") as f:
+                                for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                                    f.write(chunk)
 
                         downloaded_videos.append(video_file_path)
                         logger.debug(f" {video_file_path}")

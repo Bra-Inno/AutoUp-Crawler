@@ -18,9 +18,8 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
-from ..file_utils import get_file_extension
+from ..file_utils import get_file_extension, format_cookies_to_string, get_random_user_agent
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
-from ..config import settings
 
 
 class XiaohongshuProvider(BaseProvider):
@@ -34,8 +33,7 @@ class XiaohongshuProvider(BaseProvider):
     def __init__(
         self,
         platform_name: str = "xiaohongshu",
-        cookies: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        cookies: list | str | None = None,
         max_pages: int = 10,
         count_per_page: int = 20,
         delay: float = 2.0,
@@ -68,8 +66,10 @@ class XiaohongshuProvider(BaseProvider):
         )
 
         # 自动加载cookies和user_agent
-        self.cookies = cookies or self._load_saved_cookies()
-        self.user_agent = user_agent or self._load_user_agent()
+        if cookies is None:
+            raise ValueError("小红书功能需要有效的cookies，请提供cookies参数或确保cookies文件存在")
+        self.cookies = format_cookies_to_string(cookies)
+        self.user_agent = get_random_user_agent("chrome")
 
         self.max_pages = max_pages
         self.count_per_page = count_per_page
@@ -84,46 +84,6 @@ class XiaohongshuProvider(BaseProvider):
         os.makedirs(save_dir, exist_ok=True)
 
         logger.info(f"初始化小红书Provider完成")
-
-    def _load_saved_cookies(self) -> str:
-        """从浏览器数据加载保存的cookies"""
-        cookie_file = Path(settings.LOGIN_DATA_DIR) / "xiaohongshu_cookies.json"
-        if cookie_file.exists():
-            try:
-                with open(cookie_file, "r", encoding="utf-8") as f:
-                    cookies_data = json.load(f)
-
-                    # 处理两种可能的格式
-                    if isinstance(cookies_data, dict):
-                        if "value" in cookies_data and isinstance(cookies_data["value"], list):
-                            # 格式: {"value": [{"name": "xxx", "value": "yyy"}, ...]}
-                            cookie_list = cookies_data["value"]
-                            cookies_str = "; ".join([f"{c['name']}={c['value']}" for c in cookie_list])
-                            logger.info(f"成功加载保存的cookies，共{len(cookie_list)}个")
-                        else:
-                            # 格式: {"name1": "value1", "name2": "value2", ...}
-                            cookies_str = "; ".join([f"{k}={v}" for k, v in cookies_data.items()])
-                            logger.info(f"成功加载保存的cookies，共{len(cookies_data)}个")
-                    elif isinstance(cookies_data, list):
-                        # 格式: [{"name": "xxx", "value": "yyy"}, ...]
-                        cookies_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_data])
-                        logger.info(f"成功加载保存的cookies，共{len(cookies_data)}个")
-                    else:
-                        logger.warning(f"未知的cookies格式: {type(cookies_data)}")
-                        return ""
-
-                    return cookies_str
-            except Exception as e:
-                logger.warning(f"加载cookies失败: {e}")
-
-        logger.warning("未找到保存的cookies，请先运行 scripts/save_xiaohongshu_cookies.py")
-        return ""
-
-    def _load_user_agent(self) -> str:
-
-        # 使用配置文件中的User-Agent
-        logger.info("使用配置的User-Agent")
-        return settings.USER_AGENT
 
     async def fetch_and_parse(self, note_url: Optional[str] = None) -> Optional[ScrapedDataItem]:
         """
@@ -487,14 +447,20 @@ class XiaohongshuProvider(BaseProvider):
                 note_range,
                 pos_distance,
                 str(geo) if geo else "",
-                proxies or {},
+                # proxies or {},
             )
 
             if not success:
                 # 如果是JavaScript相关的错误，返回空结果而不是抛出异常
-                if "Cannot find module" in msg or "js" in msg.lower():
+                if (
+                    "Cannot find module" in msg
+                    or "js" in msg.lower()
+                    or "Cannot read properties of undefined" in msg
+                    or "TypeError" in msg
+                ):
                     logger.warning(f"搜索功能因JavaScript问题被禁用: {msg}")
                     logger.warning(f"⚠️ 搜索功能暂时不可用（JavaScript依赖问题），返回空结果")
+                    logger.info(f"💡 建议: 可以尝试更新小红书的JavaScript签名文件，或暂时使用其他功能")
                     return []
                 else:
                     raise Exception(f"搜索失败: {msg}")
@@ -853,10 +819,25 @@ class XiaohongshuProvider(BaseProvider):
         logger.info(f"用户笔记汇总已保存到: {filepath}")
         return filepath
 
+    def _safe_str_to_int(self, value: Any) -> int:
+        """安全地将 '2.2万' 或 '1,234' 这样的字符串转为整数"""
+        if isinstance(value, int):
+            return value
+        if not isinstance(value, str):
+            return 0
+        try:
+            value = value.strip().replace(",", "")
+            if "万" in value:
+                num = float(value.replace("万", ""))
+                return int(num * 10000)
+            return int(value)
+        except (ValueError, TypeError):
+            return 0
+
     async def search_and_save(
         self,
         query: str,
-        require_num: int = 20,
+        require_num: int = 2,
         sort_type: int = 0,
         note_type: int = 0,
         save_format: str = "markdown",
@@ -1024,26 +1005,10 @@ class XiaohongshuProvider(BaseProvider):
                         "upload_time": raw_note.get("upload_time", ""),
                         "ip_location": raw_note.get("ip_location", ""),
                         "statistics": {
-                            "liked_count": (
-                                int(raw_note.get("liked_count", 0))
-                                if isinstance(raw_note.get("liked_count"), (int, str))
-                                else 0
-                            ),
-                            "collected_count": (
-                                int(raw_note.get("collected_count", 0))
-                                if isinstance(raw_note.get("collected_count"), (int, str))
-                                else 0
-                            ),
-                            "comment_count": (
-                                int(raw_note.get("comment_count", 0))
-                                if isinstance(raw_note.get("comment_count"), (int, str))
-                                else 0
-                            ),
-                            "share_count": (
-                                int(raw_note.get("share_count", 0))
-                                if isinstance(raw_note.get("share_count"), (int, str))
-                                else 0
-                            ),
+                            "liked_count": self._safe_str_to_int(raw_note.get("liked_count", 0)),
+                            "collected_count": self._safe_str_to_int(raw_note.get("collected_count", 0)),
+                            "comment_count": self._safe_str_to_int(raw_note.get("comment_count", 0)),
+                            "share_count": self._safe_str_to_int(raw_note.get("share_count", 0)),
                             "images_count": len(raw_note.get("image_list", [])),
                             "content_length": len(content_text),
                         },
@@ -1073,26 +1038,10 @@ class XiaohongshuProvider(BaseProvider):
             logger.info(f"✅ 保存完成: {successful_saves}/{len(raw_notes)} 个笔记\n")
 
             # 5. 统计数据
-            total_likes = sum(
-                (int(raw_note.get("liked_count", 0)) if isinstance(raw_note.get("liked_count"), (int, str)) else 0)
-                for raw_note in raw_notes
-            )
-            total_collects = sum(
-                (
-                    int(raw_note.get("collected_count", 0))
-                    if isinstance(raw_note.get("collected_count"), (int, str))
-                    else 0
-                )
-                for raw_note in raw_notes
-            )
-            total_comments = sum(
-                (int(raw_note.get("comment_count", 0)) if isinstance(raw_note.get("comment_count"), (int, str)) else 0)
-                for raw_note in raw_notes
-            )
-            total_shares = sum(
-                (int(raw_note.get("share_count", 0)) if isinstance(raw_note.get("share_count"), (int, str)) else 0)
-                for raw_note in raw_notes
-            )
+            total_likes = sum(self._safe_str_to_int(raw_note.get("liked_count", 0)) for raw_note in raw_notes)
+            total_collects = sum(self._safe_str_to_int(raw_note.get("collected_count", 0)) for raw_note in raw_notes)
+            total_comments = sum(self._safe_str_to_int(raw_note.get("comment_count", 0)) for raw_note in raw_notes)
+            total_shares = sum(self._safe_str_to_int(raw_note.get("share_count", 0)) for raw_note in raw_notes)
 
             end_time = datetime.now()
             duration = (end_time - start_time).total_seconds()
@@ -1316,34 +1265,38 @@ class XiaohongshuProvider(BaseProvider):
             total_images = len(image_list)
 
             timeout = httpx.Timeout(timeout=30)
-            async with httpx.Client(timeout=timeout) as session:
+            async with httpx.AsyncClient(timeout=timeout) as session:
                 for idx, image_url in enumerate(image_list, 1):
                     try:
                         if not image_url:
                             continue
 
                         # 下载图片
-                        async with session.get(image_url) as response:
-                            if response.status == 200:
-                                content = await response.read()
+                        # ...
+                        # 下载图片
+                        # 下载图片
+                        response = await session.get(image_url)  # 1. 直接 await get()
 
-                                # 智能检测图片格式
-                                content_type = response.headers.get("Content-Type")
-                                ext = get_file_extension(
-                                    content_type=content_type,
-                                    url=image_url,
-                                    content=content,
-                                )
+                        # 2. 检查 status_code (不再使用 async with)
+                        if response.status_code == 200:
+                            content = await response.aread()
 
-                                # 生成文件名：使用序号命名
-                                filename = f"image_{idx:03d}.{ext}"
-                                filepath = os.path.join(images_dir, filename)
+                            # 智能检测图片格式
+                            content_type = response.headers.get("Content-Type")
+                            ext = get_file_extension(
+                                content=content,
+                            )
 
-                                with open(filepath, "wb") as f:
-                                    f.write(content)
-                                downloaded_count += 1
-                            else:
-                                logger.warning(f"图片下载失败 (状态码 {response.status}): {image_url}")
+                            # 生成文件名：使用序号命名
+                            filename = f"image_{idx:03d}.{ext}"
+                            filepath = os.path.join(images_dir, filename)
+
+                            with open(filepath, "wb") as f:
+                                f.write(content)
+                            downloaded_count += 1
+                        else:
+                            # 3. 使用 .status_code 属性
+                            logger.warning(f"图片下载失败 (状态码 {response.status_code}): {image_url}")
 
                         # 避免请求过快
                         await asyncio.sleep(0.2)
@@ -1620,14 +1573,6 @@ class Data_Spider:
     ) -> List[str]:
         """
         批量保存笔记数据到文件
-
-        Args:
-            notes: 笔记数据列表
-            user_id: 用户ID（可选）
-            save_summary: 是否保存汇总文件，默认True
-
-        Returns:
-            保存的文件路径列表
         """
         if not notes:
             logger.warning("没有笔记需要保存")

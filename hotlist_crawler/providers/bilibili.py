@@ -10,10 +10,10 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 from loguru import logger
 
-from app.providers.base import BaseProvider
-from app.models import ScrapedDataItem
-from app.storage import storage_manager
-from app.config import settings
+from ..providers.base import BaseProvider
+from ..models import ScrapedDataItem
+from ..storage import storage_manager
+from ..file_utils import format_cookies_to_string
 
 
 class BilibiliVideoEndpoints:
@@ -49,8 +49,8 @@ class BilibiliVideoProvider(BaseProvider):
         rules: dict | None = None,
         save_images: bool = False,
         output_format: str = "json",
+        cookies: str | list | None = None,
         force_save: bool = True,
-        cookies: Optional[str] = None,
         auto_download_video: bool = False,
         video_quality: int = 80,
     ):
@@ -70,8 +70,11 @@ class BilibiliVideoProvider(BaseProvider):
         if rules is None:
             rules = {}
         super().__init__(url, rules, save_images, output_format, force_save, "bilibili")
-        self.cookies = cookies or self._load_saved_cookies()
-        self.bvid = self._extract_bvid(url)
+        self.cookies = format_cookies_to_string(cookies)
+        # self.bvid = self._extract_bvid(url)  <-- 删除或注释掉这行
+        self.bvid: Optional[str] = None
+        self.aid: Optional[str] = None
+        self._prepare_video_ids(url)  # <-- 添加这行
         self.auto_download_video = auto_download_video
         self.video_quality = video_quality
 
@@ -84,39 +87,47 @@ class BilibiliVideoProvider(BaseProvider):
             }
         )
 
-    def _load_saved_cookies(self) -> Optional[str]:
-        """加载已保存的B站登录cookies"""
-        try:
-            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "bilibili_cookies.json")
-            if os.path.exists(cookies_file):
-                with open(cookies_file, "r", encoding="utf-8") as f:
-                    cookies_list = json.load(f)
-                    # 转换为cookie字符串
-                    cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies_list])
-                    logger.info(f"📂 加载已保存的B站登录状态，共 {len(cookies_list)} 个cookies")
-                    return cookie_str
-        except Exception as e:
-            logger.warning(f"⚠️ 加载B站登录状态失败: {e}")
-        return None
-
-    def _extract_bvid(self, url: str) -> str:
+    def _prepare_video_ids(self, url: str):
         """
-        从URL中提取BVID
-        支持的格式:
-        - https://www.bilibili.com/video/BV1Xu41177nj
-        - https://b23.tv/BV1Xu41177nj (短链)
-        - BV1Xu41177nj (直接BV号)
+        从URL中提取BVID或AVID，并设置到 self.bvid 或 self.aid
         """
-        # 如果直接是BV号
-        if url.startswith("BV"):
-            return url
-
-        # 从URL中提取
-        bv_match = re.search(r"(BV[a-zA-Z0-9]+)", url)
+        # 优先匹配 BV (BV[a-zA-Z0-9]{10})
+        bv_match = re.search(r"(BV[a-zA-Z0-9]{10})", url, re.IGNORECASE)
         if bv_match:
-            return bv_match.group(1)
+            self.bvid = bv_match.group(1)
+            logger.debug(f"提取到 BVID: {self.bvid}")
+            return
 
-        raise ValueError(f"无法从URL中提取BVID: {url}")
+        # 匹配 AV (av/AV + 数字)
+        av_match = re.search(r"[Aa][Vv]([0-9]+)", url)
+        if av_match:
+            self.aid = av_match.group(1)
+            logger.debug(f"提取到 AVID: {self.aid}")
+            return
+
+        # 兼容直接输入BV号
+        if re.fullmatch(r"BV[a-zA-Z0-9]{10}", url, re.IGNORECASE):
+            self.bvid = url
+            logger.debug(f"提取到 BVID: {self.bvid}")
+            return
+
+        # 兼容直接输入av号 (av12345)
+        if re.fullmatch(r"[Aa][Vv]([0-9]+)", url):
+            self.aid = url[2:]  # 去掉av前缀
+            logger.debug(f"提取到 AVID: {self.aid}")
+            return
+
+        raise ValueError(f"无法从URL中提取BVID或AVID: {url}")
+
+    @property
+    def _api_id_params(self) -> Dict[str, Any]:
+        """根据BVID或AVID返回调用API所需的ID参数"""
+        if self.bvid:
+            return {"bvid": self.bvid}
+        if self.aid:
+            return {"aid": self.aid}
+        # 这不应该发生
+        raise ValueError("未初始化BVID或AVID")
 
     async def _request_api(self, endpoint: str, params: dict | None = None) -> Dict[str, Any]:
         """
@@ -146,19 +157,19 @@ class BilibiliVideoProvider(BaseProvider):
 
     async def get_video_detail(self) -> Dict[str, Any]:
         """获取视频详细信息"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL, {"bvid": self.bvid})
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL, self._api_id_params)
 
     async def get_video_tags(self) -> Dict[str, Any]:
         """获取视频标签"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS, {"bvid": self.bvid})
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS, self._api_id_params)
 
     async def get_video_pages(self) -> Dict[str, Any]:
         """获取视频分P信息"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, {"bvid": self.bvid})
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, self._api_id_params)
 
     async def get_video_download_url(self, cid: Optional[int] = None, qn: int = 80) -> Dict[str, Any]:
         """
-        获取视频下载链接
+        获取视频下载链接 (此API必须使用BVID)
 
         Args:
             cid: 分P的CID（可选，不提供则获取第一P）
@@ -169,15 +180,35 @@ class BilibiliVideoProvider(BaseProvider):
         """
         # 如果没有提供cid，先获取视频详情
         if not cid:
-            detail = await self.get_video_detail()
+            detail = await self.get_video_detail()  # 这会使用 aid 或 bvid
             if detail.get("code") != 0:
                 return detail
-            cid = detail.get("data", {}).get("cid")
+
+            data = detail.get("data", {})
+            cid = data.get("cid")
+
+            # 如果我们用aid获取详情，bvid现在在data里
+            if not self.bvid:
+                self.bvid = data.get("bvid")
+
             if not cid:
                 return {"code": -1, "message": "无法获取视频cid"}
 
+        # 检查bvid，因为playurl API必须有bvid
+        if not self.bvid:
+            # 如果用户只提供了aid，并且跳过了cid查找（即提供了cid），我们仍然需要获取bvid
+            logger.debug("bvid 未知, 正在调用 get_video_detail 以获取 bvid...")
+            detail = await self.get_video_detail()
+            if detail.get("code") != 0:
+                return {"code": -1, "message": f"为获取bvid而调用详情失败: {detail.get('message')}"}
+
+            self.bvid = detail.get("data", {}).get("bvid")
+
+            if not self.bvid:
+                return {"code": -1, "message": "无法从视频详情中获取 bvid"}
+
         params = {
-            "bvid": self.bvid,
+            "bvid": self.bvid,  # 关键: 强制使用 self.bvid
             "cid": cid,
             "qn": qn,
             "fnval": 16,  # 获取dash格式

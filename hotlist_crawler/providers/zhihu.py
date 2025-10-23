@@ -8,19 +8,16 @@ from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 from loguru import logger
 
-from app.providers.base import BaseProvider
-from app.models import ScrapedDataItem
-from app.storage import storage_manager
-from app.file_utils import get_file_extension
-from app.config import settings
+from ..models import ImageInfo
+from ..providers.base import BaseProvider
+from ..models import ScrapedDataItem
+from ..storage import storage_manager
+from ..file_utils import get_file_extension, get_random_user_agent
 
 
 class ZhihuArticleProvider(BaseProvider):
     """
     知乎文章和问题页面的爬虫实现
-    支持：
-    1. 知乎专栏文章 (zhuanlan.zhihu.com)
-    2. 知乎问题页面 (www.zhihu.com/question)
     """
 
     def __init__(
@@ -29,24 +26,13 @@ class ZhihuArticleProvider(BaseProvider):
         rules: dict,
         save_images: bool = True,
         output_format: str = "markdown",
+        cookies: list | None = None,
         force_save: bool = True,
         max_answers: int = 3,
     ):
         super().__init__(url, rules, save_images, output_format, force_save, "zhihu")
         self.max_answers = max_answers
-
-    def _load_saved_cookies(self):
-        """加载已保存的登录cookies"""
-        try:
-            cookies_file = os.path.join(settings.LOGIN_DATA_DIR, "zhihu_cookies.json")
-            if os.path.exists(cookies_file):
-                with open(cookies_file, "r", encoding="utf-8") as f:
-                    cookies = json.load(f)
-                logger.info(f"📂 加载已保存的知乎登录状态，共 {len(cookies)} 个cookies")
-                return cookies
-        except Exception as e:
-            logger.warning(f"⚠️ 加载知乎登录状态失败: {e}")
-        return None
+        self.cookies = cookies
 
     def _is_question_page(self) -> bool:
         """判断是否为知乎问题页面"""
@@ -90,7 +76,7 @@ class ZhihuArticleProvider(BaseProvider):
             storage_info = None
             if self.force_save:
                 storage_info = storage_manager.create_article_storage(
-                    platform=self.platform_name, title=title, url=self.url
+                    platform=self.platform_name, title=title, url=self.url, author=None
                 )
 
                 # 保存内容
@@ -123,24 +109,27 @@ class ZhihuArticleProvider(BaseProvider):
             from playwright.sync_api import sync_playwright
 
             with sync_playwright() as playwright:
-                # 创建持久化上下文，保持登录状态
-                context = playwright.chromium.launch_persistent_context(
-                    settings.USER_DATA_DIR,
-                    headless=True,  # 抓取时使用无头模式
+
+                # 1. 启动一个 "干净" 的浏览器
+                browser = playwright.chromium.launch(
+                    headless=True,
                     slow_mo=100,
-                    user_agent=settings.USER_AGENT,
                     ignore_default_args=["--enable-automation"],
                     args=["--disable-blink-features=AutomationControlled"],
                 )
 
-                page = context.new_page()
+                # 2. 创建一个新上下文
+                context = browser.new_context(user_agent=get_random_user_agent("chrome"))
 
-                # 加载已保存的登录cookies
-                saved_cookies = self._load_saved_cookies()
+                # 3. <--- 在这里手动注入你的 cookies ---
+                saved_cookies = self.cookies
                 if saved_cookies:
                     context.add_cookies(saved_cookies)
                     logger.info("✅ 知乎登录状态已加载")
+                else:
+                    logger.warning("⚠️ 未找到 self.cookies，将以未登录状态启动。")
 
+                page = context.new_page()
                 try:
                     logger.debug(f"🌐 正在访问知乎问题页面: {self.url}")
 
@@ -304,9 +293,6 @@ class ZhihuArticleProvider(BaseProvider):
 
                         logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
 
-                    # 转换图片路径为ImageInfo对象
-                    from app.models import ImageInfo
-
                     all_image_infos = []
                     for img_path in question_images + downloaded_images:
                         all_image_infos.append(
@@ -361,9 +347,8 @@ class ZhihuArticleProvider(BaseProvider):
                 response.raise_for_status()
 
                 # 智能检测图片格式
-                content_type = response.headers.get("Content-Type")
                 content = response.content
-                ext = get_file_extension(content_type, img_url, content)
+                ext = get_file_extension(content)
 
                 img_filename = f"question_image_{img_index + 1}.{ext}"
                 local_img_path = os.path.join(question_image_dir, img_filename)
@@ -404,9 +389,8 @@ class ZhihuArticleProvider(BaseProvider):
                 response.raise_for_status()
 
                 # 获取正确的文件扩展名
-                content_type = response.headers.get("Content-Type")
                 content = response.content
-                ext = get_file_extension(content_type, img_url, content)
+                ext = get_file_extension(content=content)
 
                 img_filename = f"{img_index + 1}.{ext}"
                 local_img_path = os.path.join(answer_image_dir, img_filename)

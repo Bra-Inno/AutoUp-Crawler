@@ -2,7 +2,6 @@
 平台类型定义和常量
 """
 
-import os
 from enum import StrEnum
 
 

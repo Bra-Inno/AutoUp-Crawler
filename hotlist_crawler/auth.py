@@ -13,31 +13,11 @@ from playwright.async_api import async_playwright
 
 
 from .types import PlatformType, PLATFORM_LOGIN_URLS, PLATFORM_CHECK_URLS
-from .config import settings
 
 
 def login(platform: PlatformType, headless: bool = False) -> bool:
     """
     用户登录函数 - 符合API设计规范
-
-    Args:
-        platform: 平台类型 (PlatformType枚举)
-        headless: 是否无头模式运行（建议False，方便用户操作）
-
-    Returns:
-        bool: 登录是否成功保存
-        - True: 登录成功并保存
-        - False: 登录失败或保存失败
-
-    Example:
-        from hotlist_crawler.types import PlatformType
-
-        # 登录知乎
-        success = login(PlatformType.ZHIHU)
-        if success:
-            logger.info("知乎登录成功！")
-        else:
-            logger.error("知乎登录失败！")
     """
 
     # 验证平台类型
@@ -51,11 +31,11 @@ def login(platform: PlatformType, headless: bool = False) -> bool:
         return False
 
     # 确保用户数据目录存在
-    os.makedirs(settings.USER_DATA_DIR, exist_ok=True)
+    os.makedirs("./chrome_user_data", exist_ok=True)
 
     logger.info(f"🚀 开始登录 {platform.upper()} 平台...")
     logger.info(f"📍 登录页面: {login_url}")
-    logger.info(f"📁 用户数据目录: {settings.USER_DATA_DIR}")
+    logger.info(f"📁 用户数据目录: ./chrome_user_data")
 
     # 同步调用异步函数
     try:
@@ -87,7 +67,7 @@ async def _login_async(platform: PlatformType, login_url: str, headless: bool) -
         async with async_playwright() as p:
             # 启动浏览器，使用持久化用户数据 - 最强反检测配置
             browser = await p.chromium.launch_persistent_context(
-                user_data_dir=settings.USER_DATA_DIR,
+                user_data_dir="./chrome_user_data",
                 headless=headless,
                 args=[
                     "--no-sandbox",
@@ -290,7 +270,7 @@ async def _wait_for_user_action(page, platform: PlatformType, timeout: int = 45)
 async def _save_login_data(platform: PlatformType, cookies: list, page) -> bool:
     """保存登录数据，返回是否保存成功"""
     try:
-        login_data_dir = os.path.join(settings.USER_DATA_DIR, "login_data")
+        login_data_dir = os.path.join("./chrome_user_data", "login_data")
         os.makedirs(login_data_dir, exist_ok=True)
 
         # 准备用户信息
@@ -325,20 +305,6 @@ def is_online(platform: PlatformType) -> bool:
     """
     检查指定平台是否在线（是否有有效登录状态）
     通过访问平台特定页面并检测是否跳转来判断
-
-    Args:
-        platform: 平台类型
-
-    Returns:
-        bool: 是否在线
-        - True: 有有效登录状态（未跳转）
-        - False: 没有登录或登录已过期（发生跳转）
-
-    Example:
-        if is_online(PlatformType.ZHIHU):
-            logger.info("知乎已登录")
-        else:
-            logger.info("知乎未登录")
     """
 
     if not isinstance(platform, PlatformType):
@@ -352,7 +318,7 @@ def is_online(platform: PlatformType) -> bool:
         return False
 
     # 检查是否有cookies文件
-    cookies_file = os.path.join(settings.USER_DATA_DIR, "login_data", f"{platform}_cookies.json")
+    cookies_file = os.path.join("./chrome_user_data", "login_data", f"{platform}_cookies.json")
     if not os.path.exists(cookies_file):
         return False
 

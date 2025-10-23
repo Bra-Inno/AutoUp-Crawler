@@ -1,120 +1,312 @@
-# hotlist-crawler 接口简介
+# Hotlist Crawler 🔥
 
-## 📦 导入方式
-```python
-import hotlist_crawler
-from hotlist_crawler import PlatformType
+通用热榜内容爬虫，支持知乎、微博、微信公众号、小红书、抖音、B站等多个平台的内容抓取。
+
+## ✨ 特性
+
+- � **多平台支持**: 知乎、微博、微信、小红书、抖音、B站
+- 🔍 **智能识别**: 自动识别URL所属平台
+- 🎯 **关键词搜索**: 支持小红书关键词搜索
+- 📸 **图片下载**: 自动下载并整理图片资源
+- 📝 **多格式输出**: 支持文本和Markdown格式
+- 🔐 **登录保持**: 一次登录，长期有效
+- ⚡ **批量处理**: 支持多URL并发抓取
+- 🛡️ **反检测**: 使用无头浏览器和随机User-Agent
+
+## 📦 安装
+
+### 环境要求
+
+- Python 3.8+
+- Node.js (用于小红书JavaScript签名)
+- Google Chrome 或 Chromium
+
+### 安装依赖
+
+```bash
+# 克隆项目
+git clone https://github.com/Bra-Inno/hotlist-crawler.git
+cd hotlist-crawler
+
+# 安装Python依赖
+pip install -r requirements.txt
+
+# 安装Playwright浏览器
+playwright install chromium
+
+# 安装Node.js依赖（用于小红书）
+npm install
 ```
 
----
+### 配置环境
 
-## 🔐 认证接口
+1. 复制环境配置文件：
+```bash
+cp .env.example .env
+```
 
-### 1. login(platform, headless=False) -> bool
-- **功能：** 打开浏览器让用户登录指定平台，自动保存登录状态
-- **参数：** platform（平台类型），headless（是否无头模式）
-- **返回：** 登录是否成功
+2. 编辑 `.env` 文件，配置必要的参数：
+```env
+# Redis配置（可选，用于缓存）
+REDIS_URL=redis://localhost:6379
 
-### 2. is_online(platform) -> bool
-- **功能：** 检查指定平台是否有有效的登录状态
+# 浏览器配置
+USER_DATA_DIR=./chrome_user_data
+LOGIN_DATA_DIR=${USER_DATA_DIR}/login_data
 
-- **返回：** 是否在线
+# Playwright配置
+PLAYWRIGHT_HEADLESS=true
+PLAYWRIGHT_TIMEOUT=90000
 
-  > 各个平台使用的定向网址：
-  >
-  > - 知乎："https://www.zhihu.com/settings/profile"（设置页面）
-  > - 微博："https://weibo.com/set/index"（设置页面）
-  > - 微信：爬取固定的一个帖子来判断(https://mp.weixin.qq.com/s/T7PYt7UTYiKVT67ENmvtnw)，检查页面是否包含文章内容
-  > - B站："https://account.bilibili.com/account/home"（个人中心）
-  > - 小红书："https://www.xiaohongshu.com/explore/683fe17f0000000023017c6a?xsec_token=ABiqWIzMrzlIqlcQ8I5Ywig4rtiMtgvr2LQ5Jp02z1EDw="（一个帖子链接，转跳原因可能是xsec_token过期了）
-  > - 抖音："https://www.douyin.com/user/self?from_tab_name=main&showTab=record"（个人页面），检查是否存在登录框元素（支持多个ID: "login-full-panel-icv6ob2bq1c0" 或 "douyin-login-new-id"）
+# 下载配置
+DOWNLOAD_DIR=./downloads
+MAX_IMAGE_SIZE=10485760
+```
 
-### 3. get_all_online_status() -> Dict
-- **功能：** 获取所有平台的登录状态
-- **返回：** 平台名称到登录状态的映射
+## � 快速开始
 
----
+### 基本使用
 
-## 📥 抓取接口
+```python
+import hotlist_crawler
 
-### 1. fetch(url, destination, save_images=True, output_format="markdown", max_answers=3) -> bool
-- **功能：** 自动识别平台并抓取内容到指定目录（核心功能）
-- **参数：** URL、目标目录、是否保存图片、输出格式、最大回答数
-- **返回：** 抓取是否成功
+# 抓取单个内容
+success = hotlist_crawler.fetch(
+    url="https://www.zhihu.com/question/123456",
+    destination="./output"
+)
 
-### 2. batch_fetch(urls, destination, save_images=True, output_format="markdown", max_answers=3) -> Dict
-- **功能：** 批量抓取多个URL
-- **参数：** URL列表、目标目录、是否保存图片、输出格式、最大回答数
-- **返回：** 详细的批量抓取结果统计
+# 小红书关键词搜索
+success = hotlist_crawler.fetch(
+    url="xhs_keyword:美食",
+    destination="./output",
+    cookies=cookies  # 需要登录cookies
+)
+```
 
-### 3. validate_destination(destination) -> bool
-- **功能：** 验证目标目录是否有效可用
-- **返回：** 目录是否有效
+### 平台登录
 
----
+```python
+from hotlist_crawler import PlatformType
 
-## 🎯 平台识别接口
+# 登录知乎
+hotlist_crawler.login(PlatformType.ZHIHU)
 
-### 1. get_platform_info(url) -> Dict
-- **功能：** 分析URL并返回平台信息（平台类型、是否支持等）
-- **返回：** 包含平台、支持状态、域名等信息的字典
+# 检查登录状态
+is_online = hotlist_crawler.is_online(PlatformType.ZHIHU)
 
-### 2. list_supported_platforms() -> List[str]
-- **功能：** 返回所有支持的平台列表
-- **返回：** 平台名称列表 ['zhihu', 'weibo', 'weixin', 'xiaohongshu', 'douyin', 'bilibili']
+# 获取所有平台登录状态
+status = hotlist_crawler.get_all_online_status()
+```
 
-> **✅ 所有平台通过 fetch() 统一接口爬取:**
-> - **知乎** (zhihu): 问题、专栏文章 - `https://www.zhihu.com/...`
-> - **微博** (weibo): 搜索结果 - `https://weibo.com/...`
-> - **微信** (weixin): 公众号文章 - `https://mp.weixin.qq.com/...`
-> - **B站** (bilibili): 视频信息 - `https://www.bilibili.com/...`
-> - **小红书** (xiaohongshu): 关键词搜索 ⭐ - `xhs_keyword:关键词`
-> - **抖音** (douyin): 视频 - `https://www.douyin.com/video/...`
-> 
+### 批量抓取
 
----
+```python
+import hotlist_crawler
 
-## 🏷️ 类型和常量
+urls = [
+    "https://www.zhihu.com/question/123456",
+    "https://weibo.com/123456/status/789",
+    "https://mp.weixin.qq.com/s/abcdef"
+]
 
-### 1. PlatformType (枚举)
-- **功能：** 定义所有支持的平台类型
-- **值：** ZHIHU, WEIBO, WEIXIN, XIAOHONGSHU, DOUYIN, BILIBILI
+results = hotlist_crawler.batch_fetch(urls, "./output")
+```
 
-### 2. USER_DATA_DIR (字符串)
-- **功能：** 浏览器用户数据的存储目录路径
-- **值：** chrome_user_data目录的绝对路径
+## 📋 支持平台
 
----
+| 平台 | URL格式 | 功能 | 登录要求 |
+|------|---------|------|----------|
+| **知乎** | `https://www.zhihu.com/...` | 问题、文章 | 可选 |
+| **微博** | `https://weibo.com/...` | 搜索结果、帖子 | 可选 |
+| **微信公众号** | `https://mp.weixin.qq.com/...` | 公众号文章 | 可选 |
+| **小红书** | `xhs_keyword:关键词` | 关键词搜索 | **必需** |
+| **抖音** | `https://www.douyin.com/...` | 视频信息 | 可选 |
+| **B站** | `https://www.bilibili.com/...` | 视频信息 | 可选 |
 
-## 🧩 便捷别名
+## 🔐 Cookies管理
 
-### 平台专用函数
-- **zhihu()、weibo()、weixin()：** 对应平台的快捷抓取函数
-- **等同于：** scrape_zhihu()、scrape_weibo()、scrape_weixin()
+### 获取Cookies
 
----
+对于需要登录的平台（如小红书），需要先获取cookies：
 
-## 📋 接口总览
+1. **自动获取**：
+```python
+# 打开浏览器登录
+hotlist_crawler.login(PlatformType.XIAOHONGSHU)
+```
 
-| 类别 | 主要接口 | 功能说明 |
-|------|----------|----------|
-| **认证** | login, is_online | 登录管理和状态检查 |
-| **抓取** | fetch, batch_fetch | 单个和批量内容抓取 |
-| **平台** | get_platform_info, list_supported_platforms | 平台识别和信息查询 |
-| **工具** | validate_destination | 目录验证等辅助功能 |
+2. **手动获取**：
+   - 打开浏览器开发者工具
+   - 访问目标网站并登录
+   - 导出cookies保存为JSON文件
 
----
+### Cookies格式
 
+```json
+[
+  {
+    "name": "sessionid",
+    "value": "your_session_value",
+    "domain": ".xiaohongshu.com",
+    "path": "/",
+    "expires": 1735689600
+  }
+]
+```
 
+## �️ API参考
 
+### 核心函数
 
+#### `fetch(url, destination, **kwargs) -> bool`
 
-## 🌟 核心特性
+抓取单个URL内容
 
-- **同步接口：** 所有函数都是同步的，无需async/await
-- **自动识别：** 根据URL自动识别平台类型
-- **登录保持：** 一次登录，长期有效
-- **批量处理：** 支持多URL并发抓取
-- **无头模式：** 抓取时默认无头运行，登录时显示界面
-- **多格式输出：** 支持文本和Markdown格式
-- **图片下载：** 自动下载并整理图片资源
+**参数：**
+- `url` (str): 目标URL或关键词搜索
+- `destination` (str): 保存目录
+- `save_images` (bool): 是否下载图片，默认True
+- `output_format` (str): 输出格式 'markdown'/'text'，默认'markdown'
+- `cookies` (list): Cookies列表，默认None
+
+**返回：** 抓取是否成功
+
+#### `batch_fetch(urls, destination, **kwargs) -> dict`
+
+批量抓取多个URL
+
+**参数：**
+- `urls` (list): URL列表
+- `destination` (str): 保存目录
+- `max_concurrent` (int): 最大并发数，默认3
+
+**返回：** 包含成功/失败统计的字典
+
+#### `login(platform, headless=False) -> bool`
+
+登录指定平台
+
+**参数：**
+- `platform` (PlatformType): 平台类型
+- `headless` (bool): 是否无头模式，默认False
+
+#### `is_online(platform) -> bool`
+
+检查登录状态
+
+#### `get_platform_info(url) -> dict`
+
+分析URL获取平台信息
+
+### 平台类型枚举
+
+```python
+from hotlist_crawler import PlatformType
+
+PlatformType.ZHIHU        # 知乎
+PlatformType.WEIBO        # 微博
+PlatformType.WEIXIN       # 微信公众号
+PlatformType.XIAOHONGSHU  # 小红书
+PlatformType.DOUYIN       # 抖音
+PlatformType.BILIBILI     # B站
+```
+
+## 📁 输出结构
+
+```
+output/
+├── zhihu_问题标题/
+│   ├── content.md          # Markdown内容
+│   ├── content.txt         # 纯文本内容
+│   ├── images/             # 图片文件夹
+│   │   ├── image_1.jpg
+│   │   └── image_2.png
+│   └── metadata.json       # 元数据
+└── xhs_美食/
+    ├── note_001/
+    │   ├── content.md
+    │   └── images/
+    └── search_results.json # 搜索结果汇总
+```
+
+## ⚠️ 注意事项
+
+### 小红书搜索功能
+
+目前小红书搜索功能由于JavaScript签名算法问题暂时不可用：
+
+```
+⚠️ 搜索功能暂时不可用（JavaScript依赖问题）
+💡 建议: 可以尝试更新小红书的JavaScript签名文件，或暂时使用其他功能
+```
+
+### 反爬虫限制
+
+- 建议使用代理IP
+- 控制请求频率
+- 定期更新cookies
+
+### 存储空间
+
+图片下载可能消耗大量存储空间，建议定期清理。
+
+## 🔧 故障排除
+
+### 常见问题
+
+1. **ImportError: No module named 'xxx'**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Playwright 浏览器未安装**
+   ```bash
+   playwright install chromium
+   ```
+
+3. **小红书搜索失败**
+   - 检查cookies是否有效
+   - 更新JavaScript签名文件
+   - 查看日志中的具体错误信息
+
+4. **网络超时**
+   - 检查网络连接
+   - 调整超时设置
+   - 使用代理
+
+### 日志调试
+
+程序使用loguru进行日志记录，默认输出到控制台。如需更详细的日志：
+
+```python
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
+```
+
+## 🤝 贡献
+
+欢迎提交Issue和Pull Request！
+
+### 开发环境设置
+
+```bash
+# 安装开发依赖
+pip install -r requirements-dev.txt
+
+# 运行测试
+python -m pytest
+
+# 代码格式化
+black .
+isort .
+```
+
+## 📄 许可证
+
+MIT License
+
+## 📞 联系
+
+- 项目主页: https://github.com/Bra-Inno/hotlist-crawler
+- 问题反馈: https://github.com/Bra-Inno/hotlist-crawler/issues

@@ -419,7 +419,7 @@ var zc666;
 //# sourceMappingURL=https://picasso-private-1251524319.cos.ap-shanghai.myqcloud.com/data/formula-static/formula/xhs-pc-web/runtime-main.8718828.js.map
 try {
     try {
-        require('./app/static/xhs_xray_pack1.js');
+        require('./hotlist_crawler/static/xhs_xray_pack1.js');
     } catch (e1) {
         try {
             require('./xhs_xray_pack1.js');
@@ -432,7 +432,7 @@ try {
 }
 try {
     try {
-        require('./app/static/xhs_xray_pack2.js');
+        require('./hotlist_crawler/static/xhs_xray_pack2.js');
     } catch (e1) {
         require('./xhs_xray_pack2.js');
     }

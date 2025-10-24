@@ -278,126 +278,6 @@ class DouyinVideoProvider(BaseProvider):
             logger.error(f"\n❌ 获取抖音视频信息失败: {str(e)}")
             raise
 
-    def _extract_video_info(self, aweme_detail: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        从aweme_detail中提取视频信息
-
-        Args:
-            aweme_detail: 视频详情数据
-
-        Returns:
-            dict: 提取后的视频信息
-        """
-        # 基本信息
-        author = aweme_detail.get("author", {})
-        statistics = aweme_detail.get("statistics", {})
-        video = aweme_detail.get("video", {})
-        music = aweme_detail.get("music", {})
-
-        info = {
-            "title": aweme_detail.get("desc", "无标题"),
-            "create_time": aweme_detail.get("create_time"),
-            # 作者信息
-            "author": {
-                "uid": author.get("uid"),
-                "sec_uid": author.get("sec_uid"),
-                "nickname": author.get("nickname"),
-                "signature": author.get("signature"),
-                "avatar": author.get("avatar_larger", {}).get("url_list", [None])[0],
-            },
-            # 统计信息
-            "statistics": {
-                "play_count": statistics.get("play_count", 0),
-                "digg_count": statistics.get("digg_count", 0),
-                "comment_count": statistics.get("comment_count", 0),
-                "share_count": statistics.get("share_count", 0),
-                "collect_count": statistics.get("collect_count", 0),
-            },
-            # 视频信息
-            "video": {
-                "duration": video.get("duration"),
-                "ratio": video.get("ratio"),
-                "cover": video.get("cover", {}).get("url_list", [None])[0],
-                "dynamic_cover": video.get("dynamic_cover", {}).get("url_list", [None])[0],
-                "play_addr": video.get("play_addr", {}).get("url_list", [None])[0],
-                "download_addr": video.get("download_addr", {}).get("url_list", [None])[0],
-            },
-            # 音乐信息
-            "music": {
-                "id": music.get("id"),
-                "title": music.get("title"),
-                "author": music.get("author"),
-                "cover": music.get("cover_large", {}).get("url_list", [None])[0],
-                "play_url": music.get("play_url", {}).get("url_list", [None])[0],
-            },
-        }
-
-        return info
-
-    def _format_as_markdown(self, video_info: Dict[str, Any]) -> str:
-        """
-        将视频信息格式化为Markdown
-
-        Args:
-            video_info: 视频信息字典
-
-        Returns:
-            str: Markdown格式的内容
-        """
-        md_lines = []
-
-        # 标题
-        md_lines.append(f"# {video_info.get('title', '抖音视频')}\n")
-
-        # 作者信息
-        author = video_info.get("author", {})
-        if author:
-            md_lines.append(f"**作者**: {author.get('nickname', 'N/A')}")
-            if author.get("signature"):
-                md_lines.append(f"**签名**: {author.get('signature')}\n")
-            else:
-                md_lines.append("")
-
-        # 统计信息
-        stats = video_info.get("statistics", {})
-        if stats:
-            md_lines.append("## 数据统计\n")
-            md_lines.append(f"- 播放量: {stats.get('play_count', 0):,}")
-            md_lines.append(f"- 点赞数: {stats.get('digg_count', 0):,}")
-            md_lines.append(f"- 评论数: {stats.get('comment_count', 0):,}")
-            md_lines.append(f"- 分享数: {stats.get('share_count', 0):,}")
-            md_lines.append(f"- 收藏数: {stats.get('collect_count', 0):,}\n")
-
-        # 视频信息
-        video = video_info.get("video", {})
-        if video:
-            md_lines.append("## 视频信息\n")
-            if video.get("duration"):
-                md_lines.append(f"- 时长: {video.get('duration')} 毫秒")
-            if video.get("ratio"):
-                md_lines.append(f"- 比例: {video.get('ratio')}")
-            if video.get("cover"):
-                md_lines.append(f"\n![封面]({video.get('cover')})\n")
-
-        # 音乐信息
-        music = video_info.get("music", {})
-        if music and music.get("title"):
-            md_lines.append("## 背景音乐\n")
-            md_lines.append(f"- 标题: {music.get('title')}")
-            if music.get("author"):
-                md_lines.append(f"- 作者: {music.get('author')}\n")
-
-        # 链接信息
-        if video_info.get("complete_url"):
-            md_lines.append(f"## 链接\n")
-            md_lines.append(f"[查看原视频]({video_info.get('complete_url')})\n")
-
-        # 本地保存路径
-        if video_info.get("local_video_path"):
-            md_lines.append(f"**本地视频**: `{video_info.get('local_video_path')}`\n")
-
-        return "\n".join(md_lines)
-
     def _format_as_markdown_from_downloader_info(self, video_info: Dict[str, Any]) -> str:
         """
         将下载器返回的视频信息格式化为Markdown
@@ -454,8 +334,6 @@ class DouyinVideoProvider(BaseProvider):
         # 发布时间
         create_time = video_info.get("create_time")
         if create_time:
-            from datetime import datetime
-
             dt = datetime.fromtimestamp(create_time)
             md_lines.append(f"**发布时间**: {dt.strftime('%Y-%m-%d %H:%M:%S')}\n")
 

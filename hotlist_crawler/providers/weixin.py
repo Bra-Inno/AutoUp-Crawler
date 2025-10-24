@@ -21,6 +21,10 @@ class WeixinMpProvider(BaseProvider):
     支持图片下载和 Markdown 转换
     """
 
+    MAX_IMAGE_SIZE = 10485760  # 10MB
+    HTTP_TIMEOUT = 30  # s
+    PLAYWRIGHT_TIMEOUT = 60000  # ms
+
     def __init__(
         self,
         url: str,
@@ -32,39 +36,92 @@ class WeixinMpProvider(BaseProvider):
     ):
         super().__init__(url, rules, save_images, output_format, force_save, "weixin")
         self.storage_info = None
-        self.img_counter = {"count": 1}
+        self.img_counter = 0
         self.cookies = cookies
 
-    async def download_image(self, img_url: str, save_dir: str) -> Optional[str]:
-        """异步下载图片并保存到本地"""
+    def _download_image_content(self, img_url: str) -> Optional[bytes]:
+        """
+        下载图片内容（统一的下载逻辑）
+
+        Args:
+            img_url: 图片URL
+
+        Returns:
+            图片二进制内容，或None（如果下载失败/文件过大）
+        """
         if not img_url or not img_url.startswith("http"):
             return None
 
         try:
-            img_filename = f"image_{self.img_counter['count']}"
+            response = httpx.get(img_url, timeout=self.HTTP_TIMEOUT)
+            response.raise_for_status()
 
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                img_response = await client.get(img_url)
-                img_response.raise_for_status()
+            content_length = response.headers.get("Content-Length")
+            if content_length and int(content_length) > self.MAX_IMAGE_SIZE:
+                logger.warning(f"  - 图片过大，跳过: {img_url}")
+                return None
 
-                # 检查文件大小
-                content_length = img_response.headers.get("Content-Length")
-                if content_length and int(content_length) > 10485760:  # 10MB
-                    logger.debug(f"  - 图片过大，跳过: {img_url}")
-                    return None
-
-                ext = get_file_extension(content=img_response.content)
-
-                img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
-                with open(img_save_path, "wb") as f:
-                    f.write(img_response.content)
-
-                logger.debug(f"  - 图片已下载: {img_filename}.{ext}")
-                self.img_counter["count"] += 1
-                return f"{img_filename}.{ext}"
+            return response.content
 
         except Exception as e:
             logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
+            return None
+
+    def download_image(self, img_url: str, save_dir: str) -> Optional[str]:
+        """
+        下载图片并保存到指定目录
+
+        Args:
+            img_url: 图片URL
+            save_dir: 保存目录
+
+        Returns:
+            保存的文件名（含扩展名），或None
+        """
+        content = self._download_image_content(img_url)
+        if content is None:
+            return None
+
+        try:
+            self.img_counter += 1
+            img_filename = f"image_{self.img_counter}"
+            ext = get_file_extension(content=content)
+
+            img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
+            with open(img_save_path, "wb") as f:
+                f.write(content)
+
+            logger.debug(f"  - 图片已下载: {img_filename}.{ext}")
+            return f"{img_filename}.{ext}"
+
+        except Exception as e:
+            logger.error(f"  - 保存图片失败: {img_url}, 错误: {e}")
+            return None
+
+    def download_image_with_storage(self, img_url: str, storage_info: dict, alt_text: str = "") -> Optional[str]:
+        """
+        下载图片并通过存储管理器保存
+
+        Args:
+            img_url: 图片URL
+            storage_info: 存储信息字典
+            alt_text: 图片的alt文本
+
+        Returns:
+            本地路径，或None
+        """
+        content = self._download_image_content(img_url)
+        if content is None:
+            return None
+
+        try:
+            image_info = storage_manager.save_image(storage_info, content, img_url, alt_text, self.img_counter + 1)
+
+            self.img_counter += 1
+            return image_info["local_path"]
+
+        except Exception as e:
+            logger.error(f"  - 通过存储管理器保存图片失败: {img_url}, 错误: {e}")
             return None
 
     def convert_tag_to_markdown(self, tag, save_dir: str) -> str:
@@ -83,9 +140,7 @@ class WeixinMpProvider(BaseProvider):
                     img_src = child.get("data-src") or child.get("src")
                     alt_text = child.get("alt", "image")
                     if self.save_images and save_dir:
-                        # 使用同步方式处理图片下载（在异步环境中需要特殊处理）
-                        loop = asyncio.get_event_loop()
-                        img_local_path = loop.run_until_complete(self.download_image(img_src, save_dir))
+                        img_local_path = self.download_image(img_src, save_dir)
                         if img_local_path:
                             markdown_str += f"![{alt_text}]({img_local_path})\n"
                     else:
@@ -126,13 +181,7 @@ class WeixinMpProvider(BaseProvider):
 
             # 尝试多种方式提取标题
             title = None
-            title_selectors = [
-                "#activity-name",
-                ".rich_media_title",
-                "h1",
-                '[class*="title"]',
-                "title",
-            ]
+            title_selectors = ["#activity-name", ".rich_media_title", "h1", '[class*="title"]', "title"]
 
             for selector in title_selectors:
                 try:
@@ -348,15 +397,9 @@ class WeixinMpProvider(BaseProvider):
                             if img_src:
                                 local_path = None
                                 if self.save_images and storage_info:
-                                    local_path = self._sync_download_and_save_image(img_src, storage_info, alt_text)
+                                    local_path = self.download_image_with_storage(img_src, storage_info, alt_text)
 
-                                images.append(
-                                    {
-                                        "original_url": img_src,
-                                        "local_path": local_path,
-                                        "alt_text": alt_text,
-                                    }
-                                )
+                                images.append({"original_url": img_src, "local_path": local_path, "alt_text": alt_text})
 
                 # 保存文章索引
                 if storage_info:
@@ -378,37 +421,6 @@ class WeixinMpProvider(BaseProvider):
             finally:
                 context.close()
 
-    def _sync_download_image(self, img_url: str, save_dir: str) -> Optional[str]:
-        """同步版本的图片下载"""
-        if not img_url or not img_url.startswith("http"):
-            return None
-
-        try:
-            img_filename = f"image_{self.img_counter['count']}"
-
-            response = httpx.get(img_url, timeout=30)
-            response.raise_for_status()
-
-            # 检查文件大小
-            content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > 10485760:  # 10MB
-                logger.debug(f"  - 图片过大，跳过: {img_url}")
-                return None
-
-            ext = get_file_extension(content=response.content)
-
-            img_save_path = os.path.join(save_dir, f"{img_filename}.{ext}")
-            with open(img_save_path, "wb") as f:
-                f.write(response.content)
-
-            logger.debug(f"  - 图片已下载: {img_filename}.{ext}")
-            self.img_counter["count"] += 1
-            return f"{img_filename}.{ext}"
-
-        except Exception as e:
-            logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
-            return None
-
     def _sync_convert_tag_to_markdown(self, tag, storage_info=None) -> str:
         """同步版本的 Markdown 转换"""
         markdown_str = ""
@@ -425,7 +437,7 @@ class WeixinMpProvider(BaseProvider):
                     img_src = child.get("data-src") or child.get("src")
                     alt_text = child.get("alt", "image")
                     if self.save_images and storage_info:
-                        img_local_path = self._sync_download_and_save_image(str(img_src), storage_info, str(alt_text))
+                        img_local_path = self.download_image_with_storage(str(img_src), storage_info, str(alt_text))
                         if img_local_path:
                             # 使用相对路径在Markdown中引用图片
                             relative_path = f"images/{os.path.basename(img_local_path)}"
@@ -460,37 +472,6 @@ class WeixinMpProvider(BaseProvider):
             markdown_str = tag.get_text()
 
         return markdown_str
-
-    def _sync_download_and_save_image(self, img_url: str, storage_info: dict, alt_text: str = "") -> Optional[str]:
-        """同步版本的图片下载和保存，使用存储管理器"""
-        if not img_url or not img_url.startswith("http"):
-            return None
-
-        try:
-            response = httpx.get(img_url, timeout=30)
-            response.raise_for_status()
-
-            # 检查文件大小
-            content_length = response.headers.get("Content-Length")
-            if content_length and int(content_length) > 10485760:  # 10MB
-                logger.debug(f"  - 图片过大，跳过: {img_url}")
-                return None
-
-            # 使用存储管理器保存图片
-            image_info = storage_manager.save_image(
-                storage_info,
-                response.content,
-                img_url,
-                alt_text,
-                self.img_counter["count"],
-            )
-
-            self.img_counter["count"] += 1
-            return image_info["local_path"]
-
-        except Exception as e:
-            logger.error(f"  - 下载图片失败: {img_url}, 错误: {e}")
-            return None
 
     async def _playwright_parse(self) -> Any:
         """异步包装器，在执行器中运行同步 Playwright"""

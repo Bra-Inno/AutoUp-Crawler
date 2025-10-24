@@ -6,6 +6,7 @@ import os
 import re
 import json
 import httpx
+from enum import Enum
 from typing import Any, Dict, Optional
 from urllib.parse import urlencode
 from loguru import logger
@@ -16,22 +17,29 @@ from ..storage import storage_manager
 from ..file_utils import format_cookies_to_string
 
 
-class BilibiliVideoEndpoints:
+class BilibiliVideoEndpoints(Enum):
     """B站视频相关API端点"""
 
-    BILIAPI_DOMAIN = "https://api.bilibili.com"
-
     # 视频详情（包含基本信息和统计数据）
-    VIDEO_DETAIL = f"{BILIAPI_DOMAIN}/x/web-interface/view"
+    VIDEO_DETAIL = "https://api.bilibili.com/x/web-interface/view"
 
     # 视频标签
-    VIDEO_TAGS = f"{BILIAPI_DOMAIN}/x/tag/archive/tags"
+    VIDEO_TAGS = "https://api.bilibili.com/x/tag/archive/tags"
 
     # 视频分P信息
-    VIDEO_PAGES = f"{BILIAPI_DOMAIN}/x/player/pagelist"
+    VIDEO_PAGES = "https://api.bilibili.com/x/player/pagelist"
 
     # 视频播放地址
-    VIDEO_PLAYURL = f"{BILIAPI_DOMAIN}/x/player/playurl"
+    VIDEO_PLAYURL = "https://api.bilibili.com/x/player/playurl"
+
+
+class BilibiliVideoQuality(Enum):
+    """B站视频清晰度"""
+
+    QUALITY_360P = 16
+    QUALITY_480P = 32
+    QUALITY_720P = 64
+    QUALITY_1080P = 80
 
 
 class BilibiliVideoProvider(BaseProvider):
@@ -52,7 +60,7 @@ class BilibiliVideoProvider(BaseProvider):
         cookies: str | list | None = None,
         force_save: bool = True,
         auto_download_video: bool = False,
-        video_quality: int = 80,
+        video_quality: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P,
     ):
         """
         初始化B站视频Provider
@@ -65,18 +73,17 @@ class BilibiliVideoProvider(BaseProvider):
             force_save: 是否强制保存
             cookies: B站登录cookie（获取高清画质需要）
             auto_download_video: 是否自动下载视频文件
-            video_quality: 视频清晰度 (16=360P, 32=480P, 64=720P, 80=1080P)
+            video_quality: 视频清晰度（使用 BilibiliVideoQuality 枚举）
         """
         if rules is None:
             rules = {}
         super().__init__(url, rules, save_images, output_format, force_save, "bilibili")
         self.cookies = format_cookies_to_string(cookies)
-        # self.bvid = self._extract_bvid(url)  <-- 删除或注释掉这行
         self.bvid: Optional[str] = None
         self.aid: Optional[str] = None
-        self._prepare_video_ids(url)  # <-- 添加这行
+        self._prepare_video_ids(url)
         self.auto_download_video = auto_download_video
-        self.video_quality = video_quality
+        self.video_quality = video_quality.value
 
         # 更新headers为B站专用
         self.headers.update(
@@ -99,21 +106,9 @@ class BilibiliVideoProvider(BaseProvider):
             return
 
         # 匹配 AV (av/AV + 数字)
-        av_match = re.search(r"[Aa][Vv]([0-9]+)", url)
+        av_match = re.search(r"[Aa][Vv](\d+)", url)
         if av_match:
             self.aid = av_match.group(1)
-            logger.debug(f"提取到 AVID: {self.aid}")
-            return
-
-        # 兼容直接输入BV号
-        if re.fullmatch(r"BV[a-zA-Z0-9]{10}", url, re.IGNORECASE):
-            self.bvid = url
-            logger.debug(f"提取到 BVID: {self.bvid}")
-            return
-
-        # 兼容直接输入av号 (av12345)
-        if re.fullmatch(r"[Aa][Vv]([0-9]+)", url):
-            self.aid = url[2:]  # 去掉av前缀
             logger.debug(f"提取到 AVID: {self.aid}")
             return
 
@@ -157,27 +152,31 @@ class BilibiliVideoProvider(BaseProvider):
 
     async def get_video_detail(self) -> Dict[str, Any]:
         """获取视频详细信息"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL, self._api_id_params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_DETAIL.value, self._api_id_params)
 
     async def get_video_tags(self) -> Dict[str, Any]:
         """获取视频标签"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS, self._api_id_params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_TAGS.value, self._api_id_params)
 
     async def get_video_pages(self) -> Dict[str, Any]:
         """获取视频分P信息"""
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES, self._api_id_params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES.value, self._api_id_params)
 
-    async def get_video_download_url(self, cid: Optional[int] = None, qn: int = 80) -> Dict[str, Any]:
+    async def get_video_download_url(
+        self, cid: Optional[int] = None, qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P
+    ) -> Dict[str, Any]:
         """
         获取视频下载链接 (此API必须使用BVID)
 
         Args:
             cid: 分P的CID（可选，不提供则获取第一P）
-            qn: 清晰度，80=1080P，64=720P，32=480P，16=360P
+            qn: 清晰度（使用 BilibiliVideoQuality 枚举）
 
         Returns:
             包含视频下载链接信息的字典
         """
+        qn_value = qn.value
+
         # 如果没有提供cid，先获取视频详情
         if not cid:
             detail = await self.get_video_detail()  # 这会使用 aid 或 bvid
@@ -210,11 +209,11 @@ class BilibiliVideoProvider(BaseProvider):
         params = {
             "bvid": self.bvid,  # 关键: 强制使用 self.bvid
             "cid": cid,
-            "qn": qn,
-            "fnval": 16,  # 获取dash格式
-            "fourk": 1,
+            "qn": qn_value,
+            "fnval": 16,  # 获取DASH格式（音视频分离）
+            "fourk": 1,  # 启用4K清晰度支持
         }
-        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PLAYURL, params)
+        return await self._request_api(BilibiliVideoEndpoints.VIDEO_PLAYURL.value, params)
 
     async def fetch_and_parse(self) -> Any:
         """
@@ -237,7 +236,10 @@ class BilibiliVideoProvider(BaseProvider):
             tags_result = await self.get_video_tags()
             pages_result = await self.get_video_pages()
 
-            # 整合信息
+            # 提取视频信息
+            owner_data = data.get("owner", {})
+            stat_data = data.get("stat", {})
+
             video_info = {
                 "bvid": data.get("bvid"),
                 "aid": data.get("aid"),
@@ -247,18 +249,18 @@ class BilibiliVideoProvider(BaseProvider):
                 "duration": data.get("duration"),  # 时长（秒）
                 "pubdate": data.get("pubdate"),  # 发布时间戳
                 "owner": {
-                    "mid": data.get("owner", {}).get("mid"),
-                    "name": data.get("owner", {}).get("name"),
-                    "face": data.get("owner", {}).get("face"),
+                    "mid": owner_data.get("mid"),
+                    "name": owner_data.get("name"),
+                    "face": owner_data.get("face"),
                 },
                 "stat": {
-                    "view": data.get("stat", {}).get("view"),  # 播放量
-                    "like": data.get("stat", {}).get("like"),  # 点赞
-                    "coin": data.get("stat", {}).get("coin"),  # 投币
-                    "favorite": data.get("stat", {}).get("favorite"),  # 收藏
-                    "share": data.get("stat", {}).get("share"),  # 分享
-                    "reply": data.get("stat", {}).get("reply"),  # 评论
-                    "danmaku": data.get("stat", {}).get("danmaku"),  # 弹幕
+                    "view": stat_data.get("view"),  # 播放量
+                    "like": stat_data.get("like"),  # 点赞
+                    "coin": stat_data.get("coin"),  # 投币
+                    "favorite": stat_data.get("favorite"),  # 收藏
+                    "share": stat_data.get("share"),  # 分享
+                    "reply": stat_data.get("reply"),  # 评论
+                    "danmaku": stat_data.get("danmaku"),  # 弹幕
                 },
                 "cid": data.get("cid"),
                 "tags": (tags_result.get("data", []) if tags_result.get("code") == 0 else []),
@@ -380,17 +382,19 @@ class BilibiliVideoProvider(BaseProvider):
 
         return "\n".join(lines)
 
-    async def get_download_info(self, qn: int = 80) -> Dict[str, Any]:
+    async def get_download_info(self, qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P) -> Dict[str, Any]:
         """
         获取视频下载信息的便捷方法
 
         Args:
-            qn: 清晰度，80=1080P，64=720P，32=480P，16=360P
+            qn: 清晰度（使用 BilibiliVideoQuality 枚举）
 
         Returns:
             包含下载链接和相关信息的字典
         """
         try:
+            qn_value = qn.value
+
             # 获取视频详情以获取cid
             detail = await self.get_video_detail()
             if detail.get("code") != 0:
@@ -401,7 +405,7 @@ class BilibiliVideoProvider(BaseProvider):
             pages = data.get("pages", [])
 
             # 获取下载链接
-            download_result = await self.get_video_download_url(cid, qn)
+            download_result = await self.get_video_download_url(cid, qn_value)
 
             if download_result.get("code") != 0:
                 return {"success": False, "message": download_result.get("message")}
@@ -413,7 +417,7 @@ class BilibiliVideoProvider(BaseProvider):
                 "success": True,
                 "title": data.get("title"),
                 "bvid": self.bvid,
-                "quality": qn,
+                "quality": qn_value,
                 "pages_count": len(pages),
                 "download_info": {},
             }
@@ -478,12 +482,17 @@ class BilibiliVideoProvider(BaseProvider):
         except Exception as e:
             return {"success": False, "message": str(e)}
 
-    async def download_video(self, qn: int = 80, page: int = 1, merge_video: bool = True) -> Dict[str, Any]:
+    async def download_video(
+        self,
+        qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P,
+        page: int = 1,
+        merge_video: bool = True,
+    ) -> Dict[str, Any]:
         """
         下载视频到本地
 
         Args:
-            qn: 清晰度，80=1080P，64=720P，32=480P，16=360P
+            qn: 清晰度（使用 BilibiliVideoQuality 枚举）
             page: 分P页码（从1开始）
             merge_video: 是否合并视频和音频（DASH格式需要）
 
@@ -491,6 +500,8 @@ class BilibiliVideoProvider(BaseProvider):
             包含下载结果的字典
         """
         try:
+            qn_value = qn.value
+
             # 获取视频详情
             detail = await self.get_video_detail()
             if detail.get("code") != 0:
@@ -525,7 +536,7 @@ class BilibiliVideoProvider(BaseProvider):
             video_dir = storage_info["article_dir"]
 
             # 获取下载链接
-            download_result = await self.get_video_download_url(cid, qn)
+            download_result = await self.get_video_download_url(cid, qn_value)
 
             if download_result.get("code") != 0:
                 return {

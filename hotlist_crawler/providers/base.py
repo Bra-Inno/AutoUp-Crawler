@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from typing import Any
-import httpx
 
 
 class BaseProvider(ABC):
@@ -35,10 +34,4 @@ class BaseProvider(ABC):
         异步获取和解析指定 URL 的内容。
         每个子类必须实现此方法。
         """
-        pass
-
-    async def _get_html(self) -> str:
-        async with httpx.AsyncClient(follow_redirects=True, headers=self.headers) as client:
-            response = await client.get(self.url)
-            response.raise_for_status()
-            return response.text
+        raise NotImplementedError()

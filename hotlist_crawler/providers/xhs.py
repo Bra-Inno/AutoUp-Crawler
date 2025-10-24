@@ -11,7 +11,6 @@ import random
 import httpx
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from pathlib import Path
 from loguru import logger
 
 from .base import BaseProvider
@@ -834,6 +833,25 @@ class XiaohongshuProvider(BaseProvider):
         except (ValueError, TypeError):
             return 0
 
+    def _format_count(self, count: Any) -> str:
+        """
+        格式化数字显示，保持原样或转换为带千位分隔符的格式
+
+        Args:
+            count: 数字或字符串（如"1.4万"）
+
+        Returns:
+            格式化后的字符串
+        """
+        if isinstance(count, str):
+            # 如果是字符串(如"1.4万"),直接返回
+            return count
+        try:
+            # 如果是数字,添加千位分隔符
+            return f"{int(count):,}"
+        except (ValueError, TypeError):
+            return str(count) if count else "0"
+
     async def search_and_save(
         self,
         query: str,
@@ -1131,23 +1149,10 @@ class XiaohongshuProvider(BaseProvider):
         comment_count = raw_note.get("comment_count", 0)
         share_count = raw_note.get("share_count", 0)
 
-        # 转换为整数（有些可能是字符串）
-        # 格式化数字显示（处理中文单位如"1.4万"）
-        def format_count(count):
-            """格式化数字,保持原样或转换为带千位分隔符的格式"""
-            if isinstance(count, str):
-                # 如果是字符串(如"1.4万"),直接返回
-                return count
-            try:
-                # 如果是数字,添加千位分隔符
-                return f"{int(count):,}"
-            except:
-                return str(count) if count else "0"
-
-        parts.append(f"点赞: {format_count(liked_count)}")
-        parts.append(f"收藏: {format_count(collected_count)}")
-        parts.append(f"评论: {format_count(comment_count)}")
-        parts.append(f"分享: {format_count(share_count)}")
+        parts.append(f"点赞: {self._format_count(liked_count)}")
+        parts.append(f"收藏: {self._format_count(collected_count)}")
+        parts.append(f"评论: {self._format_count(comment_count)}")
+        parts.append(f"分享: {self._format_count(share_count)}")
         parts.append("")
 
         # 链接
@@ -1190,18 +1195,6 @@ class XiaohongshuProvider(BaseProvider):
         comment_count = raw_note.get("comment_count", 0)
         share_count = raw_note.get("share_count", 0)
 
-        # 格式化数字显示（处理中文单位如"1.4万"）
-        def format_count(count):
-            """格式化数字,保持原样或转换为带千位分隔符的格式"""
-            if isinstance(count, str):
-                # 如果是字符串(如"1.4万"),直接返回
-                return count
-            try:
-                # 如果是数字,添加千位分隔符
-                return f"{int(count):,}"
-            except:
-                return str(count) if count else "0"
-
         # 标签
         tags = raw_note.get("tags", [])
         tags_str = " ".join([f"#{tag}" for tag in tags]) if tags else "无标签"
@@ -1221,10 +1214,10 @@ class XiaohongshuProvider(BaseProvider):
 
 ## 📊 互动数据
 
-- 👍 点赞: **{format_count(liked_count)}**
-- ⭐ 收藏: **{format_count(collected_count)}**
-- 💬 评论: **{format_count(comment_count)}**
-- 🔗 分享: **{format_count(share_count)}**
+- 👍 点赞: **{self._format_count(liked_count)}**
+- ⭐ 收藏: **{self._format_count(collected_count)}**
+- 💬 评论: **{self._format_count(comment_count)}**
+- 🔗 分享: **{self._format_count(share_count)}**
 
 ## 📄 内容描述
 
@@ -1315,331 +1308,3 @@ class XiaohongshuProvider(BaseProvider):
         """关闭连接（为了接口一致性）"""
         # 小红书爬虫暂无需特殊关闭操作，保留接口以保持一致性
         pass
-
-
-# ============================================================================
-# 兼容性封装（保持旧接口可用）
-# ============================================================================
-
-
-class Data_Spider:
-    """
-    兼容性类，保持旧接口可用（同步版本）
-
-    ⚠️ 已废弃 (Deprecated)：建议使用异步版本 XiaohongshuProvider
-    此类仅为向后兼容而保留，功能较少且缺少延迟控制
-    将在未来版本中移除
-
-    推荐迁移指南: 参考 docs/XHS_ASYNC_MIGRATION.md
-    """
-
-    def __init__(self, save_dir: str = "data/xiaohongshu"):
-        """
-        初始化数据爬虫
-
-        Args:
-            save_dir: 数据保存目录，默认"data/xiaohongshu"
-        """
-        self.xhs_apis = XHS_Apis()
-        self.save_dir = save_dir
-
-        # 确保保存目录存在
-        os.makedirs(save_dir, exist_ok=True)
-
-    def spider_note(self, note_url: str, cookies_str: str, proxies=None, max_retries=3, base_delay=5):
-        """
-        爬取一个笔记的信息，带重试和延时机制
-        :param note_url: 笔记URL
-        :param cookies_str: cookies字符串
-        :param proxies: 代理设置
-        :param max_retries: 最大重试次数
-        :param base_delay: 基础延时时间（秒）
-        :return: (success, msg, note_info)
-        """
-        note_info = None
-        success = False
-        msg = "未开始处理"
-
-        for attempt in range(max_retries + 1):
-            try:
-                if attempt > 0:
-                    # 计算延时时间，每次重试增加延时
-                    delay = base_delay * (2 ** (attempt - 1)) + random.uniform(1, 3)
-                    logger.info(f"第{attempt}次重试，等待{delay:.1f}秒...")
-                    time.sleep(delay)
-
-                success, msg, response_data = self.xhs_apis.get_note_info(note_url, cookies_str, proxies or {})
-                logger.info(f"API调用结果 (尝试{attempt + 1}): success={success}, msg={msg}")
-
-                # 检查是否是限流错误
-                if response_data and isinstance(response_data, dict):
-                    if response_data.get("code") == 300013:  # 访问频次异常
-                        logger.warning(f"检测到访问频次限制，第{attempt + 1}次尝试")
-                        if attempt < max_retries:
-                            continue
-                        else:
-                            success = False
-                            msg = "重试次数用尽，仍然遇到访问频次限制"
-                            break
-
-                if success and response_data:
-                    # 检查数据结构
-                    if not isinstance(response_data, dict):
-                        success = False
-                        msg = f"API返回数据不是字典格式: {type(response_data)}"
-                    elif "data" not in response_data:
-                        success = False
-                        msg = f"API返回数据中没有data字段，可用字段: {list(response_data.keys())}"
-                    elif not isinstance(response_data["data"], dict):
-                        success = False
-                        msg = f'data字段不是字典格式: {type(response_data["data"])}'
-                    elif "items" not in response_data["data"]:
-                        success = False
-                        msg = f'data中没有items字段，可用字段: {list(response_data["data"].keys())}'
-                    elif not isinstance(response_data["data"]["items"], list):
-                        success = False
-                        msg = f'items不是列表格式: {type(response_data["data"]["items"])}'
-                    elif len(response_data["data"]["items"]) == 0:
-                        success = False
-                        msg = "items列表为空"
-                    else:
-                        note_info = response_data["data"]["items"][0]
-                        note_info["url"] = note_url
-                        note_info = handle_note_info(note_info)
-                        logger.info("笔记信息处理成功")
-                        break  # 成功处理，跳出重试循环
-                else:
-                    logger.warning(f"API调用失败或返回数据为空: success={success}")
-                    if attempt < max_retries:
-                        continue
-
-                break  # 如果不需要重试，跳出循环
-
-            except Exception as e:
-                success = False
-                msg = f"处理笔记时发生异常: {str(e)}"
-                logger.error(f"爬取笔记异常 (尝试{attempt + 1}): {e}", exc_info=True)
-                if attempt < max_retries:
-                    continue
-                break
-
-        logger.info(f"爬取笔记信息完成 {note_url}: success={success}, msg={msg}")
-        return success, msg, note_info
-
-    def spider_some_note(self, notes: list, cookies_str: str, proxies=None):
-        """
-        爬取一些笔记的信息
-        :param notes: 笔记URL列表
-        :param cookies_str: cookies字符串
-        :param proxies: 代理设置
-        :return: 笔记信息列表
-        """
-        note_list = []
-        for note_url in notes:
-            success, msg, note_info = self.spider_note(note_url, cookies_str, proxies)
-            if note_info is not None and success:
-                note_list.append(note_info)
-        return note_list
-
-    def spider_user_all_note(self, user_url: str, cookies_str: str, proxies=None):
-        """
-        爬取一个用户的所有笔记
-        :param user_url: 用户主页URL
-        :param cookies_str: cookies字符串
-        :param proxies: 代理设置
-        :return: (note_data, success, msg)
-        """
-        note_list = []
-        try:
-            success, msg, all_note_info = self.xhs_apis.get_user_all_notes(user_url, cookies_str, proxies or {})
-            if success:
-                logger.info(f"用户 {user_url} 作品数量: {len(all_note_info)}")
-                for simple_note_info in all_note_info:
-                    note_url = f"https://www.xiaohongshu.com/explore/{simple_note_info['note_id']}?xsec_token={simple_note_info['xsec_token']}"
-                    note_list.append(note_url)
-                note_data = self.spider_some_note(note_list, cookies_str, proxies)
-                return note_data, success, msg
-        except Exception as e:
-            success = False
-            msg = str(e)
-        logger.info(f"爬取用户所有视频 {user_url}: {success}, msg: {msg}")
-        return [], success, msg
-
-    def spider_some_search_note(
-        self,
-        query: str,
-        require_num: int,
-        cookies_str: str,
-        sort_type_choice=0,
-        note_type=0,
-        note_time=0,
-        note_range=0,
-        pos_distance=0,
-        geo: Optional[dict] = None,
-        proxies: Optional[dict] = None,
-    ):
-        """
-        指定数量搜索笔记，设置排序方式和笔记类型和笔记数量
-        :param query: 搜索的关键词
-        :param require_num: 搜索的数量
-        :param cookies_str: cookies字符串
-        :param sort_type_choice: 排序方式 0 综合排序, 1 最新, 2 最多点赞, 3 最多评论, 4 最多收藏
-        :param note_type: 笔记类型 0 不限, 1 视频笔记, 2 普通笔记
-        :param note_time: 笔记时间 0 不限, 1 一天内, 2 一周内天, 3 半年内
-        :param note_range: 笔记范围 0 不限, 1 已看过, 2 未看过, 3 已关注
-        :param pos_distance: 位置距离 0 不限, 1 同城, 2 附近 指定这个必须要指定 geo
-        :param geo: 地理位置信息字典，例如 {"latitude": 39.9725, "longitude": 116.4207}
-        :param proxies: 代理设置
-        :return: (note_data, success, msg)
-        """
-        note_list = []
-        try:
-            success, msg, notes = self.xhs_apis.search_some_note(
-                query,
-                require_num,
-                cookies_str,
-                sort_type_choice,
-                note_type,
-                note_time,
-                note_range,
-                pos_distance,
-                str(geo) if geo else "",
-                proxies or {},
-            )
-            if success:
-                notes = list(filter(lambda x: x["model_type"] == "note", notes))
-                logger.info(f"搜索关键词 {query} 笔记数量: {len(notes)}")
-                for note in notes:
-                    note_url = f"https://www.xiaohongshu.com/explore/{note['id']}?xsec_token={note['xsec_token']}"
-                    note_list.append(note_url)
-                note_data = self.spider_some_note(note_list, cookies_str, proxies)
-                return note_data, success, msg
-        except Exception as e:
-            success = False
-            msg = str(e)
-        logger.info(f"搜索关键词 {query} 笔记: {success}, msg: {msg}")
-        return [], success, msg
-
-    def save_note_to_file(self, note: Dict[str, Any], user_id: Optional[str] = None) -> str:
-        """
-        保存单个笔记数据到文件
-
-        Args:
-            note: 笔记数据字典
-            user_id: 用户ID（可选）
-
-        Returns:
-            保存的文件路径
-        """
-        note_id = note.get("note_id", "")
-        title = note.get("title", "无标题")
-
-        # 标准化文件名
-        safe_title = norm_str(title)[:40]
-        if not safe_title.strip():
-            safe_title = "无标题"
-
-        # 确定保存路径
-        if user_id:
-            # 尝试多种方式获取昵称（适配不同的数据结构）
-            nickname = note.get("nickname") or note.get("user", {}).get("nickname") or "unknown"
-            safe_nickname = norm_str(nickname)[:20]
-            if not safe_nickname.strip():
-                safe_nickname = "unknown"
-            save_path = os.path.join(self.save_dir, f"{safe_nickname}_{user_id}")
-        else:
-            save_path = self.save_dir
-
-        # 创建目录
-        os.makedirs(save_path, exist_ok=True)
-
-        # 生成文件名（包含时间戳）
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"note_{note_id}_{timestamp}.json"
-        filepath = os.path.join(save_path, filename)
-
-        # 保存JSON文件
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(note, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"笔记已保存到: {filepath}")
-        return filepath
-
-    def save_notes_to_file(
-        self,
-        notes: List[Dict[str, Any]],
-        user_id: Optional[str] = None,
-        save_summary: bool = True,
-    ) -> List[str]:
-        """
-        批量保存笔记数据到文件
-        """
-        if not notes:
-            logger.warning("没有笔记需要保存")
-            return []
-
-        filepaths = []
-
-        # 保存单个笔记文件
-        for note in notes:
-            try:
-                filepath = self.save_note_to_file(note, user_id)
-                filepaths.append(filepath)
-            except Exception as e:
-                logger.error(f"保存笔记失败: {e}")
-
-        # 保存汇总文件
-        if save_summary and user_id:
-            try:
-                self.save_user_notes_summary(user_id, notes)
-            except Exception as e:
-                logger.error(f"保存汇总文件失败: {e}")
-
-        logger.info(f"批量保存完成，共保存 {len(filepaths)}/{len(notes)} 个笔记")
-        return filepaths
-
-    def save_user_notes_summary(self, user_id: str, notes: List[Dict[str, Any]]) -> str:
-        """
-        保存用户笔记汇总文件
-
-        Args:
-            user_id: 用户ID
-            notes: 用户的所有笔记列表
-
-        Returns:
-            保存的文件路径
-        """
-        if not notes:
-            return ""
-
-        # 获取用户信息
-        first_note = notes[0]
-        # 尝试多种方式获取昵称
-        nickname = first_note.get("nickname") or first_note.get("user", {}).get("nickname") or "unknown"
-        safe_nickname = norm_str(nickname)[:20]
-        if not safe_nickname.strip():
-            safe_nickname = "unknown"
-
-        # 创建用户目录
-        user_dir = os.path.join(self.save_dir, f"{safe_nickname}_{user_id}")
-        os.makedirs(user_dir, exist_ok=True)
-
-        # 生成汇总数据
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        summary = {
-            "user_id": user_id,
-            "nickname": nickname,
-            "crawl_time": timestamp,
-            "total_notes": len(notes),
-            "notes": notes,
-        }
-
-        # 保存汇总文件
-        filename = f"user_{user_id}_summary_{timestamp}.json"
-        filepath = os.path.join(user_dir, filename)
-
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(summary, f, ensure_ascii=False, indent=2)
-
-        logger.info(f"用户笔记汇总已保存到: {filepath}")
-        return filepath

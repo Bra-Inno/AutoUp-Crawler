@@ -34,14 +34,11 @@ class ZhihuArticleProvider(BaseProvider):
         self.max_answers = max_answers
         self.cookies = cookies
 
-    def _is_question_page(self) -> bool:
-        """判断是否为知乎问题页面"""
-        return "www.zhihu.com/question" in self.url
-
     async def fetch_and_parse(self) -> Any:
-        """根据URL类型选择不同的解析方法"""
-        if self._is_question_page():
+        if "www.zhihu.com/question" in self.url:
             return await self._parse_question_page()
+        logger.error("❌ 仅支持知乎问题页面的解析")
+        raise ValueError("Only Zhihu question pages are supported.")
 
     async def _parse_question_page(self) -> Any:
         """使用Playwright解析知乎问题页面（整合test.py逻辑）"""
@@ -63,7 +60,7 @@ class ZhihuArticleProvider(BaseProvider):
                 # 2. 创建一个新上下文
                 context = browser.new_context(user_agent=get_random_user_agent("chrome"))
 
-                # 3. <--- 在这里手动注入你的 cookies ---
+                # 3. 手动注入 cookies
                 saved_cookies = self.cookies
                 if saved_cookies:
                     context.add_cookies(saved_cookies)
@@ -149,10 +146,7 @@ class ZhihuArticleProvider(BaseProvider):
                         item_html = str(item)
 
                         # 获取作者信息
-                        author_match = re.search(
-                            r'<meta[^>]*itemprop="name"[^>]*content="([^"]*)"',
-                            item_html,
-                        )
+                        author_match = re.search(r'<meta[^>]*itemprop="name"[^>]*content="([^"]*)"', item_html)
                         if author_match:
                             author = author_match.group(1)
                         else:
@@ -161,10 +155,7 @@ class ZhihuArticleProvider(BaseProvider):
                             author = author_match.group(1).strip() if author_match else "匿名用户"
 
                         # 获取点赞数
-                        vote_match = re.search(
-                            r'<meta[^>]*itemprop="upvoteCount"[^>]*content="([^"]*)"',
-                            item_html,
-                        )
+                        vote_match = re.search(r'<meta[^>]*itemprop="upvoteCount"[^>]*content="([^"]*)"', item_html)
                         if vote_match:
                             try:
                                 upvotes = int(vote_match.group(1))

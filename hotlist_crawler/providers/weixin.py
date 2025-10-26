@@ -172,126 +172,14 @@ class WeixinMpProvider(BaseProvider):
 
         return markdown_str
 
-    async def _fallback_parse(self) -> Any:
-        """降级方案：使用基础 HTTP 请求解析"""
-        logger.info("🔄 使用降级方案：基础 HTTP 抓取")
-        try:
-            html_content = await self._get_html()
-            soup = BeautifulSoup(html_content, "lxml")
-
-            # 尝试多种方式提取标题
-            title = None
-            title_selectors = ["#activity-name", ".rich_media_title", "h1", '[class*="title"]', "title"]
-
-            for selector in title_selectors:
-                try:
-                    if selector.startswith("#") or selector.startswith("."):
-                        title_element = soup.select_one(selector)
-                    else:
-                        title_element = soup.find(selector)
-
-                    if title_element:
-                        title = title_element.get_text(strip=True)
-                        if title and len(title) > 5:  # 确保标题有意义
-                            logger.debug(f"✅ 使用选择器 '{selector}' 找到标题: {title[:30]}...")
-                            break
-                except Exception:
-                    continue
-
-            if not title:
-                logger.error("❌ 无法找到有效标题")
-                return None
-
-            # 尝试多种方式提取作者
-            author = "未知作者"
-            author_selectors = [
-                "#js_name",
-                ".rich_media_meta_text",
-                '[class*="author"]',
-                ".author",
-            ]
-
-            for selector in author_selectors:
-                try:
-                    if selector.startswith("#") or selector.startswith("."):
-                        author_element = soup.select_one(selector)
-                    else:
-                        author_element = soup.find(selector)
-
-                    if author_element:
-                        temp_author = author_element.get_text(strip=True)
-                        if temp_author and len(temp_author) < 50:  # 合理的作者名长度
-                            author = temp_author
-                            logger.debug(f"✅ 使用选择器 '{selector}' 找到作者: {author}")
-                            break
-                except Exception:
-                    continue
-
-            # 尝试多种方式提取内容
-            content = ""
-            content_selectors = [
-                "#js_content",
-                ".rich_media_content",
-                '[class*="content"]',
-                "article",
-                ".article-content",
-            ]
-
-            for selector in content_selectors:
-                try:
-                    if selector.startswith("#") or selector.startswith("."):
-                        content_element = soup.select_one(selector)
-                    else:
-                        content_element = soup.find(selector)
-
-                    if content_element:
-                        content = content_element.get_text(strip=True)
-                        if content and len(content) > 100:  # 确保内容有意义
-                            logger.debug(f"✅ 使用选择器 '{selector}' 找到内容，长度: {len(content)} 字符")
-                            break
-                except Exception:
-                    continue
-
-            if not content:
-                # 最后尝试：获取整个body的文本
-                body = soup.find("body")
-                if body:
-                    content = body.get_text(strip=True)
-                    logger.warning(f"⚠️ 使用body文本作为内容，长度: {len(content)} 字符")
-
-            if not content:
-                logger.error("❌ 无法找到有效内容")
-                return None
-
-            logger.info(f"✅ 降级方案抓取成功 - 标题: {title[:30]}..., 内容长度: {len(content)}")
-
-            return ScrapedDataItem(
-                title=title,
-                author=author,
-                content=content,
-                markdown_content=None,
-                images=[],
-                save_directory=None,
-            )
-
-        except Exception as e:
-            logger.error(f"❌ 降级方案失败: {e}")
-            # 提供详细的调试信息
-            logger.debug(f"   URL: {self.url}")
-            logger.error(f"   错误类型: {type(e).__name__}")
-            import traceback
-
-            logger.error(f"   详细错误: {traceback.format_exc()}")
-            return None
-
     async def fetch_and_parse(self) -> Any:
         """使用 Playwright 获取和解析微信公众号文章，失败时降级到基础抓取"""
         try:
             return await self._playwright_parse()
         except Exception as e:
             logger.warning(f"⚠️  Playwright 抓取失败: {e}")
-            logger.debug("🔄 尝试降级方案...")
-            return await self._fallback_parse()
+            # TODO 实现降级方案
+            raise NotImplementedError("Playwright 抓取失败，且降级方案未实现")
 
     def _sync_playwright_parse(self) -> dict:
         """同步版本的 Playwright 抓取实现"""

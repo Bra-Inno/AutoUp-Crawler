@@ -26,78 +26,46 @@ if _parent_dir not in sys.path:
     sys.path.insert(0, _parent_dir)
 
 try:
-    from .auth import login, is_online, get_all_online_status
-    from .fetch import fetch
+    from .crawler import Crawler
+    from .config import CrawlerConfig
     from .types import PlatformType
     from .models import ScrapedDataItem
 
-    # 成功导入标志
     _import_success = True
     _import_error = None
 
 except ImportError as e:
-    # 如果相对导入失败，尝试绝对导入
     try:
-        import hotlist_crawler.auth as auth_module
-        import hotlist_crawler.fetch as fetch_module
+        import hotlist_crawler.crawler as crawler_module
+        import hotlist_crawler.config as config_module
         import hotlist_crawler.models as models
         import hotlist_crawler.types as types_module
 
-        login = auth_module.login
-        is_online = auth_module.is_online
-        get_all_online_status = auth_module.get_all_online_status
-
-        fetch = fetch_module.fetch
-
+        Crawler = crawler_module.Crawler
+        CrawlerConfig = config_module.CrawlerConfig
         PlatformType = types_module.PlatformType
-
         ScrapedDataItem = models.ScrapedDataItem
 
         _import_success = True
         _import_error = None
 
     except ImportError as e2:
-        # 导入失败，记录错误但不崩溃
         _import_success = False
         _import_error = str(e2)
 
-        # 提供错误提示函数
         def _import_error_func(*args, **kwargs):
             raise ImportError(f"hotlist_crawler模块导入失败: {_import_error}")
 
-        # 用错误函数替代主要功能
-        login = _import_error_func
-        is_online = _import_error_func
-        get_all_online_status = _import_error_func
-        fetch = _import_error_func
-        # 配置管理函数
-        set_user_data_dir = _import_error_func
-        set_user_agent = _import_error_func
-        set_login_data_dir = _import_error_func
-        get_user_data_dir = _import_error_func
-        get_user_agent = _import_error_func
-        get_login_data_dir = _import_error_func
-        set_playwright_headless = _import_error_func
-        set_download_dir = _import_error_func
-        get_all_config = _import_error_func
-        print_config = _import_error_func
-
+        Crawler = _import_error_func
+        CrawlerConfig = _import_error_func
         PlatformType = None
         ScrapedDataItem = None
 
-# 导出的公共接口
 __all__ = [
-    # Fetch功能 - 符合API设计
-    "fetch",  # 核心fetch函数 -> bool
-    # 登录功能 - 符合API设计
-    "login",  # 登录函数 -> bool
-    "is_online",  # 检查在线状态 -> bool
-    "get_all_online_status",  # 获取所有平台状态
-    # 类型和常量
-    "PlatformType",  # 平台类型枚举
-    # 数据模型
-    "ScrapedDataItem",  # 数据项模型
-    # 版本信息
+    "Crawler",
+    "CrawlerConfig",
+    "PlatformType",
+    "ScrapedDataItem",
     "__version__",
 ]
 

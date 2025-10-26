@@ -8,21 +8,19 @@ import re
 import json
 from datetime import datetime
 from hashlib import md5
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 from loguru import logger
 
 from .file_utils import clean_filename, ensure_directory, get_file_extension
-from .config import settings
+
+if TYPE_CHECKING:
+    from .config import CrawlerConfig
 
 
 class StorageManager:
-    """
-    统一的内容存储管理器
-    按平台分类存储所有抓取的内容
-    """
-
-    def __init__(self, base_dir: Optional[str] = None):
-        self.base_dir = base_dir or settings.DOWNLOAD_DIR
+    def __init__(self, config: "CrawlerConfig"):
+        self.config = config
+        self.base_dir = config.download_dir
         self.platform_dirs = {}
 
     def _get_platform_dir(self, platform: str) -> str:
@@ -265,7 +263,3 @@ class StorageManager:
             json.dump(index_data, f, ensure_ascii=False, indent=2)
 
         return index_file
-
-
-# 创建全局存储管理器实例
-storage_manager = StorageManager()

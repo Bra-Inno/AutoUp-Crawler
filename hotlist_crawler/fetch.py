@@ -3,17 +3,14 @@ import asyncio
 from loguru import logger
 from typing import Optional
 
-try:
-    from hotlist_crawler.providers.zhihu import ZhihuArticleProvider
-    from hotlist_crawler.providers.weibo import WeiboProvider
-    from hotlist_crawler.providers.weixin import WeixinMpProvider
-    from hotlist_crawler.providers.bilibili import BilibiliVideoProvider
-    from hotlist_crawler.providers.xhs import XiaohongshuProvider
-    from hotlist_crawler.providers.douyin import DouyinVideoProvider
-    from hotlist_crawler.config import settings
-    from hotlist_crawler.storage import storage_manager
-except ImportError as e:
-    raise ImportError(f"无法导入核心模块: {e}")
+from hotlist_crawler.providers.zhihu import ZhihuArticleProvider
+from hotlist_crawler.providers.weibo import WeiboProvider
+from hotlist_crawler.providers.weixin import WeixinMpProvider
+from hotlist_crawler.providers.bilibili import BilibiliVideoProvider, BilibiliVideoQuality
+from hotlist_crawler.providers.xhs import XiaohongshuProvider
+from hotlist_crawler.providers.douyin import DouyinVideoProvider
+from hotlist_crawler.config import settings
+from hotlist_crawler.storage import storage_manager
 
 
 def identify_platform_from_url(url: str) -> Optional[str]:
@@ -101,7 +98,7 @@ def fetch(
                     force_save=True,
                     cookies=cookies,
                     auto_download_video=True,
-                    video_quality=80,  # 默认1080P
+                    video_quality=BilibiliVideoQuality.QUALITY_1080P,  # 默认1080P
                 )
             elif platform == "douyin":
                 provider = DouyinVideoProvider(

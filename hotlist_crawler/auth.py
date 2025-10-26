@@ -35,7 +35,6 @@ def login(platform: PlatformType, headless: bool = False) -> bool:
 
     logger.info(f"🚀 开始登录 {platform.upper()} 平台...")
     logger.info(f"📍 登录页面: {login_url}")
-    logger.info(f"📁 用户数据目录: ./chrome_user_data")
 
     # 同步调用异步函数
     try:

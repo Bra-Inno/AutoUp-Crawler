@@ -4,8 +4,10 @@
 """
 
 import os
+import re
 import json
 from datetime import datetime
+from hashlib import md5
 from typing import Dict, Optional
 from loguru import logger
 
@@ -31,12 +33,35 @@ class StorageManager:
         return self.platform_dirs[platform]
 
     def _generate_article_id(self, url: str, title: str) -> str:
-        """生成文章的唯一标识符"""
-        import hashlib
-
-        # 使用URL和标题生成唯一ID
+        """根据URL和标题，生成文章的唯一标识符"""
         content = f"{url}_{title}"
-        return hashlib.md5(content.encode()).hexdigest()[:12]
+        return md5(content.encode()).hexdigest()[:12]
+
+    def _update_metadata(self, storage_info: Dict[str, str], updates: Dict, increment: bool = False):
+        """更新元数据文件"""
+        metadata_file = storage_info["metadata_file"]
+
+        if os.path.exists(metadata_file):
+            with open(metadata_file, "r", encoding="utf-8") as f:
+                metadata = json.load(f)
+        else:
+            metadata = {}
+
+        # 更新统计信息
+        if "statistics" not in metadata:
+            metadata["statistics"] = {}
+
+        for key, value in updates.items():
+            if increment and key in metadata["statistics"]:
+                metadata["statistics"][key] += value
+            else:
+                metadata["statistics"][key] = value
+
+        metadata["updated_at"] = datetime.now().isoformat()
+
+        # 保存更新后的元数据
+        with open(metadata_file, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
 
     def create_article_storage(self, platform: str, title: str, url: str, author: str | None = None) -> Dict[str, str]:
         """
@@ -46,9 +71,9 @@ class StorageManager:
         """
         platform_dir = self._get_platform_dir(platform)
         article_id = self._generate_article_id(url, title)
-        safe_title = clean_filename(title, max_length=50)  # 进一步缩短文件名
+        safe_title = clean_filename(title, max_length=50)
 
-        # 创建文章专用目录 - 只使用article_id，避免路径过长
+        # 创建文章专用目录
         article_dir_name = article_id
         article_dir = ensure_directory(os.path.join(platform_dir, article_dir_name))
 
@@ -56,7 +81,7 @@ class StorageManager:
         images_dir = ensure_directory(os.path.join(article_dir, "images"))
         attachments_dir = ensure_directory(os.path.join(article_dir, "attachments"))
 
-        # 准备文件路径 - 使用简短的通用文件名
+        # 准备文件路径
         text_file = os.path.join(article_dir, "content.txt")
         markdown_file = os.path.join(article_dir, "article.md")
         metadata_file = os.path.join(article_dir, "metadata.json")
@@ -139,10 +164,9 @@ class StorageManager:
 
         final_content = "".join(markdown_parts)
 
-        # 清理多余的连续换行：将3个或以上连续的换行符替换为1个换行符
-        import re
-
-        final_content = re.sub(r"\n{3,}", "\n", final_content)
+        # 优化多余的连续空行和空格
+        final_content = re.sub(r"\n{3,}", "\n\n", final_content)
+        final_content = re.sub(r"\s{4,}", "   ", final_content)
 
         with open(markdown_file, "w", encoding="utf-8") as f:
             f.write(final_content)
@@ -241,32 +265,6 @@ class StorageManager:
             json.dump(index_data, f, ensure_ascii=False, indent=2)
 
         return index_file
-
-    def _update_metadata(self, storage_info: Dict[str, str], updates: Dict, increment: bool = False):
-        """更新元数据文件"""
-        metadata_file = storage_info["metadata_file"]
-
-        if os.path.exists(metadata_file):
-            with open(metadata_file, "r", encoding="utf-8") as f:
-                metadata = json.load(f)
-        else:
-            metadata = {}
-
-        # 更新统计信息
-        if "statistics" not in metadata:
-            metadata["statistics"] = {}
-
-        for key, value in updates.items():
-            if increment and key in metadata["statistics"]:
-                metadata["statistics"][key] += value
-            else:
-                metadata["statistics"][key] = value
-
-        metadata["updated_at"] = datetime.now().isoformat()
-
-        # 保存更新后的元数据
-        with open(metadata_file, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
 
 
 # 创建全局存储管理器实例

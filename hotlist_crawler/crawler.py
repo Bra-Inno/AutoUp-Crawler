@@ -206,7 +206,6 @@ class Crawler:
         cookies: Optional[List[Dict]] = None,
         save_images: bool = True,
         output_format: str = "markdown",
-        max_answers: int = 3,
     ) -> bool:
         """根据 URL 识别平台并抓取内容。"""
         try:
@@ -232,17 +231,16 @@ class Crawler:
                 if platform == "zhihu":
                     provider = ZhihuArticleProvider(
                         url=url,
-                        rules=self.config.platforms[platform]["rules"],
+                        config=self.config,
                         save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
                         force_save=True,
-                        max_answers=max_answers,
                     )
                 elif platform == "weibo":
                     provider = WeiboProvider(
                         url=url,
-                        rules=self.config.platforms[platform]["rules"],
+                        config=self.config,
                         save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
@@ -251,7 +249,7 @@ class Crawler:
                 elif platform == "weixin":
                     provider = WeixinMpProvider(
                         url=url,
-                        rules=self.config.platforms[platform]["rules"],
+                        config=self.config,
                         save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
@@ -260,7 +258,7 @@ class Crawler:
                 elif platform == "bilibili":
                     provider = BilibiliVideoProvider(
                         url=url,
-                        rules={},
+                        config=self.config,
                         save_images=save_images,
                         output_format=output_format,
                         force_save=True,
@@ -271,7 +269,7 @@ class Crawler:
                 elif platform == "douyin":
                     provider = DouyinVideoProvider(
                         url=url,
-                        rules={},
+                        config=self.config,
                         save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,

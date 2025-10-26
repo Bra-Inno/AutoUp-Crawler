@@ -13,7 +13,6 @@ from loguru import logger
 
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem
-from ..storage import storage_manager
 from ..utils.file_utils import format_cookies_to_string
 
 
@@ -54,7 +53,7 @@ class BilibiliVideoProvider(BaseProvider):
     def __init__(
         self,
         url: str,
-        rules: dict | None = None,
+        config: Any,
         save_images: bool = False,
         output_format: str = "json",
         cookies: str | list | None = None,
@@ -67,7 +66,7 @@ class BilibiliVideoProvider(BaseProvider):
 
         Args:
             url: B站视频URL（支持BV号和av号）
-            rules: 规则配置（暂不使用，保持接口一致）
+            config: 爬虫配置
             save_images: 是否保存图片（B站视频不需要）
             output_format: 输出格式（json）
             force_save: 是否强制保存
@@ -75,9 +74,7 @@ class BilibiliVideoProvider(BaseProvider):
             auto_download_video: 是否自动下载视频文件
             video_quality: 视频清晰度（使用 BilibiliVideoQuality 枚举）
         """
-        if rules is None:
-            rules = {}
-        super().__init__(url, rules, save_images, output_format, force_save, "bilibili")
+        super().__init__(url, config, save_images, output_format, force_save, "bilibili")
         self.cookies = format_cookies_to_string(cookies)
         self.bvid: Optional[str] = None
         self.aid: Optional[str] = None
@@ -273,7 +270,7 @@ class BilibiliVideoProvider(BaseProvider):
             # 保存到本地
             storage_info = None
             if self.force_save:
-                storage_info = storage_manager.create_article_storage(
+                storage_info = self.storage.create_article_storage(
                     platform=self.platform_name, title=video_info["title"], url=self.url
                 )
 
@@ -283,14 +280,14 @@ class BilibiliVideoProvider(BaseProvider):
                     json.dump(video_info, f, ensure_ascii=False, indent=2)
 
                 # 保存文本内容
-                storage_manager.save_text_content(storage_info, content_text)
+                self.storage.save_text_content(storage_info, content_text)
 
                 # 保存markdown格式
                 markdown_content = self._format_video_info_markdown(video_info)
-                storage_manager.save_markdown_content(storage_info, markdown_content, video_info["title"])
+                self.storage.save_markdown_content(storage_info, markdown_content, video_info["title"])
 
                 # 保存文章索引
-                storage_manager.save_article_index(storage_info, video_info.get("desc", "")[:200])
+                self.storage.save_article_index(storage_info, video_info.get("desc", "")[:200])
 
                 # 自动下载视频（如果启用）
                 if self.auto_download_video:
@@ -527,7 +524,7 @@ class BilibiliVideoProvider(BaseProvider):
             part_title = target_page.get("part", title)
 
             # 创建存储目录
-            storage_info = storage_manager.create_article_storage(
+            storage_info = self.storage.create_article_storage(
                 platform=self.platform_name,
                 title=f"{title}_{part_title}" if len(pages) > 1 else title,
                 url=self.url,

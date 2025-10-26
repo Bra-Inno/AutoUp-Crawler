@@ -15,7 +15,6 @@ from loguru import logger
 
 from .base import BaseProvider
 from ..models import ScrapedDataItem
-from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
 from ..utils.file_utils import get_file_extension, format_cookies_to_string, get_random_user_agent
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
@@ -57,7 +56,7 @@ class XiaohongshuProvider(BaseProvider):
         # 使用虚拟参数初始化BaseProvider，小红书不使用这些参数
         super().__init__(
             url="",
-            rules={},
+            config=None,
             save_images=True,
             output_format="markdown",
             force_save=True,
@@ -141,16 +140,16 @@ class XiaohongshuProvider(BaseProvider):
 原文链接: {note_url}
 """
 
-        # 使用storage_manager创建存储目录
-        storage_info = storage_manager.create_article_storage(
+        # 使用storage创建存储目录
+        storage_info = self.storage.create_article_storage(
             platform=self.platform_name, title=title, url=note_url, author=author
         )
 
         # 保存Markdown内容
-        storage_manager.save_markdown_content(storage_info=storage_info, content=markdown_content)
+        self.storage.save_markdown_content(storage_info=storage_info, content=markdown_content)
 
         # 保存纯文本内容
-        storage_manager.save_text_content(storage_info=storage_info, content=content_text)
+        self.storage.save_text_content(storage_info=storage_info, content=content_text)
 
         # 保存原始JSON数据
         raw_data_path = os.path.join(storage_info["article_dir"], "raw_data.json")

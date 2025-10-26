@@ -11,6 +11,7 @@ class CrawlerConfig:
         playwright_headless: bool = False,
         playwright_timeout: int = 30000,
         user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        max_answers: int = 3,
     ):
         self.download_dir = download_dir
         self.chrome_user_data_dir = chrome_user_data_dir
@@ -19,6 +20,7 @@ class CrawlerConfig:
         self.playwright_headless = playwright_headless
         self.playwright_timeout = playwright_timeout
         self.user_agent = user_agent
+        self.max_answers = max_answers
 
         self.platforms: Dict[str, Dict[str, Any]] = {
             "zhihu": {

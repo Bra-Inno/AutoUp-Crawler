@@ -10,7 +10,6 @@ from playwright.async_api import async_playwright
 
 from .base import BaseProvider
 from ..models import ScrapedDataItem
-from ..storage import storage_manager
 from ..utils.dy import DouyinVideoDownloader
 from ..utils.file_utils import get_random_user_agent, format_cookies_to_string
 
@@ -30,7 +29,7 @@ class DouyinVideoProvider(BaseProvider):
     def __init__(
         self,
         url: str,
-        rules: dict | None = None,
+        config: Any,
         save_images: bool = False,
         output_format: str = "markdown",
         cookies: list | str | None = None,
@@ -42,16 +41,14 @@ class DouyinVideoProvider(BaseProvider):
 
         Args:
             url: 抖音视频URL（支持不完整链接）
-            rules: 规则配置（保持接口一致）
+            config: 爬虫配置
             save_images: 是否保存图片
             output_format: 输出格式
             force_save: 是否强制保存
             cookies: Cookie字符串（可选，默认从浏览器数据加载）
             auto_download_video: 是否自动下载视频
         """
-        if rules is None:
-            rules = {}
-        super().__init__(url, rules, save_images, output_format, force_save, "douyin")
+        super().__init__(url, config, save_images, output_format, force_save, "douyin")
 
         self.url = url
         self.auto_download_video = auto_download_video
@@ -197,7 +194,7 @@ class DouyinVideoProvider(BaseProvider):
             # 5. 创建存储目录（如果需要保存）
             storage_info = None
             if self.force_save:
-                storage_info = storage_manager.create_article_storage(
+                storage_info = self.storage.create_article_storage(
                     platform=self.platform_name,
                     title=video_info.get("desc", "抖音视频"),
                     url=self.url,
@@ -251,13 +248,13 @@ class DouyinVideoProvider(BaseProvider):
                     json.dump(video_info, f, ensure_ascii=False, indent=2)
 
                 # 保存文本内容
-                storage_manager.save_text_content(storage_info, content_text)
+                self.storage.save_text_content(storage_info, content_text)
 
                 # 保存markdown格式
-                storage_manager.save_markdown_content(storage_info, markdown_content, title)
+                self.storage.save_markdown_content(storage_info, markdown_content, title)
 
                 # 保存文章索引
-                storage_manager.save_article_index(storage_info, video_info.get("desc", "")[:200])
+                self.storage.save_article_index(storage_info, video_info.get("desc", "")[:200])
 
             item = ScrapedDataItem(
                 title=title,

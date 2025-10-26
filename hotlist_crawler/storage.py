@@ -8,7 +8,7 @@ import re
 import json
 from datetime import datetime
 from hashlib import md5
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 from loguru import logger
 
 from .utils.file_utils import clean_filename, ensure_directory, get_file_extension

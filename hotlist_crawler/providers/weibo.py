@@ -13,7 +13,6 @@ from bs4 import BeautifulSoup
 
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem, ImageInfo
-from ..storage import storage_manager
 from ..utils.file_utils import get_file_extension, get_random_user_agent
 
 
@@ -30,13 +29,13 @@ class WeiboProvider(BaseProvider):
     def __init__(
         self,
         url: str,
-        rules: dict,
+        config: Any,
         save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, rules, save_images, output_format, force_save, "weibo")
+        super().__init__(url, config, save_images, output_format, force_save, "weibo")
         self.cookies = cookies
 
     def _is_weibo_search_page(self) -> bool:
@@ -169,7 +168,7 @@ class WeiboProvider(BaseProvider):
 
                     if self.force_save:
                         # 创建标题（结合搜索词和作者）
-                        storage_info = storage_manager.create_article_storage(
+                        storage_info = self.storage.create_article_storage(
                             platform=self.platform_name, title=title, url=self.url
                         )
 
@@ -209,10 +208,10 @@ class WeiboProvider(BaseProvider):
 
                     # 保存内容
                     if storage_info:
-                        storage_manager.save_text_content(storage_info, full_content)
+                        self.storage.save_text_content(storage_info, full_content)
 
                         if self.output_format == "markdown":
-                            storage_manager.save_markdown_content(storage_info, full_content, title)
+                            self.storage.save_markdown_content(storage_info, full_content, title)
 
                         # 保存完整的JSON数据
                         timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -235,7 +234,7 @@ class WeiboProvider(BaseProvider):
                         with open(json_path, "w", encoding="utf-8") as f:
                             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
-                        storage_manager.save_article_index(storage_info, post_content[:200])
+                        self.storage.save_article_index(storage_info, post_content[:200])
 
                         logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
 
@@ -382,16 +381,16 @@ class WeiboProvider(BaseProvider):
             storage_info = None
 
             if self.force_save:
-                storage_info = storage_manager.create_article_storage(
+                storage_info = self.storage.create_article_storage(
                     platform=self.platform_name, title=title, url=self.url
                 )
 
-                storage_manager.save_text_content(storage_info, content)
+                self.storage.save_text_content(storage_info, content)
 
                 if self.output_format == "markdown":
-                    storage_manager.save_markdown_content(storage_info, content, title)
+                    self.storage.save_markdown_content(storage_info, content, title)
 
-                storage_manager.save_article_index(storage_info, content[:200])
+                self.storage.save_article_index(storage_info, content[:200])
 
             return ScrapedDataItem(
                 title=title,

@@ -11,7 +11,6 @@ from loguru import logger
 from ..models import ImageInfo
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem
-from ..storage import storage_manager
 from ..utils.file_utils import get_file_extension, get_random_user_agent
 
 
@@ -23,15 +22,14 @@ class ZhihuArticleProvider(BaseProvider):
     def __init__(
         self,
         url: str,
-        rules: dict,
+        config: Any,
         save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
-        max_answers: int = 3,
     ):
-        super().__init__(url, rules, save_images, output_format, force_save, "zhihu")
-        self.max_answers = max_answers
+        super().__init__(url, config, save_images, output_format, force_save, "zhihu")
+        self.max_answers = config.max_answers
         self.cookies = cookies
 
     async def fetch_and_parse(self) -> Any:
@@ -124,7 +122,7 @@ class ZhihuArticleProvider(BaseProvider):
                     storage_info = None
                     question_images = []
                     if self.force_save:
-                        storage_info = storage_manager.create_article_storage(
+                        storage_info = self.storage.create_article_storage(
                             platform=self.platform_name,
                             title=question_title,
                             url=self.url,
@@ -202,11 +200,11 @@ class ZhihuArticleProvider(BaseProvider):
 
                     # 保存内容
                     if storage_info:
-                        storage_manager.save_text_content(storage_info, full_content)
+                        self.storage.save_text_content(storage_info, full_content)
 
                         if self.output_format == "markdown":
                             markdown_content = self._convert_to_markdown(question_title, question_detail, answers_list)
-                            storage_manager.save_markdown_content(storage_info, markdown_content, question_title)
+                            self.storage.save_markdown_content(storage_info, markdown_content, question_title)
 
                         # 保存完整的JSON数据
                         json_data = {
@@ -222,7 +220,7 @@ class ZhihuArticleProvider(BaseProvider):
                         with open(json_path, "w", encoding="utf-8") as f:
                             json.dump(json_data, f, ensure_ascii=False, indent=4)
 
-                        storage_manager.save_article_index(storage_info, full_content[:200])
+                        self.storage.save_article_index(storage_info, full_content[:200])
 
                         logger.info(f"💾 数据已保存到: {storage_info['article_dir']}")
 

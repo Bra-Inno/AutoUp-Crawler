@@ -11,7 +11,6 @@ from playwright.sync_api import sync_playwright
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem, ImageInfo
 from ..utils.file_utils import get_file_extension, get_random_user_agent
-from ..storage import storage_manager
 
 
 class WeixinMpProvider(BaseProvider):
@@ -28,13 +27,13 @@ class WeixinMpProvider(BaseProvider):
     def __init__(
         self,
         url: str,
-        rules: dict,
+        config: Any,
         save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, rules, save_images, output_format, force_save, "weixin")
+        super().__init__(url, config, save_images, output_format, force_save, "weixin")
         self.storage_info = None
         self.img_counter = 0
         self.cookies = cookies
@@ -115,7 +114,7 @@ class WeixinMpProvider(BaseProvider):
             return None
 
         try:
-            image_info = storage_manager.save_image(storage_info, content, img_url, alt_text, self.img_counter + 1)
+            image_info = self.storage.save_image(storage_info, content, img_url, alt_text, self.img_counter + 1)
 
             self.img_counter += 1
             return image_info["local_path"]
@@ -244,7 +243,7 @@ class WeixinMpProvider(BaseProvider):
                 # 创建存储结构（如果启用强制保存或需要保存图片/Markdown）
                 storage_info = None
                 if self.force_save or self.save_images or self.output_format == "markdown":
-                    storage_info = storage_manager.create_article_storage(
+                    storage_info = self.storage.create_article_storage(
                         platform=self.platform_name,
                         title=title,
                         url=self.url,
@@ -253,7 +252,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 保存纯文本内容
                 if storage_info:
-                    storage_manager.save_text_content(storage_info, content)
+                    self.storage.save_text_content(storage_info, content)
 
                 # 处理 Markdown 格式
                 markdown_content = None
@@ -268,7 +267,7 @@ class WeixinMpProvider(BaseProvider):
 
                     # 保存 Markdown 文件
                     if storage_info:
-                        storage_manager.save_markdown_content(storage_info, markdown_content, title, author)
+                        self.storage.save_markdown_content(storage_info, markdown_content, title, author)
 
                 # 收集图片信息
                 images = []
@@ -291,7 +290,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 保存文章索引
                 if storage_info:
-                    storage_manager.save_article_index(storage_info, content[:200])
+                    self.storage.save_article_index(storage_info, content[:200])
 
                 return {
                     "title": title,

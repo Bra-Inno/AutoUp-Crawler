@@ -17,7 +17,7 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.xhs.apis.xhs_pc_apis import XHS_Apis
-from ..file_utils import get_file_extension, format_cookies_to_string, get_random_user_agent
+from ..utils.file_utils import get_file_extension, format_cookies_to_string, get_random_user_agent
 from ..utils.xhs.xhs_utils.data_util import handle_note_info, norm_str
 
 

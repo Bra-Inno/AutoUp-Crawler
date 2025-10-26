@@ -14,7 +14,7 @@ from bs4 import BeautifulSoup
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem, ImageInfo
 from ..storage import storage_manager
-from ..file_utils import get_file_extension, get_random_user_agent
+from ..utils.file_utils import get_file_extension, get_random_user_agent
 
 
 class WeiboProvider(BaseProvider):

@@ -11,7 +11,7 @@ from hashlib import md5
 from typing import Dict, Optional, TYPE_CHECKING
 from loguru import logger
 
-from .file_utils import clean_filename, ensure_directory, get_file_extension
+from .utils.file_utils import clean_filename, ensure_directory, get_file_extension
 
 if TYPE_CHECKING:
     from .config import CrawlerConfig

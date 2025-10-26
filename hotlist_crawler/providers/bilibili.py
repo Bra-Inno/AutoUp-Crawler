@@ -14,7 +14,7 @@ from loguru import logger
 from ..providers.base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
-from ..file_utils import format_cookies_to_string
+from ..utils.file_utils import format_cookies_to_string
 
 
 class BilibiliVideoEndpoints(Enum):

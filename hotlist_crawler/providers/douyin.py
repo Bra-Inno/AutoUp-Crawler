@@ -12,7 +12,7 @@ from .base import BaseProvider
 from ..models import ScrapedDataItem
 from ..storage import storage_manager
 from ..utils.dy import DouyinVideoDownloader
-from ..file_utils import get_random_user_agent, format_cookies_to_string
+from ..utils.file_utils import get_random_user_agent, format_cookies_to_string
 
 
 class DouyinVideoProvider(BaseProvider):

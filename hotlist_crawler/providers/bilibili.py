@@ -80,7 +80,7 @@ class BilibiliVideoProvider(BaseProvider):
         self.aid: Optional[str] = None
         self._prepare_video_ids(url)
         self.auto_download_video = auto_download_video
-        self.video_quality = video_quality.value
+        self.video_quality = video_quality
 
         # 更新headers为B站专用
         self.headers.update(
@@ -160,7 +160,7 @@ class BilibiliVideoProvider(BaseProvider):
         return await self._request_api(BilibiliVideoEndpoints.VIDEO_PAGES.value, self._api_id_params)
 
     async def get_video_download_url(
-        self, cid: Optional[int] = None, qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P
+        self, cid: Optional[int] = None, qn: BilibiliVideoQuality | int = BilibiliVideoQuality.QUALITY_1080P
     ) -> Dict[str, Any]:
         """
         获取视频下载链接 (此API必须使用BVID)
@@ -172,7 +172,11 @@ class BilibiliVideoProvider(BaseProvider):
         Returns:
             包含视频下载链接信息的字典
         """
-        qn_value = qn.value
+        # 处理清晰度参数，支持枚举或int
+        if isinstance(qn, BilibiliVideoQuality):
+            qn_value = qn.value
+        else:
+            qn_value = qn
 
         # 如果没有提供cid，先获取视频详情
         if not cid:
@@ -379,7 +383,9 @@ class BilibiliVideoProvider(BaseProvider):
 
         return "\n".join(lines)
 
-    async def get_download_info(self, qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P) -> Dict[str, Any]:
+    async def get_download_info(
+        self, qn: BilibiliVideoQuality | int = BilibiliVideoQuality.QUALITY_1080P
+    ) -> Dict[str, Any]:
         """
         获取视频下载信息的便捷方法
 
@@ -390,7 +396,11 @@ class BilibiliVideoProvider(BaseProvider):
             包含下载链接和相关信息的字典
         """
         try:
-            qn_value = qn.value
+            # 处理清晰度参数，支持枚举或int
+            if isinstance(qn, BilibiliVideoQuality):
+                qn_value = qn.value
+            else:
+                qn_value = qn
 
             # 获取视频详情以获取cid
             detail = await self.get_video_detail()
@@ -481,7 +491,7 @@ class BilibiliVideoProvider(BaseProvider):
 
     async def download_video(
         self,
-        qn: BilibiliVideoQuality = BilibiliVideoQuality.QUALITY_1080P,
+        qn: BilibiliVideoQuality | int = BilibiliVideoQuality.QUALITY_1080P,
         page: int = 1,
         merge_video: bool = True,
     ) -> Dict[str, Any]:
@@ -497,7 +507,11 @@ class BilibiliVideoProvider(BaseProvider):
             包含下载结果的字典
         """
         try:
-            qn_value = qn.value
+            # 处理清晰度参数，支持枚举或int
+            if isinstance(qn, BilibiliVideoQuality):
+                qn_value = qn.value
+            else:
+                qn_value = qn
 
             # 获取视频详情
             detail = await self.get_video_detail()

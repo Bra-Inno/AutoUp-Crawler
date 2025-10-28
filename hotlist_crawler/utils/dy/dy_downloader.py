@@ -247,6 +247,83 @@ class DouyinVideoDownloader:
         success = await self.download_video(download_url, save_path)
         return save_path if success else ""
 
+    async def find_video_in_posts(self, sec_user_id: str, aweme_id: str, max_pages: int = 20) -> Optional[dict]:
+        """
+        从用户作品列表中查找指定视频
+
+        Args:
+            sec_user_id: 用户ID
+            aweme_id: 作品ID
+            max_pages: 最多查找页数
+
+        Returns:
+            dict: 作品信息,未找到返回None
+        """
+        logger.info(f"\n🔎 正在搜索作品...")
+
+        max_cursor = 0
+
+        for page in range(max_pages):
+            res = await self.fetch_user_posts(sec_user_id, max_cursor, 20)
+
+            if res.get("status_code") != 0:
+                logger.error(f"   获取失败: {res.get('status_msg', '未知错误')}")
+                return None
+
+            aweme_list = res.get("aweme_list", [])
+
+            # 在当前页查找目标作品
+            for aweme in aweme_list:
+                if aweme.get("aweme_id") == aweme_id:
+                    logger.info(f"✅ 找到作品! (第{page+1}页)")
+                    return aweme
+
+            # 检查是否还有更多
+            if not res.get("has_more", False):
+                logger.info(f"   已搜索完所有 {page+1} 页")
+                break
+
+            max_cursor = res.get("max_cursor", 0)
+
+            if (page + 1) % 5 == 0:
+                logger.info(f"   已搜索 {page+1} 页...")
+
+            await asyncio.sleep(0.3)  # 避免请求过快
+
+        logger.error(f"❌ 未找到作品 (搜索了{max_pages}页)")
+        return None
+
+    async def fetch_user_posts(self, sec_user_id: str, max_cursor: int = 0, count: int = 20) -> Dict[str, Any]:
+        """获取用户作品列表"""
+        params = {
+            "device_platform": "webapp",
+            "aid": "6383",
+            "channel": "channel_pc_web",
+            "sec_user_id": sec_user_id,
+            "max_cursor": max_cursor,
+            "count": count,
+            "pc_client_type": 1,
+            "version_code": "290100",
+            "version_name": "29.1.0",
+            "cookie_enabled": "true",
+            "screen_width": 1920,
+            "screen_height": 1080,
+            "browser_language": "zh-CN",
+            "browser_platform": "Win32",
+            "browser_name": "Chrome",
+            "browser_version": "130.0.0.0",
+        }
+
+        url = f"{self.USER_POST_ENDPOINT}?{urlencode(params)}"
+
+        try:
+            response = await self.client.get(url)
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"请求失败: {e}")
+            return {"status_code": -1}
+
     async def close(self):
         """关闭客户端。"""
         await self.client.aclose()

@@ -568,6 +568,7 @@ class XHS_Apis:
                 proxy=None,
             )
             res_json = response.json()
+            logger.debug(f"search_note: {res_json}")
             success, msg = res_json["success"], res_json["msg"]
         except Exception as e:
             success = False

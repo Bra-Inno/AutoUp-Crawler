@@ -81,7 +81,7 @@ class Crawler:
                 await add_stealth_scripts(browser)
 
                 logger.debug("🌐 正在打开登录页面...")
-                await page.goto(login_url, wait_until="networkidle")
+                await page.goto(login_url, wait_until="load", timeout=20000)
 
                 logger.info("\n" + "=" * 50)
                 logger.info("👤 请在浏览器中完成登录操作")

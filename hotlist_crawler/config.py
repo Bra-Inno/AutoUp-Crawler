@@ -1,12 +1,10 @@
 from typing import Dict, Any
-from pathlib import Path
 
 
 class CrawlerConfig:
     def __init__(
         self,
         download_dir: str = "./temp",
-        chrome_user_data_dir: str = "./chrome_user_data",
         max_image_size: int = 10485760,
         playwright_headless: bool = False,
         playwright_timeout: int = 30000,
@@ -14,8 +12,6 @@ class CrawlerConfig:
         max_answers: int = 3,
     ):
         self.download_dir = download_dir
-        self.chrome_user_data_dir = chrome_user_data_dir
-        self.login_data_dir = str(Path(chrome_user_data_dir) / "login_data")
         self.max_image_size = max_image_size
         self.playwright_headless = playwright_headless
         self.playwright_timeout = playwright_timeout

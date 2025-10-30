@@ -36,10 +36,10 @@ try:
 
 except ImportError as e:
     try:
-        import hotlist_crawler.crawler as crawler_module
-        import hotlist_crawler.config as config_module
-        import hotlist_crawler.models as models
-        import hotlist_crawler.types as types_module
+        import sm_crawler.crawler as crawler_module
+        import sm_crawler.config as config_module
+        import sm_crawler.models as models
+        import sm_crawler.types as types_module
 
         Crawler = crawler_module.Crawler
         CrawlerConfig = config_module.CrawlerConfig

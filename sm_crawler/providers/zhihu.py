@@ -23,11 +23,10 @@ class ZhihuArticleProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, output_format, force_save, "zhihu")
+        super().__init__(url, config, force_save, "zhihu")
         self.max_answers = config.max_answers
         self.cookies = cookies
 
@@ -201,9 +200,8 @@ class ZhihuArticleProvider(BaseProvider):
                     if storage_info:
                         self.storage.save_text_content(storage_info, full_content)
 
-                        if self.output_format == "markdown":
-                            markdown_content = self._convert_to_markdown(question_title, question_detail, answers_list)
-                            self.storage.save_markdown_content(storage_info, markdown_content, question_title)
+                        markdown_content = self._convert_to_markdown(question_title, question_detail, answers_list)
+                        self.storage.save_markdown_content(storage_info, markdown_content, question_title)
 
                         # 保存完整的JSON数据
                         json_data = {
@@ -238,11 +236,7 @@ class ZhihuArticleProvider(BaseProvider):
                         content=full_content,
                         author="知乎用户",
                         images=all_image_infos,
-                        markdown_content=(
-                            self._convert_to_markdown(question_title, question_detail, answers_list)
-                            if self.output_format == "markdown"
-                            else None
-                        ),
+                        markdown_content=self._convert_to_markdown(question_title, question_detail, answers_list),
                         save_directory=(storage_info["article_dir"] if storage_info else None),
                     )
 

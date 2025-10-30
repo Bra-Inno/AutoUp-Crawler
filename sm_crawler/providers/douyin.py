@@ -30,7 +30,6 @@ class DouyinVideoProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        output_format: str = "markdown",
         cookies: list | str | None = None,
         force_save: bool = True,
         auto_download_video: bool = False,
@@ -41,12 +40,11 @@ class DouyinVideoProvider(BaseProvider):
         Args:
             url: 抖音视频URL（支持不完整链接）
             config: 爬虫配置
-            output_format: 输出格式
             force_save: 是否强制保存
             cookies: Cookie字符串（可选，默认从浏览器数据加载）
             auto_download_video: 是否自动下载视频
         """
-        super().__init__(url, config, output_format, force_save, "douyin")
+        super().__init__(url, config, force_save, "douyin")
 
         self.url = url
         self.auto_download_video = auto_download_video

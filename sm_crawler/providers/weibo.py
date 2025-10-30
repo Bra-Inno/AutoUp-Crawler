@@ -30,11 +30,10 @@ class WeiboProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, output_format, force_save, "weibo")
+        super().__init__(url, config, force_save, "weibo")
         self.cookies = cookies
 
     def _is_weibo_search_page(self) -> bool:
@@ -208,8 +207,7 @@ class WeiboProvider(BaseProvider):
                     if storage_info:
                         self.storage.save_text_content(storage_info, full_content)
 
-                        if self.output_format == "markdown":
-                            self.storage.save_markdown_content(storage_info, full_content, title)
+                        self.storage.save_markdown_content(storage_info, full_content, title)
 
                         # 保存完整的JSON数据
                         timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -262,7 +260,7 @@ class WeiboProvider(BaseProvider):
                         content=full_content,
                         author=author_name,
                         images=all_media_infos,
-                        markdown_content=(full_content if self.output_format == "markdown" else None),
+                        markdown_content=full_content,
                         save_directory=(storage_info["article_dir"] if storage_info else None),
                     )
 
@@ -385,8 +383,7 @@ class WeiboProvider(BaseProvider):
 
                 self.storage.save_text_content(storage_info, content)
 
-                if self.output_format == "markdown":
-                    self.storage.save_markdown_content(storage_info, content, title)
+                self.storage.save_markdown_content(storage_info, content, title)
 
                 self.storage.save_article_index(storage_info, content[:200])
 
@@ -394,7 +391,7 @@ class WeiboProvider(BaseProvider):
                 title=title,
                 content=content,
                 author="微博用户",
-                markdown_content=content if self.output_format == "markdown" else None,
+                markdown_content=content,
                 save_directory=storage_info["article_dir"] if storage_info else None,
             )
 

@@ -7,7 +7,6 @@ class ScrapeRequest(BaseModel):
     """接收抓取请求的模型"""
 
     url: HttpUrl = Field(..., description="需要抓取的文章链接")
-    output_format: str = Field("markdown", description="输出格式: text, markdown（默认markdown）")
     force_save: bool = Field(True, description="是否强制保存所有内容到本地（默认开启）")
 
 

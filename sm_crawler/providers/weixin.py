@@ -28,11 +28,10 @@ class WeixinMpProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, output_format, force_save, "weixin")
+        super().__init__(url, config, force_save, "weixin")
         self.storage_info = None
         self.img_counter = 0
         self.cookies = cookies
@@ -241,7 +240,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 创建存储结构（如果启用强制保存或需要保存图片/Markdown）
                 storage_info = None
-                if self.force_save or self.output_format == "markdown":
+                if self.force_save:
                     storage_info = self.storage.create_article_storage(
                         platform=self.platform_name,
                         title=title,

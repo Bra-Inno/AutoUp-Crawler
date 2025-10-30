@@ -2,7 +2,7 @@ import os
 import asyncio
 from loguru import logger
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Optional, List
 from urllib.parse import urlparse
 
 from .config import CrawlerConfig
@@ -40,9 +40,18 @@ class Crawler:
         self,
         url: str,
         destination: Optional[str] = None,
-        cookies: Optional[List[Dict]] = None,
+        cookies: Optional[List[dict]] = None,
     ) -> bool:
-        """根据 URL 识别平台并抓取内容。"""
+        """根据 URL 识别平台并抓取内容。
+
+        Args:
+            url(str): 需要抓取的链接
+            destination(Optional[str]): 可选的目标保存目录，若未指定则使用默认下载目录
+            cookies(Optional[List[Dict]]): 可选的 cookies 列表或字符串，用于需要登录验证的平台
+
+        Returns:
+            抓取是否成功 (bool)
+        """
         try:
             platform = self._identify_platform(url)
             if not platform:

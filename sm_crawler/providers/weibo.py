@@ -30,12 +30,11 @@ class WeiboProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, save_images, output_format, force_save, "weibo")
+        super().__init__(url, config, output_format, force_save, "weibo")
         self.cookies = cookies
 
     def _is_weibo_search_page(self) -> bool:
@@ -173,11 +172,10 @@ class WeiboProvider(BaseProvider):
                         )
 
                         # 下载图片
-                        if self.save_images:
-                            downloaded_images = self._sync_download_images(first_post, page, storage_info)
+                        downloaded_images = self._sync_download_images(first_post, page, storage_info)
 
-                            # 下载视频
-                            downloaded_videos = self._sync_download_videos(first_post, page, storage_info)
+                        # 下载视频
+                        downloaded_videos = self._sync_download_videos(first_post, page, storage_info)
 
                     # 组装完整内容
                     full_content = f"# {search_query} - 微博搜索结果\\n\\n"

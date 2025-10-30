@@ -41,7 +41,6 @@ class Crawler:
         url: str,
         destination: Optional[str] = None,
         cookies: Optional[List[Dict]] = None,
-        save_images: bool = True,
         output_format: str = "markdown",
     ) -> bool:
         """根据 URL 识别平台并抓取内容。"""
@@ -69,7 +68,6 @@ class Crawler:
                     provider = ZhihuArticleProvider(
                         url=url,
                         config=self.config,
-                        save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
                         force_save=True,
@@ -78,7 +76,6 @@ class Crawler:
                     provider = WeiboProvider(
                         url=url,
                         config=self.config,
-                        save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
                         force_save=True,
@@ -87,7 +84,6 @@ class Crawler:
                     provider = WeixinMpProvider(
                         url=url,
                         config=self.config,
-                        save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
                         force_save=True,
@@ -96,7 +92,6 @@ class Crawler:
                     provider = BilibiliVideoProvider(
                         url=url,
                         config=self.config,
-                        save_images=save_images,
                         output_format=output_format,
                         force_save=True,
                         cookies=cookies,
@@ -107,7 +102,6 @@ class Crawler:
                     provider = DouyinVideoProvider(
                         url=url,
                         config=self.config,
-                        save_images=save_images,
                         output_format=output_format,
                         cookies=cookies,
                         force_save=True,

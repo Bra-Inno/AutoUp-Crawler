@@ -28,12 +28,11 @@ class WeixinMpProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, save_images, output_format, force_save, "weixin")
+        super().__init__(url, config, output_format, force_save, "weixin")
         self.storage_info = None
         self.img_counter = 0
         self.cookies = cookies
@@ -138,7 +137,7 @@ class WeixinMpProvider(BaseProvider):
                 elif child.name == "img":
                     img_src = child.get("data-src") or child.get("src")
                     alt_text = child.get("alt", "image")
-                    if self.save_images and save_dir:
+                    if save_dir:
                         img_local_path = self.download_image(img_src, save_dir)
                         if img_local_path:
                             markdown_str += f"![{alt_text}]({img_local_path})\n"
@@ -242,7 +241,7 @@ class WeixinMpProvider(BaseProvider):
 
                 # 创建存储结构（如果启用强制保存或需要保存图片/Markdown）
                 storage_info = None
-                if self.force_save or self.save_images or self.output_format == "markdown":
+                if self.force_save or self.output_format == "markdown":
                     storage_info = self.storage.create_article_storage(
                         platform=self.platform_name,
                         title=title,
@@ -283,7 +282,7 @@ class WeixinMpProvider(BaseProvider):
 
                             if img_src:
                                 local_path = None
-                                if self.save_images and storage_info:
+                                if storage_info:
                                     local_path = self.download_image_with_storage(img_src, storage_info, alt_text)
 
                                 images.append({"original_url": img_src, "local_path": local_path, "alt_text": alt_text})
@@ -323,7 +322,7 @@ class WeixinMpProvider(BaseProvider):
                 elif child.name == "img":
                     img_src = child.get("data-src") or child.get("src")
                     alt_text = child.get("alt", "image")
-                    if self.save_images and storage_info:
+                    if storage_info:
                         img_local_path = self.download_image_with_storage(str(img_src), storage_info, str(alt_text))
                         if img_local_path:
                             # 使用相对路径在Markdown中引用图片

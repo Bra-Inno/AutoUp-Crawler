@@ -13,14 +13,12 @@ class BaseProvider(ABC):
         self,
         url: str,
         config: Any,
-        save_images: bool = True,
         output_format: str = "markdown",
         force_save: bool = True,
         platform_name: str = "unknown",
     ):
         self.url = url
         self.config = config
-        self.save_images = save_images
         self.output_format = output_format
         self.force_save = force_save
         self.platform_name = platform_name

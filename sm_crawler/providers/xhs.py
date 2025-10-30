@@ -57,7 +57,6 @@ class XiaohongshuProvider(BaseProvider):
         super().__init__(
             url="",
             config=None,
-            save_images=True,
             output_format="markdown",
             force_save=True,
             platform_name=platform_name,

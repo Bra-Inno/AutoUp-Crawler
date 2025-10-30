@@ -54,7 +54,6 @@ class BilibiliVideoProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        save_images: bool = False,
         output_format: str = "json",
         cookies: str | list | None = None,
         force_save: bool = True,
@@ -67,14 +66,13 @@ class BilibiliVideoProvider(BaseProvider):
         Args:
             url: B站视频URL（支持BV号和av号）
             config: 爬虫配置
-            save_images: 是否保存图片（B站视频不需要）
             output_format: 输出格式（json）
             force_save: 是否强制保存
             cookies: B站登录cookie（获取高清画质需要）
             auto_download_video: 是否自动下载视频文件
             video_quality: 视频清晰度（使用 BilibiliVideoQuality 枚举）
         """
-        super().__init__(url, config, save_images, output_format, force_save, "bilibili")
+        super().__init__(url, config, output_format, force_save, "bilibili")
         self.cookies = format_cookies_to_string(cookies)
         self.bvid: Optional[str] = None
         self.aid: Optional[str] = None

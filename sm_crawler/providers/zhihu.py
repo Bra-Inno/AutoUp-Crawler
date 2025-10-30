@@ -23,12 +23,11 @@ class ZhihuArticleProvider(BaseProvider):
         self,
         url: str,
         config: Any,
-        save_images: bool = True,
         output_format: str = "markdown",
         cookies: list | None = None,
         force_save: bool = True,
     ):
-        super().__init__(url, config, save_images, output_format, force_save, "zhihu")
+        super().__init__(url, config, output_format, force_save, "zhihu")
         self.max_answers = config.max_answers
         self.cookies = cookies
 
@@ -129,7 +128,7 @@ class ZhihuArticleProvider(BaseProvider):
                         )
 
                         # 下载问题描述中的图片
-                        if question_detail_element and self.save_images:
+                        if question_detail_element:
                             question_images = self._sync_download_question_images(question_detail_element, storage_info)
 
                     # 解析回答
@@ -171,7 +170,7 @@ class ZhihuArticleProvider(BaseProvider):
 
                         # 处理图片
                         answer_images = []
-                        if content_element and self.save_images and storage_info:
+                        if content_element and storage_info:
                             answer_images = self._sync_download_answer_images(
                                 content_element, storage_info, index, author
                             )
